@@ -1,0 +1,19 @@
+{
+  "name": "blog",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "vitepress build",
+    "dev": "cross-env NODE_ENV=development vitepress",
+    "deploy": "deploy.sh",
+    "deploy:gitlab": "scripts/bin/deploy-gitlab.sh"
+  },
+  "devDependencies": {
+    "globby": "^11.0.1",
+    "gray-matter": "^4.0.2",
+    "mz": "^2.7.0",
+    "cross-env": "^7.0.3",
+    "vitepress": "^0.7.2"
+  }
+}

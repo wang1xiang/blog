@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vitepress build",
     "dev": "cross-env NODE_ENV=development vitepress",
-    "deploy": "deploy.sh",
+    "deploy": "scripts/bin/deploy.sh",
     "deploy:gitlab": "scripts/bin/deploy-gitlab.sh"
   },
   "devDependencies": {

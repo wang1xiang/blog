@@ -13,7 +13,7 @@ async function getConfig() {
         },
       ],
       ["meta", { name: "keywords", content: "翔子Blog" }],
-      ["link", { rel: "icon", href: "/favicon.ico" }],
+      ["link", { rel: "icon", href: "/blog/favicon.ico" }],
       // 引入 Gitalk
       [
         "link",

@@ -14,7 +14,7 @@
               class="iconfont"
               :class="item.icon"
               :href="!!item.link ? item.link : 'javascript:;'"
-              v-for="(item, index) in config.iconArray"
+              v-for="item in config.iconArray"
               v-on:[item.event.type]="showModalClick(item.event.imgUrl)"
               :key="item"
             ></a>
@@ -22,7 +22,9 @@
         </div>
         <h4 class="nickName">{{ config.nickName }}</h4>
         <div class="skill-wrap">
-          <span class="skill" v-for="(item, index) in config.skill" :key="item">{{ item }}</span>
+          <span class="skill" v-for="item in config.skill" :key="item">{{
+            item
+          }}</span>
         </div>
         <p class="introduce">{{ config.synopsis }}</p>
         <div v-if="showModal" class="modal" @click.self="showModal = false">
@@ -63,8 +65,8 @@ export default {
       this.showModal = true;
     },
   },
-  created() { },
-  mounted() { },
+  created() {},
+  mounted() {},
 };
 </script>
 <style  scoped>

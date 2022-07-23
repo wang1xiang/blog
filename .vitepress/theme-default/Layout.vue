@@ -149,7 +149,7 @@ export default {
 
     const showNavbar = computed(() => {
       const { themeConfig } = siteRouteData.value;
-      const { frontmatter } = pageData.value;
+      const { frontmatter } = pageData?.value;
       if (frontmatter.navbar === false || themeConfig.navbar === false) {
         return false;
       }

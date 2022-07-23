@@ -2,10 +2,12 @@
 date: 2022-06-10
 title: 搭建博客记录
 tags:
-  - 博客
+  - tool
 describe: 使用vitepress搭建博客，通过github pages生成在线访问地址
 ---
 
+
+因为是使用vitepress搭建博客，所以先需要了解一下[vitepress](https://vitejs.cn/vitepress/)
 
 ### vitepress文档
 
@@ -65,7 +67,7 @@ describe: 使用vitepress搭建博客，通过github pages生成在线访问地�
 
 ### 创建博客项目
 
-> 可以使用[vitepress官方文档](https://vitejs.cn/vitepress/)按照步骤创建，我是直接在github上克隆别人已有的博客进行修改
+> 可以使用[vitepress官方文档](https://vitejs.cn/vitepress/)按照步骤创建，我是直接在github上克隆别人已有的博客进行修改<br />
 > 博客地址：jexlau.github.io/blog/
 
 - 克隆项目
@@ -115,6 +117,6 @@ describe: 使用vitepress搭建博客，通过github pages生成在线访问地�
 
   - yarn deploy发布，如果没有成功，可以按照deploy.sh的文件一步步执行，看是哪里的问题
 
-- 查看发布成功后的地址https://wang1xiang.github.io/blog/，如果没有刷新，强制刷新一下试试
+- 查看发布成功后的地址<https://wang1xiang.github.io/blog/>，如果没有刷新，强制刷新一下试试
 
 ### 发布到gitlab pages

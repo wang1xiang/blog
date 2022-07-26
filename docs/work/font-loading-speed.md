@@ -36,7 +36,18 @@ describe: 字体加载速度太慢，影响客户使用怎么整
   使用js加载字体
 
   ```jsx
-  const font = new FontFace('Sacramento', 'url(/font/Sacramento-Regular.woff)');
-  await font.load();
-  document.fonts.add(font);
+  // 优化字体加载 先判断浏览器是否已经加载过字体
+   let isLoaded = false;
+   for (let i of document.fonts.keys()) {
+      if (i.family === 'Sacramento') {
+         isLoaded = true;
+         break;
+      }
+   }
+   // 没有加载过在加载 已加载过就不再重复加载
+   if (!isLoaded) {
+      const font = new FontFace('Sacramento', 'url(/font/Sacramento-Regular.woff)');
+      await font.load();
+      document.fonts.add(font);
+   }
   ```

@@ -255,12 +255,13 @@ export default {
   width: 100%;
   margin-top: 3rem;
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: contain;
   background-position: center 30%;
   background-image: url("../images/bg.png");
   height: 450px;
   position: relative;
   overflow: hidden;
+  background-color: #133B47;
 }
 .home {
   display: flex !important;

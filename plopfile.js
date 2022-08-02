@@ -18,7 +18,7 @@ module.exports = (plop) => {
         type: 'list',
         name: 'module',
         message: '选择创建文件到下面哪个文件夹',
-        choices: ['work', 'tool', 'react', 'vscode', 'css']
+        choices: ['work', 'tool', 'react', 'vscode', 'css', 'vite']
       }
     ],
     actions: [

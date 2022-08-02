@@ -20,9 +20,9 @@
     </aside>
     <div class="home-bg" v-if="enableHome">
       <div class="content-bg">
-        <!-- <h1>
-          <p>人间总有一两风 填我十万八千梦</p>
-        </h1> -->
+        <h1>
+          <p>有志始知蓬莱近，无为总觉咫尺远</p>
+        </h1>
       </div>
     </div>
     <!-- TODO: make this button accessible -->
@@ -231,8 +231,8 @@ export default {
   margin: 2em 1em;
   white-space: nowrap;
   overflow: hidden;
-  animation: typing 5s steps(12, end),
-    /*英文速度*/ blink-caret 0.5s step-end infinite alternate;
+  animation: typing 6s steps(15, end),
+    /*英文速度*/ blink-caret 0.4s step-end infinite alternate;
 }
 .content-bg {
   width: 100%;

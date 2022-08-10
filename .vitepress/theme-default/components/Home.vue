@@ -10,13 +10,13 @@
       <div class="article-header">
         <div class="title">
           {{ article.frontMatter.title || "" }}
+          <div class="line"></div>
         </div>
         <time :datetime="article.frontMatter.date" class="time">
           {{ article.frontMatter.date || "" }}
         </time>
       </div>
 
-      <div class="line"></div>
       <p class="describe">
         {{ article.frontMatter.describe || "" }}
       </p>
@@ -179,20 +179,27 @@ export default defineComponent({
 .title {
   color: var(--title-color);
   display: block;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0 0;
+}
+.describe {
+  font-size: 14px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 .line {
-  -webkit-transition: all 0.3s ease-out;
-  -moz-transition: all 0.3s ease-out;
-  transition: all 0.3s ease-out;
+  -webkit-transition: all 0.4s ease-out;
+  -moz-transition: all 0.4s ease-out;
+  transition: all 0.4s ease-out;
   border-top: 0.2rem solid var(--text-color-light);
   display: block;
   width: 2rem;
 }
-.article:hover .line {
-  width: 5rem;
+.title:hover .line {
+  width: 100%;
 }
 @media screen and (max-width: 700px) {
   .article {

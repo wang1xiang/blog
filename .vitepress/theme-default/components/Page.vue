@@ -194,12 +194,15 @@ export default {
   align-items: center;
 }
 .md-title {
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 1.4rem;
   color: var(--title-color);
+  font-weight: 500;
 }
 #jinrishici-sentence {
   margin: 0.5rem 0 0.4rem;
+  color: rgba(0, 0, 0, 0.65);
+  font-style: italic;
+  font-size: 0.8rem;
 }
 h1,
 h2,
@@ -210,9 +213,9 @@ h6 {
   color: var(--title-color);
 }
 .md-date {
-  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.65);
   font-style: italic;
-  color: #aaa;
+  font-size: 1rem;
 }
 .catalog {
   border-left: 1px solid #ccc;

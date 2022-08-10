@@ -55,7 +55,8 @@ export function useYearSort(pages) {
   let num = -1;
   for (let index = 0; index < pages.length; index++) {
     const element = pages[index];
-    const y = element.frontMatter.date.split("-")[0];
+    const date = element.frontMatter.date.split("-");
+    const y = date[0]-date[1];
     if (y == year) {
       data[num].push(element);
     } else {

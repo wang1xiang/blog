@@ -2,7 +2,7 @@
   <div class="">
     <div class="years" v-for="(year, index) in data" :key="index + year">
       <div class="year">
-        {{ year[0].frontMatter.date.split("-")[0] }}
+        {{ year[0].frontMatter.date.split("-")[0] + '-' + year[0].frontMatter.date.split("-")[1] }}
       </div>
       <a
         v-show="!article.frontMatter.home"
@@ -12,7 +12,7 @@
         class="article"
       >
         <div class="title">
-          {{ article.frontMatter.title || "" }}
+          • {{ article.frontMatter.title || "" }}
         </div>
         <div class="date">{{ article.frontMatter.date.slice(5) || "" }}</div>
       </a>
@@ -31,6 +31,7 @@ export default defineComponent({
     const siteData = useSiteData();
 
     const data = computed(() => useYearSort(siteData.value.themeConfig.pages));
+    console.log(data)
 
     return {
       data,
@@ -50,25 +51,26 @@ export default defineComponent({
 }
 .year {
   padding: 15px 0;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   border-bottom: 1px solid #ccc;
   font-weight: 600;
   color: var(--text-color);
 }
 .article {
   padding: 2px;
-  margin: 10px 0;
+  margin: 6px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-style: italic;
 }
 .title {
   color: var(--accent-color);
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 .date {
   color: #ccc;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 @media screen and (max-width: 700px) {

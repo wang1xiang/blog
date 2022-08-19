@@ -12,7 +12,7 @@ describe: 利用伪元素特性，使用css属性实现placeholder
 <div className="App" placeholder="在这里输入"></div>;
 ```
 
-#### 可以利用伪元素结合[css attr()函数](https://developer.mozilla.org/zh-CN/docs/Web/CSS/attr)来实现
+## 可以利用伪元素结合[css attr()函数](https://developer.mozilla.org/zh-CN/docs/Web/CSS/attr)来实现
 
 需要在指定元素上设置placeholder属性
 

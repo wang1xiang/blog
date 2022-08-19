@@ -9,9 +9,9 @@ describe: 使用vitepress搭建博客，通过github pages生成在线访问地�
 
 因为是使用vitepress搭建博客，所以先需要了解一下[vitepress](https://vitejs.cn/vitepress/)
 
-### vitepress文档
+## vitepress文档
 
-#### 配置
+### 配置
 
 - 文档目录下创建一个 `.vuepress` 目录，存放所有 `VuePress` 相关的文件
 - 配置文件 `.vuepress/config.js`，导出一个 JavaScript 对象
@@ -23,7 +23,7 @@ describe: 使用vitepress搭建博客，通过github pages生成在线访问地�
   }
   ```
 
-#### markdown拓展
+### markdown拓展
 
 [原文链接](https://vitejs.cn/vitepress/guide/markdown.html)
 

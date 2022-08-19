@@ -9,7 +9,7 @@ describe: 通过mutationObserver检测DOM变化，生成事件
   
 > 最近在写项目时，有一个需求是保存的同时截取当前页面内容并生成缩略图，下面是我的实现过程。
 
-#### 生成快照
+## 生成快照
 
 - 将DOM转成图片的三种方式
   [dom-to-image](https://github.com/tsayen/dom-to-image)、[html2canvas](https://github.com/niklasvh/html2canvas)、[
@@ -60,7 +60,7 @@ html-to-image]([html-to-image](https://github.com/bubkoo/html-to-image))
 
 通过html2canvas将DOM转成图片并保存，原则上已经解决了问题，但每次保存时不管页面有没有发生变化，都会生成快照，尝试通过[MutationObserver](https://developer.mozilla.org/zh-CN/docs/Web/API/MutationObserver)解决一下。
 
-#### 优化
+### 优化
 
 为了通用，写了一个自定义hooks，通过传入func函数来监听DOM变化时的回调
 

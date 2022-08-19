@@ -180,7 +180,7 @@ describe: 整理了一些自己在工作中用到的git命令及案例
 
     git tag -d xxx // 删除本地 tag
 
-##### 配置别名
+### 配置别名
 
 ```bash
 git config --global alias.st status
@@ -198,7 +198,7 @@ git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Crese
 
 全局 Git 配置文件放在用户主目录下的一个隐藏文件`.gitconfig`中
 
-##### fork 项目--更新
+#### fork 项目--更新
 
 Fork 别人的项目后，如何再同步更新别人的提交
 

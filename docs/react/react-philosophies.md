@@ -7,11 +7,11 @@ describe: react-philosophies即react哲学，按照英文文档翻译
 ---
 
 > Chinese translation of the [react-philosophies](https://github.com/mithi/react-philosophies)
-### react-philosophies react哲学
+## react-philosophies react哲学
 
-#### 1.The Bare Minimum 最低要求
+### 1.The Bare Minimum 最低要求
 
-##### 1.1 Recognize when the computer is smarter than you 计算机比你更聪明
+#### 1.1 Recognize when the computer is smarter than you 计算机比你更聪明
 
 1. 使用Eslint静态分析代码，启用[钩子规则](https://www.npmjs.com/package/eslint-plugin-react-hooks)捕获特定react错误
 2. 开启严格模式

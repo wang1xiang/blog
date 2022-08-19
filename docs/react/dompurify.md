@@ -18,7 +18,7 @@ const main = () => {
 
 而`dangerousSetInnerHtml`渲染的HTML内容是没有经过过滤或转义的，所以很容易遇到XSS攻击
 
-##### [解决方法](https://www.npmjs.com/package/dompurify)
+### [解决方法](https://www.npmjs.com/package/dompurify)
 
 可以通过 dompurify.sanitize 进行过滤
 ```jsx

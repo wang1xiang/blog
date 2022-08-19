@@ -7,7 +7,7 @@ describe: 不需要及很多命令，只需要输入/就可以添加你想要的
 ---
   
 
-#### 安装必要的插件
+## 安装必要的插件
 
 - Markdown All in One
   编写 Markdown 所需的一切（键盘快捷键、目录、自动预览等）
@@ -15,7 +15,7 @@ describe: 不需要及很多命令，只需要输入/就可以添加你想要的
 - markdownlint
   Visual Studio Code 的 Markdown linting 和样式检查
 
-#### 用户自定义片段
+### 用户自定义片段
 
 `设置 -> 用户自定义片段 -> markdown.json`，修改为如下代码
 

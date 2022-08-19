@@ -6,11 +6,11 @@ tags:
 describe: 记录使用拖拽组件react-grid-layout遇到的问题
 ---
 
-#### 前言
+## 前言
 
 由于业务需要，最近使用react-grid-layout来完成一个基于拖拉拽生成的弹窗，所以记录一下自己使用过的API以及遇到的问题。
 
-#### react-grid-layout简介
+### react-grid-layout简介
 
 介绍：用于 React 的具有响应断点的可拖动和可调整大小的网格布局。[github地址](https://github.com/react-grid-layout/react-grid-layout)
 

@@ -235,9 +235,7 @@ h6 {
 }
 .level-3 {
   margin: 10px 0;
-  display: list-item;
   list-style-position: inside;
-  color: #717171 !important;
   padding-left: 1rem;
   font-size: 12px;
   list-style-type: circle;

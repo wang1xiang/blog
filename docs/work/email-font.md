@@ -13,7 +13,7 @@ describe: HTML 电子邮件中的字体——限制、解决方案和行业标�
 1. System Fonts系统字体
 2. Web Fonts 网络字体
 
-### System Fonts 系统字体
+## System Fonts 系统字体
 
 系统字体就是那些已经安装在您的计算机上，像网页或者所有电子邮件客户端都可以访问和使用这些字体，以下10种字体都可以使用
 
@@ -28,11 +28,21 @@ describe: HTML 电子邮件中的字体——限制、解决方案和行业标�
 - Trebucher MS
 - Verdana
 
-#### Web Fonts 网络字体
+### Web Safe Fonts 网络安全字体
+
+在邮件中可以放心使用的字体,被认为是网络安全字体，可用于电子邮件中的实时文本。它们是不同计算机、设备和操作系统上的默认字体。它们几乎存在于所有设备上。
+
+- Arial
+- Verdana
+- Georgia
+- Times New Roman
+- Courier
+
+### Web Fonts 网络字体
 
 桌面字体被加载到个人计算机上，以便在文字处理器和其他应用程序中使用，而网络字体则在线存储并由浏览器下载。
 
-##### 支持网络字体的电子邮件客户端
+### 支持Web Fonts网络字体的电子邮件客户端
 
 - Apple Mail
 - iOS Mail
@@ -42,7 +52,9 @@ describe: HTML 电子邮件中的字体——限制、解决方案和行业标�
   
 可以在这个网站查看：<https://www.caniemail.com/search/?s=web+font>
 
-##### Gmail支持字体列表
+如果不支持网络字体，则不会完全消除，因为会看到备用字体。
+
+#### Gmail支持字体列表
 
 - Roboto 和 Google Sans：Gmail 自己使用这些网络字体
 - web safe fonts 网络安全字体： 以下字体是W3Schools 列为 HTML 和 CSS 的最佳网络安全字体
@@ -58,13 +70,21 @@ describe: HTML 电子邮件中的字体——限制、解决方案和行业标�
   - Brush Script MT (cursive)
 - Email safe fonts电子邮件安全字体：system fonts 每台计算机上都安装的字体
 
-#### 通过image来展示文字：解决文字不能展示的问题
+### 通过image来展示文字：解决文字不能展示的问题
 
 虽然能解决，但会有三个问题
 
 1. 大多数邮件编辑器会默认阻止图像加载，导致转为图片的文字也不能正常显示
 2. 图像会减慢电子邮件的加载时间
 3. 文字效果肯定看起来比图像更好
+4. 有按钮跳转或者操作类型标签的就无法再使用
+
+### 获取google字体
+
+- 打开[google fonts](https://fonts.google.com/),选择需要的字体
+- 点击View all styles
+  ![googlefonts.jpg](./images/googlefonts.jpg)
+- 即可获取到字体的链接
 
 参考文章
 

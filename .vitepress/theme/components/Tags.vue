@@ -8,7 +8,7 @@
     class="article"
   >
     <div class="title">
-      {{ article.frontMatter.title || "" }}
+      • {{ article.frontMatter.title || "" }}
     </div>
     <div class="date">{{ article.frontMatter.date.slice(5) || "" }}</div>
   </a>
@@ -107,6 +107,8 @@ export default defineComponent({
   justify-content: space-between;
   align-items: center;
   text-decoration: none;
+  font-style: italic;
+  margin: 6px 0;
 }
 
 .article:hover .date {
@@ -120,11 +122,11 @@ export default defineComponent({
 }
 .title {
   color: #4a9ae1;
-  font-size: 1.1rem;
+  font-size: .9rem;
 }
 .date {
   color: #ccc;
-  font-size: 1rem;
+  font-size: .9rem;
 }
 @media screen and (max-width: 700px) {
   .header {

@@ -10,7 +10,7 @@
       <a href="javascript:;">纪年</a> 文章发布平台
     </p> -->
     <p class="platform">
-      Copyright &copy; 2020-2021
+      Copyright &copy; 2022 - present
       <a href="https://github.com/wang1xiang">@wangxiang</a>
     </p>
   </div>

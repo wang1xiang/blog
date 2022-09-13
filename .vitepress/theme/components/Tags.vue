@@ -74,23 +74,26 @@ export default defineComponent({
 .tag {
   display: inline-block;
   position: relative;
-  padding: 4px 20px;
+  padding: 2px 20px 4px;
   padding-right: 10px;
   margin: 0 16px 12px 0;
   font-size: 14px;
   line-height: 25px;
-  background-color: rgb(33, 150, 243, 0.5);
+  background-color: #5bc0de;
   transition: 0.4s;
-  color: #fff;
+  color: #000;
   cursor: pointer;
   border-radius: 33px 0 0 33px;
+}
+.tag:hover {
+  background-color: #5cb75d;
 }
 .tag::before {
   content: "";
   position: absolute;
   width: 5px;
-  margin-top: 10px;
-  margin-left: -15px;
+  margin-top: 11px;
+  margin-left: -10px;
   height: 5px;
   background: #fff;
   border-radius: 50%;

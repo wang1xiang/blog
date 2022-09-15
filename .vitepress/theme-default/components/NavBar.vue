@@ -33,6 +33,7 @@
 .logo {
   margin-right: 0.75rem;
   height: 2rem;
+  width: 2rem;
   vertical-align: bottom;
   border-radius: 10px;
 }

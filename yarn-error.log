@@ -1,8 +1,8 @@
 Arguments: 
-  D:\nodejs\node.exe D:\Yarn\bin\yarn.js build
+  D:\nodejs\node.exe D:\Yarn\bin\yarn.js zip
 
 PATH: 
-  C:\Users\xiang wang\bin;D:\Git\mingw64\bin;D:\Git\usr\local\bin;D:\Git\usr\bin;D:\Git\usr\bin;D:\Git\mingw64\bin;D:\Git\usr\bin;C:\Users\xiang wang\bin;C:\Users\XIANGW~1\AppData\Local\Temp\yarn--1663058897342-0.9530426991172554;F:\github\blog\node_modules\.bin;C:\Users\xiang wang\AppData\Local\Yarn\Data\link\node_modules\.bin;D:\libexec\lib\node_modules\npm\bin\node-gyp-bin;D:\lib\node_modules\npm\bin\node-gyp-bin;D:\nodejs\node_modules\npm\bin\node-gyp-bin;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\WINDOWS\System32\OpenSSH;D:\Yarn\bin;D:\Git\cmd;D:\TortoiseSVN\bin;C:\Program Files\Microsoft VS Code\bin;C:\ProgramData\chocolatey\bin;%NODE_PATH%;D:\Java\jdk-18\bin;D:\nvm;D:\nodejs;D:\nodejs;C:\Users\xiang wang\AppData\Local\pnpm;C:\Users\xiang wang\AppData\Local\Programs\Python\Python38\Scripts;C:\Users\xiang wang\AppData\Local\Programs\Python\Python38;C:\Users\xiang wang\AppData\Local\Microsoft\WindowsApps;C:\Users\xiang wang\AppData\Local\Yarn\bin;D:\Bandizip;D:\nvm;D:\nodejs;C:\Users\xiang wang\AppData\Roaming\npm;D:\Git\usr\bin\vendor_perl;D:\Git\usr\bin\core_perl
+  C:\Users\XIANGW~1\AppData\Local\Temp\yarn--1663229958087-0.21365930622263885;F:\github\blog\node_modules\.bin;C:\Users\xiang wang\AppData\Local\Yarn\Data\link\node_modules\.bin;D:\libexec\lib\node_modules\npm\bin\node-gyp-bin;D:\lib\node_modules\npm\bin\node-gyp-bin;D:\nodejs\node_modules\npm\bin\node-gyp-bin;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;D:\Yarn\bin\;D:\Git\cmd;D:\TortoiseSVN\bin;C:\Program Files\Microsoft VS Code\bin;C:\ProgramData\chocolatey\bin;%NODE_PATH%;D:\Java\jdk-18\bin;D:\nvm;D:\nodejs;D:\nodejs;C:\Users\xiang wang\AppData\Local\pnpm;C:\Users\xiang wang\AppData\Local\Programs\Python\Python38\Scripts\;C:\Users\xiang wang\AppData\Local\Programs\Python\Python38\;C:\Users\xiang wang\AppData\Local\Microsoft\WindowsApps;C:\Users\xiang wang\AppData\Local\Yarn\bin;D:\Bandizip\;D:\nvm;D:\nodejs;C:\Users\xiang wang\AppData\Roaming\npm
 
 Yarn version: 
   1.22.15
@@ -33,13 +33,17 @@ npm manifest:
     "main": "index.js",
     "license": "MIT",
     "scripts": {
+      "zip": "cd .vitepress/dist && tar -zcvf ../dist.tar.gz *",
       "build": "vitepress build",
+      "build:server": "cross-env SERVER_ENV=development vitepress build",
       "dev": "cross-env NODE_ENV=development vitepress --port 9999",
       "deploy": "scripts/bin/deploy.sh",
       "deploy:gitlab": "scripts/bin/deploy-gitlab.sh",
+      "deploy:server": "yarn zip && yarn build:server && node scripts/upload.js",
       "createMd": "plop create"
     },
     "devDependencies": {
+      "ssh2-sftp-client": "^9.0.4",
       "cross-env": "^7.0.3",
       "globby": "^11.0.1",
       "gray-matter": "^4.0.2",

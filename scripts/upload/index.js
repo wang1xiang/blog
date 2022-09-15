@@ -78,7 +78,7 @@ const upload = (config, options) => {
       console.log(error("失败"), err);
       sftp.end();
     });
-}
+};
 // 上传文件
 if (process.argv?.[2]) {
   config.password = process.argv?.[2];

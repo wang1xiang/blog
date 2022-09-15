@@ -5,8 +5,10 @@
   "license": "MIT",
   "scripts": {
     "zip": "cd .vitepress/dist && tar -zcvf ../dist.tar.gz *",
-    "build": "vitepress build",
-    "build:server": "cross-env SERVER_ENV=development vitepress build && npm run zip",
+    "modify:github": "node scripts/modifyBase/github",
+    "build": "npm run modify:github && vitepress build",
+    "modify:server": "node scripts/modifyBase/server",
+    "build:server": "npm run modify:server && cross-env APP_ENVKEY=server vitepress build && npm run zip",
     "dev": "cross-env NODE_ENV=development vitepress --port 9999",
     "deploy": "scripts/bin/deploy.sh",
     "deploy:server": "npm run build:server && node scripts/upload",

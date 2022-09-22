@@ -284,6 +284,19 @@ module.exports = {
 ## vscode配置
 
 添加配置文件`.editorconfig`
+
+```bash
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+```
+
 目的：
 
 - ESLint 配置目的是在代码提交时进行审核

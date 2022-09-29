@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>
+      vite学习记录 | 翔子
+    </title>
+    <meta name="description" content="A VitePress site">
+    <link rel="stylesheet" href="/_assets/style.12e6589b.css">
+    <link rel="modulepreload" href="/_assets/common-03e46d7f.js">
+    <link rel="modulepreload" href="/_assets/docs_vite_vite.md.434e360e.lean.js">
+    <link rel="modulepreload" href="/_assets/app.694175d1.js">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta name="keywords" content="翔子Blog">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="https://lib.baomitu.com/gitalk/1.7.0/gitalk.min.css">
+    <script src="https://lib.baomitu.com/gitalk/1.7.0/gitalk.min.js"></script>
+    <script src="https://lib.baomitu.com/axios/0.21.1/axios.js"></script>
+    
+  </head>
+  <body>
+    <div id="app"><!--[--><div id="containerColor" class="no-sidebar theme" data-v-afcf09d4><header class="navbar" data-v-afcf09d4><!--[--><a class="title" aria-label="翔子, back to home" href="/"><img class="logo" src="/favicon.ico" alt="logo"><span>翔子</span></a><div class="flex-grow"></div><nav class="nav-links hide-mobile"><!--[--><!--[--><div class="nav-item"><a class="nav-link" href="/index.html" target="" rel="">🏠 首页 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/more/docs.html" target="" rel="">📅 归档 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/more/tags.html" target="" rel="">📂 分类 <!----></a></div><!--]--><!--]--><div id="docsearch"></div><!----><!----></nav><!--[--><!--]--><!--]--><div class="sidebar-button" data-v-afcf09d4><svg class="icon" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z" class></path></svg></div></header><aside class="" data-v-afcf09d4><!--[--><nav class="nav-links show-mobile"><!--[--><!--[--><div class="nav-item"><a class="nav-link" href="/index.html" target="" rel="">🏠 首页 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/more/docs.html" target="" rel="">📅 归档 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/more/tags.html" target="" rel="">📂 分类 <!----></a></div><!--]--><!--]--><div id="docsearch"></div><!----><!----></nav><!--[--><!--]--><ul class="sidebar"><!--[--><!--]--></ul><!--[--><!--]--><!--]--></aside><!----><!-- TODO: make this button accessible --><div class="sidebar-mask" data-v-afcf09d4></div><main data-v-afcf09d4><!--[--><div class="content"><!--[--><!--]--><div class="md-header"><div class="md-title">vite学习记录</div><span id="jinrishici-sentence">正在加载今日诗词....</span><div class="md-date">2022-07-30</div></div><ul class="catalog"><!--[--><li class="catalog-item"><a class="level level-2" href="#概念">概念</a><!----></li><li class="catalog-item"><!----><a class="level level-3" href="#vite如何解决这两个问题？">vite如何解决这两个问题？</a></li><!--]--></ul><div><h2 id="概念"><a class="header-anchor" href="#概念" aria-hidden="true">#</a> 概念</h2><p>vite开发阶段是esbuild，构建阶段是rollup</p><p>以前浏览器不支持ES Modules，所以es6代码都是通过打包工具转成浏览器识别的语言才能正常工作</p><p>带来的问题是：</p><ol><li>当项目越来越大时，启动项目需要很长时间（经历一条很长的编译打包链条，从入口开始需要逐步经历语法解析、依赖收集、代码转译、打包合并、代码优化，最终将高版本的、离散的源码编译打包成低版本、高兼容性的产物代码）</li><li>代码更新也需要时间（HMR 时需要把改动模块及相关依赖全部编译）</li></ol><h3 id="vite如何解决这两个问题？"><a class="header-anchor" href="#vite如何解决这两个问题？" aria-hidden="true">#</a> vite如何解决这两个问题？</h3><ul><li><p>针对项目启动慢的问题，vite 在开发环境冷启动无需打包，无需分析模块之间的依赖，同时也无需在启动开发服务器前进行编译，vite启动时将代码分为依赖和源码</p><p><code>依赖</code>：指的是一些不变的东西。例如第三方库，这部分使用esbuild构建（go语言开发，比js编写的打包器预构建依赖快10-100倍）</p><p><code>源码</code>：项目代码，按需加载，并且以es moduel的方式直接交给浏览器</p></li><li><p>针对项目更新的问题，vite只需要更新改动的源码位置，依赖不需要重新加载</p><p>源码部分根据协商缓存，依赖模块直接强缓存</p></li></ul><h4 id="配置"><a class="header-anchor" href="#配置" aria-hidden="true">#</a> 配置</h4><p>以下配置是我在项目中使用的配置</p><ol><li><p>vite创建项目</p><div class="language-bash"><pre><code><span class="token function">npm</span> init vite@latest my-vue-app
+</code></pre></div></li><li><p>配置vite.config.ts</p><p>path等node变量不生效时，安装ts-node 缺少node类型定义</p><div class="language-bash"><pre><code><span class="token function">yarn</span> <span class="token function">add</span> ts-node --dev
+<span class="token function">yarn</span> <span class="token function">add</span> @types/node --dev
+</code></pre></div></li><li><p>组件编写，想在当前组件中创建example文件夹测试当前组件</p><p>vite.config.ts配置</p><div class="language-tsx"><pre><code><span class="token keyword">import</span> <span class="token punctuation">{</span> defineConfig <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">&#39;vite&#39;</span>
+<span class="token keyword">import</span> react <span class="token keyword">from</span> <span class="token string">&#39;@vitejs/plugin-react&#39;</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token operator">*</span> <span class="token keyword">as</span> path <span class="token keyword">from</span> <span class="token string">&#39;path&#39;</span><span class="token punctuation">;</span>
+
+<span class="token comment">// https://vitejs.dev/config/</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  resolve<span class="token operator">:</span> <span class="token punctuation">{</span>
+    alias<span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token string-property property">&#39;@example&#39;</span><span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">&#39;example&#39;</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token string-property property">&#39;@&#39;</span><span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> <span class="token string">&#39;./src&#39;</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token comment">// 确保example可以成功找到quick-email-editor</span>
+      <span class="token string-property property">&#39;quick-email-editor&#39;</span><span class="token operator">:</span> path<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> <span class="token string">&#39;./src/main.tsx&#39;</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  plugins<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token function">react</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  build<span class="token operator">:</span> <span class="token punctuation">{</span>
+    minify<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    manifest<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    sourcemap<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    target<span class="token operator">:</span> <span class="token string">&#39;es2015&#39;</span><span class="token punctuation">,</span>
+    rollupOptions<span class="token operator">:</span> <span class="token punctuation">{</span>
+      output<span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token function">manualChunks</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^\/src\/.*</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token string">&#39;quick-email-editor&#39;</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span>
+          <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token regex"><span class="token regex-delimiter">/</span><span class="token regex-source language-regex">^\/example\/.*</span><span class="token regex-delimiter">/</span></span><span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token string">&#39;demo&#39;</span><span class="token punctuation">;</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+</code></pre></div><p>index.html配置</p><div class="language-html"><pre><code><span class="token comment">&lt;!-- 找到最外层HTML文件 --&gt;</span>
+<span class="token doctype"><span class="token punctuation">&lt;!</span><span class="token doctype-tag">DOCTYPE</span> <span class="token name">html</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>en<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">charset</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>UTF-8<span class="token punctuation">&quot;</span></span> <span class="token punctuation">/&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>link</span> <span class="token attr-name">rel</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>icon<span class="token punctuation">&quot;</span></span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>image/svg+xml<span class="token punctuation">&quot;</span></span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>/src/favicon.svg<span class="token punctuation">&quot;</span></span> <span class="token punctuation">/&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>viewport<span class="token punctuation">&quot;</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>width=device-width, initial-scale=1.0<span class="token punctuation">&quot;</span></span> <span class="token punctuation">/&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>title</span><span class="token punctuation">&gt;</span></span>Vite App<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>title</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>body</span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>root<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+    <span class="token comment">&lt;!-- 将此行隐藏 使用下面的文件  --&gt;</span>
+    <span class="token comment">&lt;!--&lt;script type=&quot;module&quot; src=&quot;/src/main.tsx&quot;&gt;&lt;/script&gt;--&gt;</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>module<span class="token punctuation">&quot;</span></span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>/example/index.tsx<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token script"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>body</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">&gt;</span></span>
+
+</code></pre></div></li><li><p>打包分析 rollup-plugin-visualize</p><div class="language-sh"><pre><code>yarn add rollup-plugin-visualizer --dev
+</code></pre></div><p>vite.config.js配置</p><div class="language-sh"><pre><code>process.env.ANALYZE === &quot;true&quot; &amp;&amp;
+      visualizer({
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      }),
+</code></pre></div><p>package.json配置</p><div class="language-sh"><pre><code>
+&quot;analyze&quot;: &quot;cross-env ANALYZE=true yarn lib&quot;,
+&quot;analyze:build&quot;: &quot;cross-env ANALYZE=true yarn build&quot;,
+</code></pre></div></li><li><p>预览preview</p><p>package.json配置</p><div class="language-sh"><pre><code>&quot;preview&quot;: &quot;npm run lib &amp;&amp; vite --config vite.preview.config.ts --force&quot;,
+</code></pre></div><p>vite.lib.config.js配置</p><div class="language-sh"><pre><code>plugins: [
+    {
+      ...typescript2({
+        check: false,
+        tsconfig: &#39;tsconfig.lib.json&#39;,
+      }),
+      apply: &#39;build&#39;,
+    },
+    process.env.ANALYZE === &#39;true&#39; &amp;&amp;
+    visualizer({
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    }),
+  ],
+</code></pre></div></li><li><p>编译生成.d.ts文件</p><p>要确保tsconfig.json存在declaration</p><div class="language-sh"><pre><code>{
+  &quot;compilerOptions&quot;: {
+    &quot;target&quot;: &quot;ESNext&quot;,
+    &quot;useDefineForClassFields&quot;: true,
+    &quot;lib&quot;: [&quot;DOM&quot;, &quot;DOM.Iterable&quot;, &quot;ESNext&quot;],
+    &quot;allowJs&quot;: false,
+    &quot;skipLibCheck&quot;: true,
+    &quot;esModuleInterop&quot;: false,
+    &quot;allowSyntheticDefaultImports&quot;: true,
+    &quot;strict&quot;: true,
+    &quot;forceConsistentCasingInFileNames&quot;: true,
+    &quot;module&quot;: &quot;ESNext&quot;,
+    &quot;moduleResolution&quot;: &quot;Node&quot;,
+    &quot;resolveJsonModule&quot;: true,
+    &quot;isolatedModules&quot;: true,
+    &quot;noEmit&quot;: true,
+    # 是否生成声明文件
+    &quot;declaration&quot;: true,
+    &quot;jsx&quot;: &quot;react-jsx&quot;
+  },
+  &quot;include&quot;: [&quot;src&quot;],
+  &quot;references&quot;: [{ &quot;path&quot;: &quot;./tsconfig.node.json&quot; }]
+}
+
+</code></pre></div><p>安装typescript2</p><div class="language-sh"><pre><code>yarn add rollup-plugin-typescript2 typescript tslib --dev
+</code></pre></div><p>配置</p><div class="language-sh"><pre><code>plugins: [
+    {
+      ...typescript2({
+        check: false,
+        # 默认加载tsconfig.json
+        tsconfig: &#39;tsconfig.lib.json&#39;,
+      }),
+      apply: &#39;build&#39;,
+    },
+    process.env.ANALYZE === &#39;true&#39; &amp;&amp;
+    visualizer({
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    }),
+  ],
+</code></pre></div></li><li><p>静态文件还在public下，打包的时候会直接copy</p></li><li><p>vite进度条插件</p><div class="language-bash"><pre><code><span class="token function">yarn</span> <span class="token function">add</span> progress vite-plugin-progress -D
+</code></pre></div><div class="language-javascript"><pre><code><span class="token comment">// vite.config.js</span>
+<span class="token keyword">import</span> progress <span class="token keyword">from</span> <span class="token string">&#39;vite-plugin-progress&#39;</span>
+<span class="token keyword">import</span> colors <span class="token keyword">from</span> <span class="token string">&#39;picocolors&#39;</span>
+<span class="token operator">...</span>
+
+<span class="token literal-property property">plugins</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token operator">...</span><span class="token function">typescript2</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        <span class="token literal-property property">check</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+        <span class="token literal-property property">tsconfig</span><span class="token operator">:</span> <span class="token string">&#39;tsconfig.lib.json&#39;</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">apply</span><span class="token operator">:</span> <span class="token string">&#39;build&#39;</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">ANALYZE</span> <span class="token operator">===</span> <span class="token string">&#39;true&#39;</span> <span class="token operator">&amp;&amp;</span>
+    <span class="token function">visualizer</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">open</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">gzipSize</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">brotliSize</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">progress</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token literal-property property">format</span><span class="token operator">:</span>  <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>colors<span class="token punctuation">.</span><span class="token function">green</span><span class="token punctuation">(</span>colors<span class="token punctuation">.</span><span class="token function">bold</span><span class="token punctuation">(</span><span class="token string">&#39;Bouilding&#39;</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>colors<span class="token punctuation">.</span><span class="token function">cyan</span><span class="token punctuation">(</span><span class="token string">&#39;[:bar]&#39;</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> :percent</span><span class="token template-punctuation string">`</span></span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token operator">...</span>
+</code></pre></div><p>实现思路：</p><p>webpack有对应的插件webpackBar，实现思路：webpack.progressPlugin事件钩子，可轻松获取进度 vite基于rollup打包，不知道进度</p><p>第一次打包时，模拟并记录所有模块总数并缓存起来</p></li><li><p>静态资源处理</p><ul><li>默认在public下的文件不打包</li><li>引用：<code>public/icon.png</code>应该在代码中引用为<code>/icon.png</code></li></ul></li><li><p>new URL(url, import.meta.url)</p><p>import.meta可以获取模块上的元数据属性</p><div class="language-javascript"><pre><code>console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">import</span><span class="token punctuation">.</span>meta<span class="token punctuation">.</span>env<span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">import</span><span class="token punctuation">.</span>meta<span class="token punctuation">.</span>hot<span class="token punctuation">)</span><span class="token punctuation">;</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">import</span><span class="token punctuation">.</span>meta<span class="token punctuation">.</span>url<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre></div><p><img src="/_assets/import.meta.4552aa12.png" alt="截图"></p><p>与URL构造器组合使用可以通过相对路径得到一个被完整解析的静态资源URL</p><div class="language-javascript"><pre><code>console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">URL</span><span class="token punctuation">(</span><span class="token string">&#39;./sample.json&#39;</span><span class="token punctuation">,</span> <span class="token keyword">import</span><span class="token punctuation">.</span>meta<span class="token punctuation">.</span>url<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre></div><p><img src="/_assets/import.url.7bb0df7a.png" alt="截图"></p></li></ol><p>持续更新中。。。</p></div><div class="links-wrapper"><div class="prev-link"><!----></div><div class="next-link"><!----></div></div><div><footer class="page-edit"><!-- <a v-for="(item,index) in data.platform" :key="index" :href="item.href">
+        <img class="imgIcon" :src="item.icon" />
+      </a> --></footer><!-- <p class="platform">
+      以上皆为
+      <a href="javascript:;">纪年</a> 文章发布平台
+    </p> --><p class="platform"> Copyright © 2022 - present <a href="https://github.com/wang1xiang">@wangxiang</a></p></div><!--[--><!--]--></div><!-- 只想点击背景才关闭 请使用 .self 修饰符 --><div style="display:none;" class="imgBox"><img src=""></div><!--]--></main><div class="theme-select" data-v-afcf09d4><ul data-v-afcf09d4><li class="active" data-v-afcf09d4>☀️</li><li class="" data-v-afcf09d4>🌑</li></ul></div></div><!----><!--]--></div>
+    <script>__VP_HASH_MAP__ = JSON.parse("{\"index.md\":\"4d2ed2d6\",\"README.md\":\"80a4d151\",\"more_docs.md\":\"d30e9d67\",\"more_index.md\":\"1dda2ab4\",\"more_tags.md\":\"374ad1f2\",\"docs_css_grid.md\":\"79984b11\",\"docs_css_placeholder.md\":\"ba87d148\",\"docs_git_git-autocrlf.md\":\"33f7f692\",\"docs_git_git-ignorecase.md\":\"ae454249\",\"docs_git_git-notes.md\":\"ae6c2ea5\",\"docs_git_gitflow.md\":\"f416ff09\",\"docs_http_http.md\":\"7ee76afe\",\"docs_javascript_image-load.md\":\"f9cafd67\",\"docs_javascript_javascript-utils.md\":\"2d2e1388\",\"docs_javascript_memory-leak.md\":\"433b89f9\",\"docs_javascript_preload-prefetch.md\":\"43af3053\",\"docs_mobile_mobileDebugging.md\":\"04fbaced\",\"docs_node_deploy-server.md\":\"5ca3d022\",\"docs_react_dompurify.md\":\"3f2c43bf\",\"docs_react_eslint-react.md\":\"37c035a1\",\"docs_react_react-classnames.md\":\"01d71666\",\"docs_react_react-grid-layout.md\":\"8c588e2b\",\"docs_react_react-philosophies.md\":\"1fcecbf8\",\"docs_react_react-router-change.md\":\"421572c8\",\"docs_tool_blog.md\":\"22abb684\",\"docs_tool_mock.md\":\"c16b5693\",\"docs_tool_mvp.md\":\"e67438b4\",\"docs_tool_whistle.md\":\"5572887b\",\"docs_vite_componentLibrary.md\":\"84997b4e\",\"docs_vite_vite-react.md\":\"c7b453ed\",\"docs_vite_vite.md\":\"434e360e\",\"docs_vite_vite3.0.md\":\"3c1de145\",\"docs_vscode_vscode-markdown.md\":\"252ae7c2\",\"docs_vue_antd-form.md\":\"502d487b\",\"docs_vue_antd-vue.md\":\"3d6c3fbb\",\"docs_vue_axios-token.md\":\"3ab9862a\",\"docs_vue_history-mode.md\":\"81e93bc6\",\"docs_vue_keepAlive.md\":\"941cc017\",\"docs_wechat_wechat-app.md\":\"d593a40c\",\"docs_work_email-font.md\":\"a776b176\",\"docs_work_font-loading-speed.md\":\"a0350f55\",\"docs_work_malformed.md\":\"193923d7\",\"docs_work_mutationObserver.md\":\"7c0c5cef\",\"docs_work_react-ref.md\":\"70493641\",\"docs_work_sentry-error.md\":\"42e83cc7\",\"docs_work_sentry.md\":\"7977e765\",\"docs_work_text-decoration.md\":\"d0742b17\",\"docs_work_zero-width-spaces.md\":\"3fa90c40\"}")</script>
+    <script type="module" async src="/_assets/app.694175d1.js"></script>
+  </body>
+</html>

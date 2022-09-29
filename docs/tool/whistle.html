@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>
+      前端抓包工具——Whistle环境快速搭建 | 翔子
+    </title>
+    <meta name="description" content="A VitePress site">
+    <link rel="stylesheet" href="/_assets/style.12e6589b.css">
+    <link rel="modulepreload" href="/_assets/common-03e46d7f.js">
+    <link rel="modulepreload" href="/_assets/docs_tool_whistle.md.5572887b.lean.js">
+    <link rel="modulepreload" href="/_assets/app.694175d1.js">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta name="keywords" content="翔子Blog">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="https://lib.baomitu.com/gitalk/1.7.0/gitalk.min.css">
+    <script src="https://lib.baomitu.com/gitalk/1.7.0/gitalk.min.js"></script>
+    <script src="https://lib.baomitu.com/axios/0.21.1/axios.js"></script>
+    
+  </head>
+  <body>
+    <div id="app"><!--[--><div id="containerColor" class="no-sidebar theme" data-v-afcf09d4><header class="navbar" data-v-afcf09d4><!--[--><a class="title" aria-label="翔子, back to home" href="/"><img class="logo" src="/favicon.ico" alt="logo"><span>翔子</span></a><div class="flex-grow"></div><nav class="nav-links hide-mobile"><!--[--><!--[--><div class="nav-item"><a class="nav-link" href="/index.html" target="" rel="">🏠 首页 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/more/docs.html" target="" rel="">📅 归档 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/more/tags.html" target="" rel="">📂 分类 <!----></a></div><!--]--><!--]--><div id="docsearch"></div><!----><!----></nav><!--[--><!--]--><!--]--><div class="sidebar-button" data-v-afcf09d4><svg class="icon" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z" class></path></svg></div></header><aside class="" data-v-afcf09d4><!--[--><nav class="nav-links show-mobile"><!--[--><!--[--><div class="nav-item"><a class="nav-link" href="/index.html" target="" rel="">🏠 首页 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/more/docs.html" target="" rel="">📅 归档 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/more/tags.html" target="" rel="">📂 分类 <!----></a></div><!--]--><!--]--><div id="docsearch"></div><!----><!----></nav><!--[--><!--]--><ul class="sidebar"><!--[--><!--]--></ul><!--[--><!--]--><!--]--></aside><!----><!-- TODO: make this button accessible --><div class="sidebar-mask" data-v-afcf09d4></div><main data-v-afcf09d4><!--[--><div class="content"><!--[--><!--]--><div class="md-header"><div class="md-title">前端抓包工具——Whistle环境快速搭建</div><span id="jinrishici-sentence">正在加载今日诗词....</span><div class="md-date">2022-09-09</div></div><ul class="catalog"><!--[--><li class="catalog-item"><a class="level level-2" href="#whistle介绍">whistle介绍</a><!----></li><li class="catalog-item"><a class="level level-2" href="#安装启动">安装启动</a><!----></li><li class="catalog-item"><a class="level level-2" href="#whistle页面介绍">whistle页面介绍</a><!----></li><li class="catalog-item"><!----><a class="level level-3" href="#network">Network</a></li><li class="catalog-item"><!----><a class="level level-3" href="#rules">Rules</a></li><li class="catalog-item"><!----><a class="level level-3" href="#values">Values</a></li><li class="catalog-item"><!----><a class="level level-3" href="#plugins">Plugins</a></li><!--]--></ul><div><h2 id="whistle介绍"><a class="header-anchor" href="#whistle介绍" aria-hidden="true">#</a> whistle介绍</h2><p><a href="https://wproxy.org/whistle/" target="_blank" rel="noopener noreferrer">官网</a>、<a href="https://github.com/avwo/whistle" target="_blank" rel="noopener noreferrer">github</a></p><p>基于Node实现的web调试代理工具，对前端很友好</p><h2 id="安装启动"><a class="header-anchor" href="#安装启动" aria-hidden="true">#</a> 安装启动</h2><ol><li><p>如果没有node环境，先安装node</p></li><li><p>安裝whistle</p><div class="language-bash"><pre><code> <span class="token comment"># 全局安装whistle</span>
+ <span class="token function">npm</span> i -g whistle
+
+ <span class="token comment"># 启动 默认端口8899，可以通过-p指定 --init会为计算机安装证书</span>
+ w2 start -p <span class="token number">8899</span> --init
+</code></pre></div><p>启动后，打开浏览器输入<a href="http://127.0.0.1:8899/#network" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8899/#network</a>访问</p></li><li><p>浏览器设置代理</p><p>google浏览器安装<a href="https://github.com/FelisCatus/SwitchyOmega/releases" target="_blank" rel="noopener noreferrer">SwitchyOmega</a>插件，安装完成后需要配置proxy，将浏览器代理到8899端口（whistle的端口），如下图 <img src="/_assets/whistleConfig.f44973ac.jpg" alt="whistleConfig.jpg"></p><p>设置好后一定要点击<code>应用选项</code>，否则不会生效<br> 点击whistle插件，选择刚刚设置的proxy<br><img src="/_assets/whistleCrx.e659c54d.jpg" alt="whistleCrx.jpg"><br> 打开<a href="http://127.0.0.1:8899/#network" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8899/#network</a>，看到以下页面，就说明成功了 <img src="/_assets/whistlePage.64368f8c.jpg" alt="whistle.jpg"></p></li><li><p><a href="https://wproxy.org/whistle/webui/https.html" target="_blank" rel="noopener noreferrer">开启捕获HTTPS请求</a>，一定得开，不然https请求不会正常被捕获</p></li></ol><h2 id="whistle页面介绍"><a class="header-anchor" href="#whistle页面介绍" aria-hidden="true">#</a> whistle页面介绍</h2><p>由顶部工具栏、左侧菜单栏和中间内容区域组成</p><h3 id="network"><a class="header-anchor" href="#network" aria-hidden="true">#</a> Network</h3><p>展示抓到的网络请求及详细信息</p><h3 id="rules"><a class="header-anchor" href="#rules" aria-hidden="true">#</a> Rules</h3><p>设置代理规则</p><ol><li><p>配置host</p><p>类似于修改全局host文件，为某个域名或具体的url指定ip，绕过dns解析过程，让请求直接到达指定的 ip <br></p><div class="language-bash"><pre><code><span class="token comment"># 为github配置域名解析</span>
+<span class="token number">140.82</span>.113.3  github.com
+</code></pre></div><p>本地启动一个vite服务，在rules中创建一个test文件 右键 -&gt; create -&gt; test，添加以下规则</p><div class="language-bash"><pre><code><span class="token comment"># 将百度代理本地vite项目上</span>
+<span class="token number">127.0</span>.0.1:5173  baidu.com
+</code></pre></div><p>规则反着写也是一样的</p><div class="language-bash"><pre><code>baidu.com  <span class="token number">127.0</span>.0.1:5173
+</code></pre></div><p>当访问baidu.com时就会跳到vite项目<br></p><p>可以在Network中查看这条请求的详情 <img src="/_assets/baidu-proxy.d32525a8.jpg" alt="baidu-proxy.jpg"> 开发中就可以使用这种方式，将测试环境的域名代理到本地的 localhost，这样就能够在本地请求到测试环境的接口，类似于webpack和vite的proxy设置</p></li><li><p>替换html文件</p><p>将上述的test文件改为</p><div class="language-bash"><pre><code><span class="token comment"># 将线上环境的网页内容替换为本地</span>
+https://app-test.quickcep.com file://<span class="token variable">${projectPath}</span>/index.html
+</code></pre></div><p>此处的<code>projectPath</code>是在<a href="http://127.0.0.1:8899/#values%E4%B8%AD%E9%85%8D%E7%BD%AE%E7%9A%84%E5%8F%98%E9%87%8F%EF%BC%8C%E5%86%8D%E6%AC%A1%E6%89%93%E5%BC%80baidu.com%EF%BC%8C%E5%B0%B1%E4%BC%9A%E7%9C%8B%E5%88%B0%E5%8F%98%E6%88%90%E4%BA%86%E6%9C%AC%E5%9C%B0index.html" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8899/#values中配置的变量，再次打开baidu.com，就会看到变成了本地index.html</a>中的内容了</p></li><li><p>替换静态资源</p><div class="language-bash"><pre><code> <span class="token comment"># 将百度代理本地vite项目上</span>
+ <span class="token number">127.0</span>.0.1:3000 baidu.com
+
+ <span class="token comment"># 将线上环境的网页内容替换为本地</span>
+ <span class="token comment"># https://app-test.quickcep.com file://${projectPath}/index.html</span>
+
+ <span class="token comment"># 将线上项目的js替换为本地资源进行调试</span>
+ https://app-test.quickcep.com/config.js file://<span class="token variable">${projectPath}</span>/config.
+
+</code></pre></div><p>如果线上环境遇到bug时，可以将本地的静态资源通过代理取代线上环境的资源进行调试 <img src="/_assets/jsresource.746f5605.jpg" alt="jsresource.jpg"></p></li><li><p>模拟接口报错</p><div class="language-bash"><pre><code><span class="token comment"># 通过修改statusCode 模拟接口报错</span>
+https://app-test.quickcep.com/store/user/getUserInfo statusCode://500
+</code></pre></div></li><li><p>模拟接口超时</p><div class="language-bash"><pre><code>https://app-test.quickcep.com/store/user/getUserInfo reqDelay://5000 enable://abort
+</code></pre></div></li><li><p>修改返回内容</p><div class="language-bash"><pre><code><span class="token comment"># 模拟接口返回</span>
+https://app-test.quickcep.com/store/user/getUserInfo resBody://<span class="token punctuation">{</span>getUserInfo.json<span class="token punctuation">}</span>
+
+</code></pre></div></li><li><p>解决跨域</p><div class="language-bash"><pre><code>www.baidu.com resCors://*
+</code></pre></div></li><li><p>插入js代码</p><div class="language-bash"><pre><code><span class="token comment"># 执行js代码  jsPrepend 允许我们对某个页面注入 JS 脚本</span>
+https://app-test.quickcep.com jsPrepend://<span class="token punctuation">{</span>reload.js<span class="token punctuation">}</span>
+</code></pre></div></li></ol><p>以上的所有代码整理</p><div class="language-bash"><pre><code><span class="token comment"># 将百度代理本地vite项目上</span>
+<span class="token number">127.0</span>.0.1:3000 baidu.com
+<span class="token comment"># 将线上环境的网页内容替换为本地</span>
+<span class="token comment"># https://app-test.quickcep.com file://${projectPath}/index.html</span>
+<span class="token comment"># 将线上项目的js替换为本地资源</span>
+https://app-test.quickcep.com/config.js file://<span class="token variable">${projectPath}</span>/config.js
+<span class="token comment"># 解决跨域</span>
+www.baidu.com resCors://*
+<span class="token comment"># 模拟接口报错</span>
+<span class="token comment"># https://app-test.quickcep.com/store/user/getUserInfo statusCode://500</span>
+<span class="token comment"># 模拟接口超时 reqDelay://5000 5s超时时间</span>
+https://app-test.quickcep.com/store/user/getUserInfo reqDelay://5000 enable://abort
+<span class="token comment"># 模拟接口返回</span>
+https://app-test.quickcep.com/store/user/getUserInfo resBody://<span class="token punctuation">{</span>getUserInfo.json<span class="token punctuation">}</span>
+<span class="token comment"># 执行js代码  jsPrepend 允许我们对某个页面注入 JS 脚本</span>
+https://app-test.quickcep.com jsPrepend://<span class="token punctuation">{</span>reload.js<span class="token punctuation">}</span>
+</code></pre></div><h4 id="移动端调试"><a class="header-anchor" href="#移动端调试" aria-hidden="true">#</a> 移动端调试</h4><p>调试移动端的代码，可以查看<a href="https://wang1xiang.github.io/blog/docs/mobile/mobileDebugging.html" target="_blank" rel="noopener noreferrer">这篇文章</a></p><ol><li><p>注入vConsole whistle 可以通过jsPrepend 注入vConsole，下载<a href="https://cdn.jsdelivr.net/npm/vconsole@3.14.6/dist/vconsole.min.js" target="_blank" rel="noopener noreferrer">vConsole.min.js</a>，copy到Values中取名为vConsole.js，并添加实例化vConsole的<a href="https://gitee.com/Tencent/vConsole?utm_source=alading&amp;utm_campaign=repo" target="_blank" rel="noopener noreferrer">代码</a></p><div class="language-js"><pre><code><span class="token comment">// 此处省略vConsole.min.js的代码</span>
+<span class="token comment">// VConsole 默认会挂载到 `window.VConsole` 上</span>
+<span class="token keyword">var</span> vConsole <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">window<span class="token punctuation">.</span>VConsole</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre></div><p>在Rules中添加vConsole分类，并添加以下代码</p><div class="language-bash"><pre><code><span class="token comment"># 为baidu添加vConsole</span>
+https://www.baidu.com/ jsPrepend://<span class="token punctuation">{</span>vConsole.js<span class="token punctuation">}</span>
+</code></pre></div><p>重新打开百度，可以看到vConsole的标志</p></li><li><p>inspect插件 whistle提供了更方便的插件:</p><div class="language-bash"><pre><code><span class="token function">npm</span> i -g whistle.inspect
+</code></pre></div><p>安装完成后，需要重启</p><div class="language-bash"><pre><code>w2 restart
+</code></pre></div><p>配置rules</p><div class="language-bash"><pre><code><span class="token comment"># 为baidu添加vConsole</span>
+https://www.baidu.com/ whistle.inspect://
+</code></pre></div></li><li><p>使用 log 功能打印日志 除了使用vConsole，还可以开启日志打印</p><div class="language-bash"><pre><code>https://www.baidu.com/  log://
+</code></pre></div><p>重新打开百度，在 Network 的 Tools 下面的 Console 选项下面看到控制台打印的所有 log 信息 <img src="/_assets/log.ff306905.jpg" alt="log.jpg"></p></li><li><p>手机代理原理：</p><ol><li>在 PC 启动一个服务，监听一个端口例如8899</li><li>手机连接统一局域网，配置网络代理，指向 PC 端的 IP 地址和 8899 端口</li><li>此时，手机上所有的网络通信都会被先转发到 PC 端的 8899 端口，就可以对数据包进行分析处理</li></ol></li><li><p>手机代理到 whistle</p><ul><li><p>手机电脑同一个wifi环境</p></li><li><p>点击whistle的online，查看ip地址<br><img src="/_assets/whistleOnline.7bccf361.jpg" alt="whistleOnline.jpg"></p></li><li><p>手机进入wifi设置，代理设为手动，主机名为ip地址，端口填8899，保存（调试完记得改回去，避免手机上网异常）</p></li><li><p>配置rules</p><div class="language-bash"><pre><code> <span class="token comment"># 插件 m.baidu.com/为移动端</span>
+ https://m.baidu.com/ whistle.inspect://
+ <span class="token comment"># 添加log日志</span>
+ <span class="token comment"># https://m.baidu.com/  log://</span>
+</code></pre></div></li></ul></li></ol><p>以上代码整理</p><div class="language-bash"><pre><code><span class="token comment"># 为baidu添加vConsole</span>
+<span class="token comment"># https://www.baidu.com/ jsPrepend://{vConsole.js}</span>
+<span class="token comment"># 插件 m.baidu.com/为移动端</span>
+https://m.baidu.com/ whistle.inspect://
+<span class="token comment"># 添加log日志</span>
+<span class="token comment"># https://www.baidu.com/  log://</span>
+</code></pre></div><h3 id="values"><a class="header-anchor" href="#values" aria-hidden="true">#</a> Values</h3><p>设置变量，供其他模块使用</p><h3 id="plugins"><a class="header-anchor" href="#plugins" aria-hidden="true">#</a> Plugins</h3><p><a href="https://wproxy.org/whistle/plugins.html" target="_blank" rel="noopener noreferrer">https://wproxy.org/whistle/plugins.html</a></p></div><div class="links-wrapper"><div class="prev-link"><!----></div><div class="next-link"><!----></div></div><div><footer class="page-edit"><!-- <a v-for="(item,index) in data.platform" :key="index" :href="item.href">
+        <img class="imgIcon" :src="item.icon" />
+      </a> --></footer><!-- <p class="platform">
+      以上皆为
+      <a href="javascript:;">纪年</a> 文章发布平台
+    </p> --><p class="platform"> Copyright © 2022 - present <a href="https://github.com/wang1xiang">@wangxiang</a></p></div><!--[--><!--]--></div><!-- 只想点击背景才关闭 请使用 .self 修饰符 --><div style="display:none;" class="imgBox"><img src=""></div><!--]--></main><div class="theme-select" data-v-afcf09d4><ul data-v-afcf09d4><li class="active" data-v-afcf09d4>☀️</li><li class="" data-v-afcf09d4>🌑</li></ul></div></div><!----><!--]--></div>
+    <script>__VP_HASH_MAP__ = JSON.parse("{\"index.md\":\"4d2ed2d6\",\"README.md\":\"80a4d151\",\"more_docs.md\":\"d30e9d67\",\"more_index.md\":\"1dda2ab4\",\"more_tags.md\":\"374ad1f2\",\"docs_css_grid.md\":\"79984b11\",\"docs_css_placeholder.md\":\"ba87d148\",\"docs_git_git-autocrlf.md\":\"33f7f692\",\"docs_git_git-ignorecase.md\":\"ae454249\",\"docs_git_git-notes.md\":\"ae6c2ea5\",\"docs_git_gitflow.md\":\"f416ff09\",\"docs_http_http.md\":\"7ee76afe\",\"docs_javascript_image-load.md\":\"f9cafd67\",\"docs_javascript_javascript-utils.md\":\"2d2e1388\",\"docs_javascript_memory-leak.md\":\"433b89f9\",\"docs_javascript_preload-prefetch.md\":\"43af3053\",\"docs_mobile_mobileDebugging.md\":\"04fbaced\",\"docs_node_deploy-server.md\":\"5ca3d022\",\"docs_react_dompurify.md\":\"3f2c43bf\",\"docs_react_eslint-react.md\":\"37c035a1\",\"docs_react_react-classnames.md\":\"01d71666\",\"docs_react_react-grid-layout.md\":\"8c588e2b\",\"docs_react_react-philosophies.md\":\"1fcecbf8\",\"docs_react_react-router-change.md\":\"421572c8\",\"docs_tool_blog.md\":\"22abb684\",\"docs_tool_mock.md\":\"c16b5693\",\"docs_tool_mvp.md\":\"e67438b4\",\"docs_tool_whistle.md\":\"5572887b\",\"docs_vite_componentLibrary.md\":\"84997b4e\",\"docs_vite_vite-react.md\":\"c7b453ed\",\"docs_vite_vite.md\":\"434e360e\",\"docs_vite_vite3.0.md\":\"3c1de145\",\"docs_vscode_vscode-markdown.md\":\"252ae7c2\",\"docs_vue_antd-form.md\":\"502d487b\",\"docs_vue_antd-vue.md\":\"3d6c3fbb\",\"docs_vue_axios-token.md\":\"3ab9862a\",\"docs_vue_history-mode.md\":\"81e93bc6\",\"docs_vue_keepAlive.md\":\"941cc017\",\"docs_wechat_wechat-app.md\":\"d593a40c\",\"docs_work_email-font.md\":\"a776b176\",\"docs_work_font-loading-speed.md\":\"a0350f55\",\"docs_work_malformed.md\":\"193923d7\",\"docs_work_mutationObserver.md\":\"7c0c5cef\",\"docs_work_react-ref.md\":\"70493641\",\"docs_work_sentry-error.md\":\"42e83cc7\",\"docs_work_sentry.md\":\"7977e765\",\"docs_work_text-decoration.md\":\"d0742b17\",\"docs_work_zero-width-spaces.md\":\"3fa90c40\"}")</script>
+    <script type="module" async src="/_assets/app.694175d1.js"></script>
+  </body>
+</html>

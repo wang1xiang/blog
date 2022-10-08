@@ -10,6 +10,7 @@
       <a href="javascript:;">纪年</a> 文章发布平台
     </p> -->
     <p class="platform">
+      <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022027737号</a><br />
       Copyright &copy; 2022 - present
       <a href="https://github.com/wang1xiang">@wangxiang</a>
     </p>

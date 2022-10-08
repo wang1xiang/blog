@@ -17,10 +17,13 @@ describe: react + typescript配置eslint + prettier + husky
   # 内置各种解析 TypeScript rules 插件
   pnpm i @typescript-eslint/eslint-plugin -D
 
+  # eslint插件 命名方式eslint-plugin-<plugin-name>
   pnpm i babel-eslint eslint-plugin-react eslint-plugin-import -D 
   ```
 
 - 创建eslint配置文件
+
+  安装完成之后需要设置一个配置文件，可以通过命令行工具直接生成
 
   ```bash
   npx eslint --init
@@ -29,6 +32,7 @@ describe: react + typescript配置eslint + prettier + husky
   ![eslint-config.jpg](./images/eslint-config.jpg)
   会自动安装eslint-plugin-react等相关依赖<br/>
   完成后项目中会多出一个`.eslint.js`文件，eslint的配置文件
+
 - 在package.json中添加脚本
 
   ```bash
@@ -56,7 +60,7 @@ describe: react + typescript配置eslint + prettier + husky
   ```
 
 - 执行pnpm lint
-  
+
 - 报错问题处理
   - Error while loading rule '@typescript-eslint/dot-notation'，[stackoverflow](https://stackoverflow.com/questions/64116378/error-while-loading-rule-typescript-eslint-dot-notation)<br />
     配置parserOptions.project
@@ -73,8 +77,10 @@ describe: react + typescript配置eslint + prettier + husky
     "@typescript-eslint/explicit-function-return-type": 0,
     ```
 
-  -
+- eslint工作原理
   
+  Eslint默认使用Espree解析javaScript代码，将代码转换为AST，然后拦截检测是否符合我们规定的书写方式，最后展示报错、警告等
+
 ## 配置prettier
 
 - 安装
@@ -178,10 +184,12 @@ describe: react + typescript配置eslint + prettier + husky
 
 ```js
 module.exports = {
+  // 指定环境，比如是浏览器还是 Node，会提供一些预定义的全局变量
   env: {
     browser: true,
     es2021: true
   },
+  // 要扩展的配置文件 共享配置后面的覆盖前面的
   extends: [
     'eslint:recommended',
     'standard-with-typescript',
@@ -192,8 +200,10 @@ module.exports = {
   overrides: [],
   parser: 'babel-eslint',
   parserOptions: {
-    project: '@typescript-eslint/parser',
+    project: 'tsconfig',
+    // 指定你要使用的 ECMAScript 语法版本，"latest" 表示始终启用最新的 ECMAScript 版
     ecmaVersion: 'latest',
+    // "script" (默认值) 或 "module"（如果你的代码是 ECMAScript 模块)
     sourceType: 'module'
   },
   plugins: ['react', '@typescript-eslint'],
@@ -204,6 +214,7 @@ module.exports = {
   },
 
   /**
+   * 配置规则
    * "off" 或 0 - 关闭规则
    * "warn" 或 1 - 开启规则，使用警告级别的错误：warn (不会导致程序退出),
    * "error" 或 2 - 开启规则，使用错误级别的错误：error (当被触发的时候，程序会退出)

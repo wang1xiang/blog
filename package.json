@@ -16,12 +16,12 @@
     "createMd": "plop create"
   },
   "devDependencies": {
-    "ssh2-sftp-client": "^9.0.4",
     "cross-env": "^7.0.3",
     "globby": "^11.0.1",
     "gray-matter": "^4.0.2",
     "mz": "^2.7.0",
     "plop": "^3.1.1",
+    "ssh2-sftp-client": "^9.0.4",
     "vitepress": "0.7.2"
   }
 }

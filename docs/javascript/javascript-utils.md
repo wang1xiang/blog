@@ -48,22 +48,6 @@ isType([], 'Object') // false
 const upperFisrtWord = (word = '') => word.slice(0, 1).toUpperCase() + word.slice(1);
 ```
 
-### 创建指定长度的数据
-
-```js
-// 创建长度为7的数组
-Array.from({ length: 7 }) //[undefined, undefined, undefined, undefined, undefined, undefined, undefined]
-
-// 创建长度为3的数组 并向其中插入0
-const length = 3;
-const init = 0;
-const result = Array.from({ length }, () => init); // [0,0,0]
-
-// Array.from的第二个参数，可以遍历数组 相当于map
-let b = [1,2,3]
-console.log(Array.from(b, v=> v + 2)); // [3,4,5]
-```
-
 ### 深浅拷贝
 
 ```ts
@@ -340,11 +324,57 @@ export const textSize = (fontSize, fontFamily, text) => {
   result.height = parseFloat(window.getComputedStyle(span).height) - result.height
   return result
 }
+
+/** 字符串前后补0操作 */
+'123'.padStart(5, 0) // 00123
+'123'.padEnd(4, 0) // 1230
+
+/** 生成随机ID */
+const randomId = len => Math.random().toString(36).substr(3, len);
+const id = randomId(10);
+
+/** 生成随机HEX色值 */
+const randomColor = () => "#" + Math.floor(Math.random() * 0xffffff).toString(16).padEnd(6, "0");
+const color = randomColor();
 ```
 
-### 数组差集
+### Number操作
 
 ```ts
+/** 精确小数位 */
+const RoundNum = (num, decimal) => Math.round(num * 10 ** decimal) / 10 ** decimal;
+const num = RoundNum(1.69, 1); 
+
+/** 生成随机数 */
+const RandomNum = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const num = RandomNum(12, 122);
+
+```
+
+### 获取URL查询参数
+
+```ts
+const params = new URLSearchParams(location.search.replace(/\?/ig, "")); // location.search = /book?id=6850413616484040711"
+params.has("id"); // true
+params.get("id"); // "6850413616484040711"
+```
+
+### 数组操作
+
+```ts
+
+// 创建长度为7的数组
+Array.from({ length: 7 }) //[undefined, undefined, undefined, undefined, undefined, undefined, undefined]
+
+// 创建长度为3的数组 并向其中插入0
+const length = 3;
+const init = 0;
+const result = Array.from({ length }, () => init); // [0,0,0]
+const arr = new Array(length).fill(0); // [0,0,0]
+
+// Array.from的第二个参数，可以遍历数组 相当于map
+let b = [1,2,3]
+console.log(Array.from(b, v=> v + 2)); // [3,4,5]
 
 /**
  * 求数组差集
@@ -377,6 +407,9 @@ export const formatNumber = function (n) {
 }
 
 (v) => ${v}.replace(/\d{1,3}(?=(\d{3})+$)/g, (s) => ${s},)
+
+export const thousandNum = num => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+const money = thousandNum(2548745.45); // '2,548,745.45'
  
 ```
 

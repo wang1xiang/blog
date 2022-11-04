@@ -285,4 +285,29 @@ vite基于rollup打包，不知道进度
 
     ![截图](./images/import.url.png)
 
+11. vite配置[Emotion](https://emotion.sh/docs/introduction)
+
+    ```bash
+    npm install @emotion/react
+    npm install -D @emotion/babel-plugin
+    ```
+
+    修改vite.config.js文件
+
+    ```js
+    export default defineConfig({
+      plugins: [
+        react({
+          jsxImportSource: '@emotion/react',
+          babel: {
+            // 利用emotion的babel插件为JSX加入css属性，这样不用每个jsx文件开头添加JSX Pragma了
+            plugins: ['@emotion/babel-plugin']
+          },
+        }),
+      ],
+    });
+    ```
+
+12.
+
 持续更新中。。。

@@ -222,3 +222,49 @@ sourcemap里有sourceContent部分，直接把源码贴在这里，这样的好�
    build中找到getPlugins方法，将5个插件注释
 
 5. 再次执行npm run build ，即可打包出带有sourcemap的react包
+
+   直接将打包后的react和react-dom包丢到node_modules下，是不能直接调试react源码的，因为webpack打包并没有关联react相关包的sourcemap，只能映射到react-dom.development.js而不能进一步映射到源码
+
+   解决方法：
+   1. 添加sourcemap配置，xxx-module-source-map加上module可以读取和关联loader的sourcemap，从而关联到源码，但webpack配置麻烦
+   2. 不打包react和react-dom包，用script标签引入，浏览器会解析各自的sourcemap，进而映射到源码
+
+6. create-react-app脚手架创建的项目要么执行npm run eject弹窗webpack配置去修改externals，要么使用custom-cra修改配置
+
+   ```js
+   // config-overrides.js
+   const {
+      override,
+      overrideDevServer,
+      addWebpackAlias,
+      addLessLoader,
+      addWebpackExternals,
+      fixBabelImports,
+    } = require("customize-cra");
+    module.exports = {
+      webpack: override(
+        // 不做打包处理cdn直接引用
+        addWebpackExternals({
+          react: 'React',
+          'react-dom': 'ReactDOM'
+        })
+        ...
+      )}
+   ```
+
+7. 将react.development.js和react-dom.development.js和对应的sourcemap文件放在public下，在index.html中引入
+
+   ```html
+   ...
+
+   <script src="./react.development.js"></script>
+   <script src="./react-dom.development.js"></script>
+   ...
+
+   ```
+
+8. 这时候再次点击调试，可以看到调用栈直接定位到了本地的react项目下，此时就是直接调试react源码
+
+   .![react-resource.jpg](./images/react-resource.jpg)
+
+9. 此时因为本地clone下来的react项目和当前调试项目不在一个workspace下，VSCode不会直接定位到react源码项目，将react项目添加到同一个workspace中即可

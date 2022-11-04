@@ -104,22 +104,19 @@ describe: react + typescript配置eslint + prettier + husky
   }
   ```
 
-- 根目录创建.prettier.json文件
+- 根目录创建prettier.config.js文件
 
-  ```json
-  {
-    "singleQuote": true,
-    "tabWidth": 2,
-    "bracketSpacing": true,
-    "trailingComma": "none",
-    "printWidth": 100,
-    "semi": false,
-    "overrides": [
-      {
-        "files": ".prettierrc",
-        "options": { "parser": "typescript" }
-      }
-    ]
+  ```js
+  module.exports = {
+    printWidth: 80,
+    tabWidth: 2,
+    bracketSpacing: true,
+    arrowParens: "always",
+    endOfLine: "auto",
+    singleQuote: true,
+    trailingComma: "none",
+    semi: false,
+    useTabs: false
   }
   ```
 
@@ -198,12 +195,10 @@ module.exports = {
     'plugin:prettier/recommended'
   ],
   overrides: [],
-  parser: 'babel-eslint',
   parserOptions: {
-    project: 'tsconfig',
-    // 指定你要使用的 ECMAScript 语法版本，"latest" 表示始终启用最新的 ECMAScript 版
+    parser: '@babel/eslint-parser',
+    project: ['tsconfig.json'],
     ecmaVersion: 'latest',
-    // "script" (默认值) 或 "module"（如果你的代码是 ECMAScript 模块)
     sourceType: 'module'
   },
   plugins: ['react', '@typescript-eslint'],
@@ -360,6 +355,27 @@ insert_final_newline = true
 
   提交代码之前，pre-commit都会拦截 Git 的 commit 操作，然后运行lint命令进行代码检测，若检测到有违反校验规则的情况，则会返回错误，从而导致git commit失败。
 
+- 安装lint-staged只校验暂存区文件
+  
+  ```bash
+  npm install lint-staged --save-dev
+  ```
+
+  在package.json中添加配置即可，这样就不会所有文件都校验
+
+  ```json
+    "lint-staged": {
+      "*.{ts,tsx,js,vue}": [
+          "eslint --fix",
+          "git add"
+      ],
+      "*.{vue,css,scss,less}": [
+          "stylelint --fix",
+          "git add"
+      ]
+    }
+  ```
+
 ## commit规范
 
 目前最为流行的提交信息规范来自于 Angular 团队
@@ -398,7 +414,7 @@ workflow：工作流相关文件修改。
 - 添加commitline到githoos中
 
   ```bash
-  npx husky add .husky/commit-msg ""
+  npx husky add .husky/commit-msg npx --no -- commitlint --edit "$1"
   ```
 
 - 配置完成后，commit提交测试如下

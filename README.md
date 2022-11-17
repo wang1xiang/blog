@@ -2,7 +2,7 @@
 
 ## 效果预览
 
-https://wang1xiang.github.io/blog/
+http://wangxiang.website/
 
 ## 安装
 

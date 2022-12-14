@@ -46,6 +46,9 @@ isType([], 'Object') // false
 ```ts
 // 首字母大写
 const upperFisrtWord = (word = '') => word.slice(0, 1).toUpperCase() + word.slice(1);
+// 字符串转数组 利用es6扩展运算符
+// 任何 Iterator 接口的对象，都可以用扩展运算符转为真正的数组
+[...'hello'] // [ "h", "e", "l", "l", "o" ]
 ```
 
 ### 深浅拷贝

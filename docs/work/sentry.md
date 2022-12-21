@@ -62,6 +62,17 @@ npm install --save @sentry/react @sentry/tracing
   ```
 
   - fallback (React.ReactNode or Function)：当错误边界捕获错误时要呈现的 React 元素
+  - beforeCapture：在将错误发送到 Sentry 之前调用的函数，允许将额外的标签或上下文添加到错误中
+
+    ```jsx
+    beforeCapture={(scope) => {
+      scope.setTag('storeId', Number(ls.getItem('quick-storeId')));
+      scope.setTag('userId', user?.staffInfo?.userId);
+      scope.setTag('currentTime', moment().format('YYYY-MM-DD HH:mm:ss'));
+      scope.setTag('pathname', window.location.pathname);
+    }}
+    ```
+
   - [更多配置](https://docs.sentry.io/platforms/javascript/guides/react/components/errorboundary/#options)
 
 ### 原理

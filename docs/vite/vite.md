@@ -6,7 +6,7 @@ tags:
 describe: vite基本概念及常用配置
 ---
   
-## 概念
+### 概念
 
 vite开发阶段是esbuild，构建阶段是rollup
 
@@ -28,7 +28,7 @@ vite开发阶段是esbuild，构建阶段是rollup
   
   源码部分根据协商缓存，依赖模块直接强缓存
 
-#### 配置
+### 配置
 
 以下配置是我在项目中使用的配置
 
@@ -36,6 +36,9 @@ vite开发阶段是esbuild，构建阶段是rollup
 
    ```bash
    npm init vite@latest my-vue-app
+
+   # 使用pnpm
+   pnpm create vite my-vue-app --template vue-ts
    ```
 
 2. 配置vite.config.ts
@@ -275,7 +278,7 @@ vite基于rollup打包，不知道进度
     console.log(import.meta.url);
     ```
 
-    ![截图](./images/import.meta.png)
+    ![截图](./images/importmeta.png)
 
     与URL构造器组合使用可以通过相对路径得到一个被完整解析的静态资源URL
 
@@ -283,7 +286,7 @@ vite基于rollup打包，不知道进度
     console.log(new URL('./sample.json', import.meta.url));
     ```
 
-    ![截图](./images/import.url.png)
+    ![截图](./images/importurl.png)
 
 11. vite配置[Emotion](https://emotion.sh/docs/introduction)
 

@@ -393,6 +393,20 @@ export const subSet = function (arr1, arr2) {
   }
   return subset
 }
+
+/** 
+ * 数组解构赋值
+ */
+const a = [1,2,3,4];
+const [b,c,...d] = a;
+b; // 1
+c; // 2
+d; // [3,4]
+// 也可以使用对象的方式解构 key对应下标 可以直接获取数组length
+const { 0: b, length, [length - 1]: last } = arr;
+b; // 1
+last; // 4
+length; // 4
 ```
 
 ### 数字千分位

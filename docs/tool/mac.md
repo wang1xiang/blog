@@ -137,6 +137,33 @@ describe:
       ls ~/.oh-my-zsh/themes
       ```
 
+    - 快捷键
+
+      ```bash
+      # 新建标签
+      cmd t
+      # 删除标签
+      cmd w
+      # 切换标签
+      cmd 数字/左右
+
+      # 分屏
+      cmd shift d
+
+      # 查看历史命令
+      cmd ;
+      # 到行首/行尾
+      Control a/e
+      # 删除当前光标
+      Control d
+      # 删除光标之前/之后
+      Control h/w
+      # 删除当前行
+      Control u
+      # 删除当前单词
+      Control w
+      ```
+
     - 无权限问题
 
     ![image-20221214082911682](./images/onmyzshError.png)

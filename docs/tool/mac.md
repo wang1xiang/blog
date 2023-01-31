@@ -1,6 +1,6 @@
 ---
 date: 2022-12-29
-title: 我换mac了
+title: 我的mac使用之路
 tags:
   - tool
 describe:
@@ -194,16 +194,119 @@ describe:
 
   - 等待安装完成后，选中 MarkDown 文件空格即可预览
 
+### iTerm2 主题设置
+
+1. 安装 PowerLine
+   [github](https://github.com/powerline/powerline)
+
+   ```bash
+   # powerLine需要pip安装 pip是python的一个维护命令
+   sudo easy_install pip
+   sudo pip install powerline-status --user
+   # 如果上面命令无法安装 使用下面命令安装
+   curl https://bootstrap.pypa.io/get-pip.py | python3
+   ```
+
+2. 安装 PowerFonts
+
+   创建一个目录用来保存 github 的代码，如～/Desktop/github
+
+   ```bash
+   git clone https://github.com/powerline/fonts.git --depth=1
+   cd fonts
+
+   ./install.sh
+   ```
+
+   执行完成后，进入`Settings -> Profiles -> Text -> Font`选择`Meslo LG S for Powerline`字体即可
+
+3. 安装配色方案(看个人爱好)
+
+   ```bash
+   # 在刚刚的github目录
+   git clone https://github.com/altercation/solarized
+   cd solarized/iterm2-colors-solarized/
+
+   # 打开当前目录
+   open .
+   ```
+
+   在打开的 finder 窗口中，双击 Solarized Dark.itermcolors 和 Solarized Light.itermcolors 安装配色
+   安装完成后，进入`Settings -> Profiles -> Colors -> Color Presets`选择新添加的配色
+
+4. 安装 agnoster 主题
+
+   ```bash
+   git clone https://github.com/fcamblor/oh-my-zsh-agnoster-fcamblor.git
+   cd oh-my-zsh-agnoster-fcamblor/
+   ./install
+   ```
+
+   安装完成后，编辑配置文件
+
+   ```bash
+   vim ~/.zshrc
+   # 修改`ZSH-THEME`为`agnoster`
+   source ~/.zshrc
+   ```
+
+5. 安装高亮和命令补全插件
+
+   ```bash
+   cd ~/.oh-my-zsh/custom/plugins/
+   # 高亮插件
+   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
+   # 优化文件路径显示
+   vim ~/.oh-my-zsh/themes/agnoster.zsh-theme
+   ```
+
+   ```bash
+   # 修改%～ 为 %1d
+   # Dir: current working directory
+   prompt_dir() {
+     #prompt_segment blue $CURRENT_FG '%~'
+     prompt_segment blue $CURRENT_FG '%1d'
+   }
+   ```
+
+   ```bash
+   # 命令补全
+   git clone https://github.com/zsh-users/zsh-autosuggestions
+   # 此时提示颜色与背景色相同，需要改一下
+   vim zsh-autosuggestions.zsh
+   ```
+
+   ```bash
+   # 搜索fg=8 改为fg=10
+   typeset -g ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=10'
+   ```
+
+   ```bash
+   # 编辑zshrc文件
+   vim ~/.zshrc
+   ```
+
+   ```bash
+   # 搜索plugins，添加 zsh-autosuggestions和zsh-syntax-highlighting
+   plugins=(
+    git
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+   )
+   ```
+
+6. 全部执行完毕后，`cmd q`退出 iTerm2，重新打开
+
 ## 系统快捷键
 
-- 复制文件：按住option 拖动文件即可复制
-- 剪切：cmd + c 复制成功后 再使用cmd+option+v进行剪切
-- 预览：选中文件 按空格键 或 全选后按组合option+空格
-- 聚焦搜索：cmd + 空格   搜索文件后 按住cmd键可以直达文件路劲
+- 复制文件：按住 option 拖动文件即可复制
+- 剪切：cmd + c 复制成功后 再使用 cmd+option+v 进行剪切
+- 预览：选中文件 按空格键 或 全选后按组合 option+空格
+- 聚焦搜索：cmd + 空格 搜索文件后 按住 cmd 键可以直达文件路劲
 - 切换中英文：大写锁定键
 - 打开表情：ctrl+cmd+空格
 - 切换声调：tab 输入拼音后切换声调
-- 菜单栏改变位置：按住cmd
+- 菜单栏改变位置：按住 cmd
 - 退出应用：cmd+q
 - 重命名：选中后回车
 - 回退/前进：cmd+z/shift+cmd+z
@@ -215,11 +318,11 @@ describe:
 - 切换对应标签页：cmd+1/2/3
 - 窗口最小化：cmd+m
 - 切换应用：cmd+tab
-- 强制关闭应用  ：option+cmd+esc
-- 查看ip等：option+wifit图标
-- 拖动dock栏位置 ：按住option
+- 强制关闭应用 ：option+cmd+esc
+- 查看 ip 等：option+wifit 图标
+- 拖动 dock 栏位置 ：按住 option
 
-## Google浏览器
+## Google 浏览器
 
 - 调试
 
@@ -234,7 +337,7 @@ describe:
 ## VSCode
 
 - 打开用户设置：cmd + ,
-- 打开新的vscode：cmd + shift + n
+- 打开新的 vscode：cmd + shift + n
 - 切换项目：cmd + r
 - 跳到某一行：ctrl + g
 - 搜索文件并打开：ctrl + p

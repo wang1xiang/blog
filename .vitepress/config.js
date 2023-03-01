@@ -25,7 +25,7 @@ async function getConfig() {
       ["script", { src: "https://lib.baomitu.com/gitalk/1.7.0/gitalk.min.js" }],
       ["script", { src: "https://lib.baomitu.com/axios/0.21.1/axios.js" }],
     ],
-    title: "翔子",
+    title: "学习笔记",
     themeConfig: {
       displayAllHeaders: true,
       logo: "/favicon.ico",

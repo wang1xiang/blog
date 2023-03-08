@@ -194,6 +194,77 @@ describe:
 
   - 等待安装完成后，选中 MarkDown 文件空格即可预览
 
+### Homebrew
+
+#### 常用命令
+
+```bash
+brew search xxx               #搜索
+brew cask search xxx          #搜索
+brew install xxx              #安装，下载源码解压然后 ./configure && make install ，同时会包含相关依存库。并自动配置好各种环境变量，而且易于卸载。
+brew cask install xxx         #安装桌面程序 安装的是已经编译好了的应用包 （.dmg/.pkg），只是下载解压，放在/opt/homebrew-cask/Caskroom
+brew list --versions          #查看安装过的包列表，同时显示版本号
+brew update                   #更新 brew
+brew upgrade <package_name>   #更新用brew安装的软件
+brew cleanup                  #清理旧版本的包缓存时，清除安装包
+brew cask cleanup             #清除安装包
+brew outdated                 # 显示可以升级的包
+brew uninstall wget
+```
+
+#### 安装合集
+
+```bash
+# 用 HomeBrew 安装 App
+brew install --cask \
+  1password \  # 密码管理工具
+  alfred \     # mac效率神器，可以查看网上教程
+  battery-buddy \   # 使电池变得可爱
+  eagle \        # 轻松完成图片整理、分类
+  google-chrome  \ # 浏览器
+  keycastr \        # 键盘敲击在屏幕上实时显示
+  licecap \         # 录制生成gif图
+
+# 安装 Cli 工具，以下是我的（以字母排序，方便你查找）
+brew install \
+  autojump \   # 快捷跳转工具
+  bat \        # 代替cat查看文件的工具
+  cloc \       # 代码统计工具
+  cmatrix \    # 模拟黑客帝国，安装后输入cmatrix -a -s试试
+  diff-so-fancy \ # 代替git diff
+  fd \            # 代替find fd index.html
+  ffmpeg \
+  fzf \
+  gh \
+  git \
+  httpie \
+  hub \
+  hyperfine \
+  imagemagick \
+  jq \
+  lazygit \
+  mkcert \
+  nvm \
+  pnpm \
+  the_silver_searcher \
+  tig \
+  tldr \
+  tree \
+  ugit \
+  wget
+```
+
+### autojump
+
+安装完成后添加到`~/.zshrc`的插件中
+
+```bash
+# 查看autojump已经记录的目录
+j -s
+# 跳转到目录
+j xxx
+```
+
 ### iTerm2 主题设置
 
 1. 安装 PowerLine
@@ -256,17 +327,22 @@ describe:
    cd ~/.oh-my-zsh/custom/plugins/
    # 高亮插件
    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git
-   # 优化文件路径显示
-   vim ~/.oh-my-zsh/themes/agnoster.zsh-theme
    ```
 
    ```bash
+   # 优化文件路径显示
+   vim ~/.oh-my-zsh/themes/agnoster.zsh-theme
    # 修改%～ 为 %1d
    # Dir: current working directory
    prompt_dir() {
      #prompt_segment blue $CURRENT_FG '%~'
      prompt_segment blue $CURRENT_FG '%1d'
    }
+   # 隐藏用户名信息
+   # Context: user@hostname (who am I and where am I)
+   prompt_context() {
+    if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+     # prompt_segment black default "%(!.%{%F{yellow}%}.)%n@%m"
    ```
 
    ```bash

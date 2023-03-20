@@ -1,7 +1,7 @@
 // 接收plop对象，用于创建生成器任务
 module.exports = (plop) => {
   plop.setHelper('time', () => {
-    const date = new Date();
+    const date = new Date()
     return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
   })
   // param 生成器名称 生成器配置选项
@@ -12,21 +12,36 @@ module.exports = (plop) => {
         type: 'input',
         name: 'name',
         message: '文档名称',
-        default: 'text'
+        default: 'text',
       },
       {
         type: 'list',
         name: 'module',
         message: '选择创建文件到下面哪个文件夹',
-        choices: ['css', 'git', 'javascript', 'mobile', 'node', 'pnpm', 'react', 'tool', 'vite', 'vscode', 'work']
-      }
+        choices: [
+          'css',
+          'git',
+          'javascript',
+          'mobile',
+          'node',
+          'pnpm',
+          'prosemirror',
+          'react',
+          'react native',
+          'tool',
+          'vite',
+          'vue',
+          'vscode',
+          'work',
+        ],
+      },
     ],
     actions: [
       {
         type: 'add', // 代表添加全新文件
         path: `docs/{{module}}/{{name}}.md`,
-        templateFile: 'plop-templates/docs.md.hbs'
-      }
-    ]
+        templateFile: 'plop-templates/docs.md.hbs',
+      },
+    ],
   })
 }

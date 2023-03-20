@@ -1,9 +1,10 @@
 ---
-date: 2023-3-11
+date: 2023-3-18
 title: 使用零宽度字符解决prosemirror-tables单元格文字背景色
 tags:
   - javascript
   - work
+  - prosemirror
 describe: zero-width-space
 ---
 
@@ -179,6 +180,10 @@ describe: zero-width-space
 
 零宽度字符在浏览器上是隐藏不显示的，相当于`display: none`，但是获取文本长度时会占位置，最常见的零宽度字符有以下几种：
 
+- 零宽不换行空格
+
+  HTML 实体编码中的一个字符实体，它代表的是“零宽度非换行空格”（zero width no-break space），也称作 BOM（Byte Order Mark）。零宽度非换行空格是一种特殊的 Unicode 字符，它在显示时不会产生空格，但会防止文本在该位置换行。BOM 是一种用于标记 Unicode 文件编码的特殊字符，它位于文件的开头，用来指示文件的字节序（byte order）和编码方式。当文本编辑器打开一个 Unicode 文件时，会读取文件的开头，如果存在 BOM，就会根据 BOM 中指定的编码方式来解析文件。在 HTML 中，使用实体编码的方式插入零宽度非换行空格，可以在需要防止自动换行的位置上插入该字符，以达到布局上的特殊要求。但是，由于一些历史原因，某些浏览器对该实体编码的支持存在问题，因此在编写 HTML 时建议使用其他的方式来插入零宽度非换行空格，HTML 字符值引用是`&#xFEFF;`，Unicode 映射为`\uFEFF`。
+
 - 零宽空格
 
   最常见和我们使用最多的空格，可以在 HTML 片段中看到他是`&ZeroWidthSpace;`，中文称为“零宽空格”，这个字符在主流文本编辑器中均没有任何显示效果，但拷贝时会带上，HTML 字符值引用是`&#8203;`，Unicode 映射为`U+200B`。
@@ -191,7 +196,24 @@ describe: zero-width-space
 
   HTML 片段中看到他是`&zwnj;`，中文称为“零宽连字”，这个字符是一个控制字符，放在某些需要复杂排版语言（如阿拉伯语、印地语）的两个字符之间，使得这两个本不会发生连字的字符产生了连字效果。HTML 字符值引用是`&#8205;`，Unicode 映射为`U+200D`。
 
-他们的作用有数据防爬、传递隐藏信息、逃脱敏感词过滤等，在这篇文章其实就是用了它的传递隐藏信息这个特性。
+比如，可以利用零宽不换行空格处理可编辑文本中图片前后的光标问题，这样就可以让图片的光标不那么丑陋：
+
+```html
+<div contenteditable="true">
+  <span>&#xFEFF;</span>
+  <img
+    src="https://faworkfile.qimingpian.cn/userUpload/docs/sedW5IEUtEhikAZUmiW4j3LxwvI1hB6E8tkqfJKa.png"
+  />
+  <span>&#xFEFF;</span>
+</div>
+```
+
+他们的作用还有数据防爬、传递隐藏信息、逃脱敏感词过滤等，在这篇文章其实就是用了它的传递隐藏信息这个特性。
+而如果需要有复制需求的话，需要在拿到文本后将零宽字符给替换掉。
+
+```js
+text.replace(/[\u200b-\u200f\uFEFF\u202a-\u202e]/g, '')
+```
 
 于是我们将`createAndFill`改为下面这样就 ok 了
 
@@ -215,11 +237,11 @@ describe: zero-width-space
 ```
 
 ![zerowithspace.png](./images/zerowithspace.png)
-这样一来，就解决了单元格添加背景色时，显示文字的背景色，而不是整个p标签的背景色。
+这样一来，就解决了单元格添加背景色时，显示文字的背景色，而不是整个 p 标签的背景色。
 
 ## 总结
 
-最后再总结一下在prosemirror-tables中修改单元格样式的方法：
+最后再总结一下在 prosemirror-tables 中修改单元格样式的方法：
 
 1. 为单元格添加自定义 CSS 属性，并在 css 文件中使用它们；
 2. 修改 tiptap 默认的设置行内样式的方法；

@@ -3,6 +3,7 @@ date: 2023-4-6
 title: 富文本编辑器html内容转word：html-docs-js避坑指南
 tags:
   - javascript
+  - prosemirror
 describe: html2docs
 ---
 

@@ -9,24 +9,27 @@ describe: async-await
 
 这是我参与「掘金日新计划 · 4 月更文挑战」的第 4 天，活动详情：https://juejin.cn/post/7218068880224550972
 
+本文参加了由[公众号@若川视野](https://lxchuan12.gitee.io/)发起的每周源码共读活动，[点击了解详情一起参与](https://juejin.cn/post/7079706017579139102)。
+这是源码共读的第 21 期，链接：[【若川视野 x 源码共读】第 21 期 | await-to-js 如何优雅的捕获 await 的错误](https://juejin.cn/post/7083109687591338021#comment)
+
 ## 写在前面
 
-不知道大家项目里面是怎么处理 async/await 的异常，我斗胆在我们项目里翻了一下，发现存在大量使用 try-catch 来处理 async/await 异常。
+不知道大家项目里面是怎么处理 async/await 的异常，我斗胆在我们项目里翻了一下，发现大量使用 try-catch 来处理 async/await 异常。
 
 ![try-await-catch.png](./images/try-awati-catch.png)
 
-首先说一下， try-catch 处理并没有什么问题，我只是觉得这么写代码会有点乱，感觉代码逻辑像是断层了一样；
-其次是代码冗余问题，单个 try-catch 就占了好几行代码，如果每个请求的地方都添加 try-catch，就会显得很冗余。
+首先说明一下， try-catch 处理并没有什么问题，我只是觉得这么写代码会有点乱，感觉代码逻辑像是断层了一样，不易理解；
+其次是代码冗余问题，单个 try-catch 就占了好几行代码，如果每个请求的地方都添加 try-catch，就会显得代码很臃肿。
 而对于这种大量相同的冗余代码，完全可以用一种通用的函数来替代。
 
-async/await 是在 ES7 中引入的，为了让异步操作更加方便，同时也解决了 Promise 的回调地狱问题。那么我们为什么要捕获 async/await 的异常呢？它们是在什么时候发生异常呢？带着问题我们一起看一下本文。
+async/await 是在 ES2017 中引入的，目的是为了让异步操作更加直观、方便，同时也解决了 Promise 的回调地狱问题。想必这些概念大家都已经了解了，**那么我们为什么要捕获 async/await 的异常呢？它们是在什么时候发生异常呢？** 带着问题我们一起看一下本文。
 
 ## 什么时候会请求异常
 
 我们都知道 await 后面一般都是异步请求，异步请求发生异常的原因大致有以下几种：
 
-1. 网络问题导致，网络突然断了，请求不到；
-2. 网络慢导致异步请求超时；
+1. 网络问题导致，网络断开连接，请求不到；
+2. 网络慢导致异步请求超时。
 
 ## 什么情况下需要处理请求异常
 
@@ -34,34 +37,34 @@ async/await 是在 ES7 中引入的，为了让异步操作更加方便，同时
 
 **但有必要为所有的异步请求都加 try-catch 吗？**
 
-我看了下我们项目里面的代码，异步请求加了 try-catch 处理的，有以下几种情况：
+我研究了下我们项目的代码，异步请求加了 try-catch 处理的，有以下几种情况：
 
-- 前一个异步请求的返回结果，会作为后一个异步请求的请求参数使用
+### 多个异步请求串行
 
-  ```js
-  try {
-    // 获取列表list
-    const list = await getList(params)
-    // 获取单个详情
-    const info = await getListById(list[0]?.id)
-  } catch {}
-  ```
+```js
+try {
+  // 获取列表list
+  const list = await getList(params)
+  // 获取单个详情
+  const info = await getListById(list[0]?.id)
+} catch {}
+```
 
-  所以一旦前一个请求异常，后面的请求肯定会异常，所以需要添加 try-catch 处理。
+前一个异步请求的返回结果，会作为后一个异步请求的请求参数使用，所以一旦前一个请求异常，后面的请求肯定会异常，所以需要添加 try-catch 处理。
 
-- 异步请求的 loading 状态
+### 处理异步请求的 loading 状态
 
-  ```js
-  loading.value = true
-  try {
-    // 获取列表list
-    const list = await getList(params)
-  } finally {
-    loading.value = false
-  }
-  ```
+```js
+loading.value = true
+try {
+  // 获取列表list
+  const list = await getList(params)
+} finally {
+  loading.value = false
+}
+```
 
-  一般我们处理异步请求前，会为其添加 loading 状态，而一旦请求异常出现时，如果不加 try-catch 时就会导致页面一直处于 loading 状态。所以需要在`finally`中将 loading 状态置为 false，`catch中处理时需要外部再处理一次`。
+一般我们处理异步请求前，会为其添加 loading 状态，而一旦请求异常出现时，如果不加 try-catch 时就会导致页面一直处于 loading 状态。所以需要在`finally`中将 loading 状态置为 false，`catch中处理时需要外部再处理一次`。
 
 那么，我们如何优雅的处理异步请求中的 try-catch 呢？
 
@@ -80,9 +83,9 @@ if (!res) return
 
 ### await-to-js 处理函数
 
-简单的异步请求我们可以使用上面这种方法，但遇到多个异步操作时就需要借助[await-to-js](https://github.com/scopsy/await-to-js)这个库来帮助我们，它的介绍很简单：**无需 try-catch 即可轻松处理错误**。
+简单的异步请求我们可以使用上面这种方法，但遇到多个异步操作时，就需要借助我们今天要说的[await-to-js](https://github.com/scopsy/await-to-js)这个库，它的介绍很简单：**无需 try-catch 即可轻松处理错误**。
 
-而且代码贼简单，就 23 行代码，我们一起来看看。
+而且[源码](https://github.com/scopsy/await-to-js/blob/master/src/await-to-js.ts)贼简单，就 23 行代码，我们一起来看看。
 
 ```ts
 /**
@@ -109,7 +112,8 @@ export function to<T, U = Error>(
 export default to
 ```
 
-函数`to`接受参数`Promise`和`errorExt`，然后返回一个 Promise，如果这个 Promise 成功时返回`[null, data]`，如果异常时会判断是否带有`errorExt`参数（代表传递给 err 对象的附加信息），如果有时会与 catch 捕获的 err 合并返回，如果没有时返回`[err, undefined]`。
+大致流程如下：
+函数`to`接受参数`Promise`和`errorExt`，如果这个 Promise 成功时返回`[null, data]`，如果异常时会判断是否带有`errorExt`参数（代表传递给 err 对象的附加信息），如果有时会与 catch 捕获的 err 合并返回，如果没有时返回`[err, undefined]`。
 
 很简单的逻辑是不是，接着我们看下它的用法：
 

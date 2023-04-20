@@ -15,7 +15,7 @@ describe: office在线预览功能调研
 
 像一般的图片、视频、office 等文件，我们都可以实现在线预览功能，但始终不能覆盖全部，万一用户上传什么奇奇怪怪的文件。所以我们需要做好兜底处理，再无法预览时给用于一个提示。比如下面这张图对压缩文件的处理，提示用户主动下载进行查看。
 
-![yulan-doudi.png](./images/yulan-doudi.png)
+![yulan.png](./images/yulan-doudi.png)
 
 下面，我们将常见附件进行分类，然后分别看一下不同的预览方式。
 
@@ -33,7 +33,7 @@ describe: office在线预览功能调研
 
 ## 音视频预览
 
-HTML5 的[<video>](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/video)和[<audio>](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/audio)标签用于播放视频和音频，所以我们可以封装一个组件专门来处理音视频。
+HTML5 的[video](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/video)和[audio](https://developer.mozilla.org/zh-CN/docs/Web/HTML/Element/audio)标签用于播放视频和音频，所以我们可以封装一个组件专门来处理音视频。
 
 ```vue
 <template>

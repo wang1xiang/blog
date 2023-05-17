@@ -9,9 +9,6 @@ describe: async-await
 
 这是我参与「掘金日新计划 · 4 月更文挑战」的第 4 天，活动详情：https://juejin.cn/post/7218068880224550972
 
-本文参加了由[公众号@若川视野](https://lxchuan12.gitee.io/)发起的每周源码共读活动，[点击了解详情一起参与](https://juejin.cn/post/7079706017579139102)。
-这是源码共读的第 21 期，链接：[【若川视野 x 源码共读】第 21 期 | await-to-js 如何优雅的捕获 await 的错误](https://juejin.cn/post/7083109687591338021#comment)
-
 ## 写在前面
 
 不知道大家项目里面是怎么处理 async/await 的异常，我斗胆在我们项目里翻了一下，发现大量使用 try-catch 来处理 async/await 异常。

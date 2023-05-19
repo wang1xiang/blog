@@ -5,8 +5,7 @@ tags:
   - vite
 describe: vite-react-cli
 ---
-
-# create-vct
+# ![create-vct](./images/create-vct.svg) create-vct
 
 这是一个用于初始化 vite + React 企业级项目的脚手架工具。
 
@@ -35,7 +34,7 @@ create-vct
 ## 针对 create-vite 的修改
 
 ![create-vite-load.png](./images/create-vite-load.png)
-**"工欲善其事，必先利其器"**，开始之前，如果没看过 create-vite 源码的小伙伴，欢迎阅读这篇文章[站在巨人的肩膀上：你还不懂 create-vite 原理吗？来一起康康](https://juejin.cn/post/7217750296171118651)，顺便动动手点个赞 👍。
+**"工欲善其事，必先利其器"**，开始之前，如果不熟悉 create-vite 源码的小伙伴，欢迎阅读这篇文章[站在巨人的肩膀上：你还不懂 create-vite 原理吗？来一起康康](https://juejin.cn/post/7217750296171118651)，顺便动动手点个赞 👍。
 
 ### 删除不需要的模块
 
@@ -971,10 +970,12 @@ npm publish
 
 - 使用 npx
 
-npm 从 5.25.2 版开始，增加了 npx 命令，可以让我们在当前路径使用全局包。npx 运行时，会到当前 node_modules/.bin 路径和环境变量$PATH 里面，检查命令是否存在。如果找不到时会从 npm 上下载最新版本使用。
+  npm 从 5.25.2 版开始，增加了 npx 命令，可以让我们在当前路径使用全局包。npx 运行时，会到当前 node_modules/.bin 路径和环境变量$PATH 里面，检查命令是否存在。如果找不到时会从 npm 上下载最新版本使用。
 
-```bash
-npx create-vct
-```
+  ```bash
+  npx create-vct
+  ```
 
 ## 总结
+
+整个流程走下来，真的是收获很多，学到了node操作文件的很多api。然后每个模块又重新学习了一遍 之前的白板要派上用场了，我用它来做每个模块的图，还学着做了一下svg的图标，收获满满。

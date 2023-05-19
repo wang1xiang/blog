@@ -1,9 +1,9 @@
 ---
 date: 2023-4-20
-title: git如何合并多次提交吗
+title: add、commit...👀git就会这几个操作吗？进来学点新姿势～
 tags:
   - git
-describe: git-rebase
+describe: git教程
 ---
 
 ![git](./images/git.jpg)

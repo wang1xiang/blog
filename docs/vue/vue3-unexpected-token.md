@@ -1,3 +1,11 @@
+---
+date: 2023-5-05
+title: 深入学习ESLint配置项，ESLint忽略检查
+tags:
+  - javascript
+describe: ESLint配置项
+---
+
 ## 问题 Parsing error: Unexpected token type
 
 ![unexpected token](./images/unexpected-token.png)

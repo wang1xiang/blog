@@ -5,6 +5,7 @@ tags:
   - vite
 describe: vite-react-cli
 ---
+
 # ![create-vct](./images/create-vct.svg) create-vct
 
 这是一个用于初始化 vite + React 企业级项目的脚手架工具。
@@ -25,16 +26,17 @@ create-vct
 
 ## 起因
 
-我们公司前端都是用的 vue3，但最近有个白板项目[产品经理：客户想要个画板，你们前端能不能做？](https://juejin.cn/post/7232947178691444794)只有 react 的框架可以做，领导说让我来弄这个项目，顺便完了之后搭一个 react 脚手架工具用于以后快速开发 react 应用。Ok，接受挑战 😜。
+我们公司前端统一用 vue3，但最近有个白板项目[产品经理：客户想要个画板，你们前端能不能做？](https://juejin.cn/post/7232947178691444794)，只有 react 的框架可以做。领导说让我来弄这个项目，顺便完了之后搭一个 react 脚手架工具用于以后快速开发 react 应用。ok，接受挑战 😜。
 
-我们整个脚手架工具是在 create-vite 的基础上修改，封装了 react 中常用到的各种包：[react-router](https://reactrouter.com/en/main)、[redux-toolkit](https://redux-toolkit.js.org/)、[react-query](https://cangsdarm.github.io/react-query-web-i18n/react/)、[antd](https://ant.design/index-cn) 等等，包含 ts 和 js 版本，同时也封装了 eslint + prettier + husky + commitlint 用于团队规范。
+create-vct 脚手架工具是在 create-vite 的基础上修改，封装了 react 中常用到的各种包：[react-router](https://reactrouter.com/en/mRin)、[redux-toolkit](https://redux-toolkit.js.org/)、[react-query](https://cangsdarm.github.io/react-query-web-i18n/react/)、[antd](https://ant.design/index-cn) 等等，包含 ts 和 js 版本，同时也封装了 eslint + prettier + husky + commitlint 用于团队规范。
 
 下面让我们来看看整个过程，篇幅较长，请耐心观看。
 
 ## 针对 create-vite 的修改
 
 ![create-vite-load.png](./images/create-vite-load.png)
-**"工欲善其事，必先利其器"**，开始之前，如果不熟悉 create-vite 源码的小伙伴，欢迎阅读这篇文章[站在巨人的肩膀上：你还不懂 create-vite 原理吗？来一起康康](https://juejin.cn/post/7217750296171118651)，顺便动动手点个赞 👍。
+
+**"工欲善其事，必先利其器"**，开始之前，如果不熟悉 create-vite 源码的小伙伴，欢迎阅读这篇文章[站在巨人的肩膀上：你还不懂 create-vite 原理吗？来一起康康](https://juejin.cn/post/7217750296171118651)，顺便动动你的小手手点个赞 👍。
 
 ### 删除不需要的模块
 
@@ -43,8 +45,8 @@ create-vct
 
 ### 修改模板 vite.config.ts 代码
 
-1. 配置 alias 添加别名设置；
-2. 配置 server 代理服务器；
+1. 配置 alias 添加别名设置
+2. 配置 server 代理服务器
 
    ```ts
     // vite.config.ts
@@ -92,27 +94,27 @@ create-vct
 3. 创建 src/styles/variables.scss，设置全局 sass 变量；
 4. 在 vite.config.js 中配置全局 sass 变量：
 
-```js
-export default defineConfig({
-  ...
-  css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: '@import "@/styles/variables.scss";',
-      },
-    },
-  }
-  ...
-})
-```
+   ```js
+   export default defineConfig({
+     ...
+     css: {
+       preprocessorOptions: {
+         scss: {
+           additionalData: '@import "@/styles/variables.scss";',
+         },
+       },
+     }
+     ...
+   })
+   ```
 
-**注意：vite 对.sass 已经提供了内置支持，所以不再需要安装 loader 了，[官方解释](https://cn.vitejs.dev/guide/features.html#css-pre-processors)**
+   **注意：vite 对.sass 已经提供了内置支持，所以不再需要安装 loader 了，[官方解释](https://cn.vitejs.dev/guide/features.html#css-pre-processors)**
 
 ### 将 classnames 引入项目
 
-个人感觉 CSS Modules 比 CSS In JS 看的更直观些，所以项目中使用 CSS Modules 的方式处理 css，当然你也可以用 CSS In JS 的方式处理，项目模板没有太多 css 代码，不会影响到你的选择。
+个人感觉 CSS Modules 比 CSS In JS 用起来更舒服，所以该脚手架使用 CSS Modules 的方式来处理 css，当然你也可以用 CSS In JS 的方式处理，项目模板没有太多 css 代码，不会影响到你的选择。
 
-在脚手架中只需要在 package.json 中依赖中添加`"classnames": "^2.3.2"`即可。
+在 package.json 中依赖中添加`"classnames": "^2.3.2"`即可。
 
 使用也很简单：
 
@@ -150,7 +152,9 @@ eslint 和 prettier 的安装参考的是[vite-pretty-lint](https://github.com/t
 
 ### 添加 pre-commit 和 commit-msg 钩子
 
-添加 githooks，在提交前对代码校验和格式化处理，并规范提交信息，可以参考我之前的文章：[vue3 项目添加 husky+lint-staged 配置](https://juejin.cn/post/7215454235046445112)，我们看看在一个项目中配置 git hooks 都需要哪些步骤。
+添加 githooks，在提交前对代码进行校验和格式化处理，并规范提交信息，可以参考我之前的文章：[vue3 项目添加 husky+lint-staged 配置](https://juejin.cn/post/7215454235046445112)。
+
+我们看看在一个项目中配置 git hooks 都需要哪些步骤。
 
 1. 添加 husky 和 lint-staged 依赖
 
@@ -220,11 +224,13 @@ eslint 和 prettier 的安装参考的是[vite-pretty-lint](https://github.com/t
 
 9. 到这里，husky + lint-staged + commitlint 都配置完成了。
 
-这一步完成后，我们同时配置了代码规范和 git 规范，添加了 husky，所以需要在项目创建完成后，首先**执行一下 git init 初始化 git 仓库，然后 husky 才能正常运行**，于是就把提示信息多加了一项 🤔，如下。
+   ![husky-error.png](./images/husky-error.png)
+
+这一步完成后，我们同时配置了代码规范和 git 规范，添加了 husky，所以需要在项目创建完成后，首先**执行一下 git init 初始化 git 仓库，然后 husky 才能正常运行**，于是就把提示信息多加了一项 🤔，如下：
 
 ![create-vct-init.png](./images/create-vct-init.png)
 
-我们需要修改 create-vite 的代码，添加如下代码：
+基于以上，我们修改 create-vite 的代码，添加如下：
 
 ```js
 if (isEslint) {
@@ -269,9 +275,9 @@ if (isEslint) {
 
 ![antd-logo.png](./images/antd-logo.png)
 
-我们可以梳理下，如果往项目中添加 Antd 需要做哪些事：
+我们先来梳理下，如果往项目中添加 Antd 需要做哪些事：
 
-1. 需要将 Antd 依赖添加到 package.json 文件；
+1. 添加 Antd 依赖；
 
    ant-design@v5 版本支持 tree-shaking，就不用配置按需加载了。那么就很简单，我们只需要在 package.json 的`dependencies`字段中添加 Antd 的库。
 
@@ -324,7 +330,7 @@ if (isAntd) {
 
 > react-router 和 react-router-dom 的关系类似于 react 和 react-dom。dom 及浏览器环境，react-router-dom 通过添加用于 DOM 的组件，可以让 react-router 运行在浏览器环境，同时还有 react-router-native，用于 native 环境。
 
-使用 v6 时不需要额外的类型，只需要安装`react-router`和`react-router-dom`即可。
+使用 v6 后不需要再引入额外的类型，只需要安装`react-router`和`react-router-dom`即可。
 
 ### react-router v6 说明
 
@@ -341,7 +347,7 @@ if (isAntd) {
 
 ### react-router v6 使用教程
 
-同 Antd，首先我们先理一下将 react-router 添加到项目中的步骤。
+同 Antd，首先我们先梳理一下将 react-router 添加到项目中的步骤。
 
 1. 添加 react-router 和 react-router-dom 依赖；
 
@@ -353,37 +359,58 @@ if (isAntd) {
 
    ```js
    import ErrorPage from '@/pages/ErrorPage'
+   import AppLayout from '@/layout/AppLayout'
    import { lazy } from 'react'
-   import { RouteObject } from 'react-router-dom'
+   import { MetaMenu, AuthRouteObject } from './interface'
 
    // 快速导入工具函数
    const lazyLoad = (moduleName: string) =>
      lazy(() => import(`@/pages/${moduleName}/index.tsx`))
 
    const Home = lazyLoad('Home')
-   const About = lazyLoad('About')
+   const ReduxToolkitDemo = lazyLoad('ReduxToolkitDemo')
+   const ReactQueryDemo = lazyLoad('ReactQueryDemo')
 
-   const routers: RouteObject[] = [
+   const routers: AuthRouteObject<MetaMenu>[] = [
      {
        path: '/',
-       element: <Home />,
+       element: <AppLayout />,
        errorElement: <ErrorPage />,
-     },
-     {
-       path: 'home',
-       element: <Home />,
-     },
-     {
-       path: 'about',
-       element: <About />,
+       meta: {
+         title: '',
+       },
+       children: [
+         {
+           path: 'home',
+           element: <Home />,
+           meta: {
+             title: 'Home',
+           },
+         },
+         {
+           path: 'toolkit',
+           element: <ReduxToolkitDemo />,
+           meta: {
+             title: 'React Toolkit',
+           },
+         },
+         {
+           path: 'query',
+           element: <ReactQueryDemo />,
+           meta: {
+             title: 'React Query',
+           },
+         },
+       ],
      },
    ]
 
    export default routers
    ```
 
-3. 创建 src/pages 文件夹，添加 Home 和 About 组件；
-4. 通过 [useRoutes](https://reactrouter.com/en/main/hooks/use-routes) 钩子将上面的路由表一一映射为路由对象
+3. 创建 src/layout 文件夹，添加 AppLayout 组件；
+4. 创建 src/pages 文件夹，添加 Home 和 ReactQueryDemo 组件；
+5. 通过 [useRoutes](https://reactrouter.com/en/main/hooks/use-routes) 钩子将上面的路由表一一映射为路由对象
 
    useRoutes 也就是`<Routes />`组件的 js 实现，在路由跳转时需要增加 loading 转场，我们可以使用`<Suspense />`组件传入一个 loading 组件来实现。
 
@@ -404,11 +431,11 @@ if (isAntd) {
    export default App
    ```
 
-5. 在 main.tsx 中配置`<BrowserRouter />`包裹 App 组件
+6. 在 main.tsx 中配置`<BrowserRouter />`包裹 App 组件
 
    ```tsx
    import { BrowserRouter } from 'react-router-dom'
-
+   
    ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
      <React.StrictMode>
        <BrowserRouter>
@@ -441,7 +468,7 @@ if (isRouter) {
 }
 ```
 
-## 集成 redux toolkit 作为状态管理
+## 集成 Redux toolkit 作为状态管理
 
 ![redux-toolkit-logo.png](./images/redux-toolkit-logo.png)
 
@@ -458,7 +485,7 @@ if (isRouter) {
 - 已经集成 redux-thunk，不需要再次安装；
 - 按 feature 组织 Redux 逻辑，更加清晰。
 
-总体来说，Redux Toolkit 的出现让之前想尝试 Redux，但又被 Redux 各种繁琐的配置劝退的人重拾了兴趣。
+总体来说，Redux Toolkit 的出现让之前想尝试 Redux，但又被 Redux 各种繁琐的配置劝退的人重新归位 😄。
 
 ### Redux Toolkit 使用教程
 
@@ -552,11 +579,11 @@ if (isRouter) {
      decremented,
      incremented,
    } from './store/feature/appSlice'
-
+   
    function App() {
      const elements = useRoutes(routers)
      const count = useAppSelector(selectCount)
-
+   
      const dispatch = useAppDispatch()
      return (
        <>
@@ -578,7 +605,7 @@ if (isRouter) {
 
 ### Redux Toolkit 异步操作
 
-在原来的 Redux 中，如果需要异步操作则需要安装 Redux-Thunk，而 Redux Toolkit 已经内置了 Redux-Thunk，不需要另外安装和配置。
+在 Redux 中，如果需要异步操作则需要安装 Redux-Thunk，而 Redux Toolkit 已经内置了 Redux-Thunk，不需要另外安装和配置。
 
 我们只需要使用 createAsyncThunk 就能完成异步 action 的创建。
 
@@ -640,7 +667,7 @@ export default userSlice.reducer
 
 在 userSlice 中我们主要做了这几件事：
 
-1. 使用 createAsyncThunk 创建一个异步 action；
+1. 使用 createAsyncThunk 创建一个异步 action
 
    通过 createAsyncThunk return 出去的值，会在 extraReducers 中接收，有三种状态：
 
@@ -648,11 +675,11 @@ export default userSlice.reducer
    - fulfilled（成功）
    - ejected（失败）
 
-2. 通过 extraReducers 来接受 createAsyncThunk 的结果；
+2. 通过 extraReducers 来接受 createAsyncThunk 的结果
 
-   在`addCase(getUserData.fulfilled..`中获取异步结果成功后的返回值，直接更新在 state 中
+   在`addCase(getUserData.fulfilled..`中获取异步结果成功后的返回值，直接更新在 state 中。
 
-3. 还创建了一个 deleteUser action，用来删除用户
+3. 创建一个 deleteUser action，用来删除用户
 
    这一步主要是为了**演示 immer 的作用**，如果对 immer 不太熟悉的同学，可以看看这篇文章：[不可变数据实现-Immer.js](https://juejin.cn/post/7047450607984541710#heading-18)。
 
@@ -677,13 +704,11 @@ export default userSlice.reducer
    ```
 
 4. 在主入口合并到 reducer 中，和 appSlice 一样操作；
-5. 使用，同上
-
-完整代码：[github]()
+5. 使用，同同步操作
 
 基于以上步骤，我们实现的代码如下：
 
-首先询问是否需要安装 Redux Toolkit，并返回 isRedux 是否为 true，如果为 true 时，将 redux-toolkit 的模板文件添加到输出目录中，同时修改 main.tsx 的代码：
+首先询问是否需要安装 Redux Toolkit，并返回 isRedux 是否为 true，如果为 true 时，将 Redux Toolkit 的模板文件添加到输出目录中，同时修改 main.tsx 的代码：
 
 ```ts
 if (isRedux) {
@@ -726,7 +751,7 @@ if (isRedux) {
 
 2. 创建 api 文件夹
 
-   api 中包含 feature（包含所有的请求接口）、interface(类型统一管理)、query（存在 react query 相关配置）、request（简单封装 axios）
+   api 中包含 feature（包含所有的请求接口）、interface(类型统一管理)、query（react query 相关配置）、request（封装 axios）。
 
    ```bash
    ├── api
@@ -739,7 +764,7 @@ if (isRedux) {
    │   └── request.ts
    ```
 
-   对于 axios，真的不想封装，网上有大把过渡封装的案例，真的使用起来会有那么复杂吗？我只是简单的添加了请求拦截和相应拦截，感觉就已经够用了。
+   对于 axios，网上有大把过渡封装的案例 🤮，我只是简单的添加了请求拦截和相应拦截，感觉就已经够用了。
 
    ```ts
    import { message } from 'antd'
@@ -801,7 +826,7 @@ if (isRedux) {
    }
    ```
 
-   顺便看下导出的 request 方法，传入了返回和请求值的类型，然后在 app.ts 中，使用 request 发送请求时，我们只要传入后端的返回类型，这样在接口请求完成后，使用数据的时候就会方便很多。
+   顺便看下导出的 request 方法，传入了返回和请求值的类型，然后在 app.ts 中，使用 request 发送请求时，我们只要传入后端的返回类型，这样在接口请求完成后，使用数据的时候就会方便很多，这就是 TS 的好处 🐮。
 
    ```ts
    import { GithubType } from '../interface'
@@ -871,7 +896,7 @@ if (isRedux) {
    import { QUERY_USER_LIST } from '@/api/query/query.constant'
    // import React, { useEffect, useState } from 'react';
    import { useQuery } from 'react-query'
-
+   
    const QueryDemo = () => {
      // 不使用react-query时的请求
      // const [loading, setLoading] = useState(false);
@@ -902,7 +927,7 @@ if (isRedux) {
        </>
      )
    }
-
+   
    export default QueryDemo
    ```
 
@@ -941,7 +966,7 @@ if (isQuery) {
 ],
 ```
 
-这一步发布 npm 包，我们将所需要的模板文件全部发布，修改 package.json 的`files`如上所示，files 就是发不到 npm 仓库的文件。
+发布 npm 包时，我们需要将所有模板文件都发布，修改 package.json 的`files`如上所示，files 就是发布到 npm 仓库的文件。
 
 bin 字段修改为`create-vct`，这样在执行`create-vct`命令时最终执行的文件就是 index.js。
 
@@ -978,4 +1003,8 @@ npm publish
 
 ## 总结
 
-整个流程走下来，真的是收获很多，学到了node操作文件的很多api。然后每个模块又重新学习了一遍 之前的白板要派上用场了，我用它来做每个模块的图，还学着做了一下svg的图标，收获满满。
+整个流程走下来，真的是收获很多，学到了 node 操作文件的很多 api。对 react-router、redux-toolkit 和 react-query 又重新回顾了一遍。之前做的白板要派上用场了，我用它来做每个模块的图（虽然略丑 😅），同时还学着做了一下 svg 的图标，可谓是收获满满。
+
+以上就是本文的全部内容，希望这篇文章对你有所帮助，欢迎点赞和收藏 🙏，如果发现有什么错误或者更好的解决方案及建议，欢迎随时联系。
+
+本文项目地址，https://github.com/wang1xiang/create-vct 欢迎 star。

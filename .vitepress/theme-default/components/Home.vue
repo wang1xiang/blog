@@ -243,6 +243,11 @@ input[type=search]::-webkit-search-cancel-button {
 .title:hover .line {
   width: 100%;
 }
+@media screen and (max-width: 800px) {
+  .article-search { 
+    display: none;
+  }
+}
 @media screen and (max-width: 700px) {
   .article {
     padding: 1rem 0;

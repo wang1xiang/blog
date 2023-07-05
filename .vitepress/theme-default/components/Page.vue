@@ -221,7 +221,8 @@ h6 {
   border-left: 1px solid #ccc;
   position: fixed;
   top: 100px;
-  right: 6vw;
+  max-width: 20vw;
+  right: 10px;
   overflow: auto;
   max-height: 80vh;
   padding-left: 12px;
@@ -245,7 +246,7 @@ h6 {
   padding-right: 10px;
   width: 100px;
 }
-@media screen and (max-width: 1200px) {
+@media screen and (max-width: 1000px) {
   .catalog {
     display: none;
   }

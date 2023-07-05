@@ -28,6 +28,7 @@ module.exports = (plop) => {
           'prosemirror',
           'react',
           'react native',
+          'tiptap',
           'tool',
           'vite',
           'vue',

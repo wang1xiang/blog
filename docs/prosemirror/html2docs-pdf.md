@@ -7,8 +7,6 @@ tags:
 describe: 富文本导出图片、pdf和word
 ---
 
-这是我参与「掘金日新计划 · 4 月更文挑战」的第 2 天，活动详情：https://juejin.cn/post/7218068880224550972
-
 > 接上篇[富文本编辑器 html 内容转 word：html-docs-js 避坑指南](https://juejin.cn/post/7220244579671916604)，我们已经完成了 html 内容转 word 文档的> 需求，接着咱们看下图片和 pdf 的处理。
 
 ## 介绍下用到的库

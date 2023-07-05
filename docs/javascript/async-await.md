@@ -4,10 +4,8 @@ title: 不是吧？2023了竟然还有人用Try-Catch来处理async...await异�
 tags:
   - javascript
   - work
-describe: async-await
+describe: async/await 是在 ES2017 中引入的，目的是为了让异步操作更加直观、方便，同时也解决了 Promise 的回调地狱问题。那么我们该什么时候去捕获 async/await 的异常呢？
 ---
-
-这是我参与「掘金日新计划 · 4 月更文挑战」的第 4 天，活动详情：https://juejin.cn/post/7218068880224550972
 
 ## 写在前面
 

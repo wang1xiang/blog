@@ -146,6 +146,7 @@ export default defineComponent({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 14em;
   }
 }
 </style>

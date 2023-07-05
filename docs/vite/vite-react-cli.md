@@ -1,9 +1,9 @@
 ---
 date: 2023-5-13
-title: 记录为公司react项目统一脚手架的过程
+title: 「记录篇」我是如何一步步为公司搭建react项目脚手架的
 tags:
   - vite
-describe: vite-react-cli
+describe: 集成React-Router、Antd、Redux-Toolkit和React-Query，并封装ESLint+Prettier+Husky的React项目脚手架，快来试试吧！
 ---
 
 # ![create-vct](./images/create-vct.svg) create-vct

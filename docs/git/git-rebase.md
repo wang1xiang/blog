@@ -1,11 +1,9 @@
 ---
 date: 2023-4-20
-title: add、commit...👀git就会这几个操作吗？进来学点新姿势～
+title: add、commit👀git就会这几个操作吗？进来学点新姿势～
 tags:
   - git
 describe: 相信大家在使用 git 的使用过程中，都会遇到一些小问题阻碍你继续下一步，我先说几个，看看你有没有遇到过：
-1. 正在写功能但要切分支改 bug;
-2. 提交信息手快写错了单词或少提交了代码
 ---
 
 ![git](./images/git.jpg)

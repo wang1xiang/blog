@@ -60,6 +60,7 @@ describe: 如果你用惯了process-on 和 drawio这类流程图工具，那么�
 [模版](https://libraries.excalidraw.com/?theme=light&sort=default)
 
 - 基本图形元素：画笔、文字、矩形、圆形、菱形、箭头等等
+- 新增组件：画框工具、网页嵌入
 - 属性设置：背景、填充、风格、圆角、透明等
 - 浅色和深色模式两种
 - 可定制样式等
@@ -241,6 +242,10 @@ Excalidraw 提供的 Props 很多，都是可选的。我们可以用来设置�
   每次 Excalidraw 内容发生改变时，通过 onchange 回调函数获取最新的数据，包括 excalidrawElements（当前白板中的 excalidrawElements 数组）、appState（白板的一些状态）、files（添加到白板中的文件）。
 
   获取到这些数据后，就可以将数据保存到后端或选择本地存储。
+
+- validateEmbeddable
+
+  最新的 Excalidraw 支持 Web Embed 网页嵌入功能，可以将网页 url 复制到此组件中进行展示。默认情况下，仅支持 YouTube, Vimeo, Twitter, Excalidraw, Figma 这几个网站的 url，如果传递 true，则所有 URL 都可以支持。
 
 ### Children components: 可用于自定义 UI 的官方组件
 

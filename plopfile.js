@@ -33,6 +33,7 @@ module.exports = (plop) => {
           'vite',
           'vue',
           'vscode',
+          'webrtc',
           'work',
         ],
       },

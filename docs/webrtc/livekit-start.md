@@ -1,11 +1,17 @@
 ---
-date: 2023-7-3
-title: Livekit
+date: 2023-7-18
+title: WebRTC实战｜使用Livekit搭建多人音视频通话
 tags:
   - javascript
   - WebRTC
 describe: 小白快速上手Livekit
 ---
+
+先说下我们公司使用 Livekit 的原因：
+
+1. 音视频会议不是公司核心业务；
+2. 投入人少，项目催得紧，并且要求不高；
+3. 公司对音视频了解的人并不多，并且了解的都是浅水区。
 
 ## Livekit cloud
 
@@ -124,3 +130,6 @@ resolution：aspectRatio 长宽比、frameRate 帧率、height 和 width
 ### onError
 
 ### onMediaDeviceFailure
+
+下面是我们公司尝试的 Demo，带宽 5m，同时 6 个人在线
+![livekit-multi-demo.png](./images/livekit-muti-demo.png)

@@ -1,88 +1,162 @@
 ---
-date: 2023-7-3
-title: 实时通讯WebRTC扫盲——快速搭建1对1音视频通话
+date: 2023-7-18
+title: WebRTC这么火🔥，前端靓仔，请收下这篇入门教程
 tags:
   - javascript
   - WebRTC
-describe: 小白快速上手WebRTC
+describe: 本文是针对小白的 WebRTC 快速入门课，如果你还之前还不了解 WebRTC，不了解实时通讯，希望你能认真阅读本文，实现对 WebRTC 的零的突破 💪。
 ---
+
+WebRTC 系列教程分为三篇进行介绍，本篇为第一篇，下一篇[WebRTC 这么火 🔥，前端靓仔，请收下这篇入门教程](https://juejin.cn/post/7266417942182608955)。
+
+本文是针对小白的 WebRTC 快速入门课，如果你还之前还不了解 WebRTC，希望你能认真阅读本文，实现对 WebRTC 的零的突破 💪。如果感兴趣，就跟着我动手实践一下。
 
 ## 什么是 WebRTC
 
 WebRTC（Web Real-Time Communications）是一项实时通讯技术，它允许网络应用或者站点，在不借助中间媒介的情况下，建立浏览器之间点对点（Peer-to-Peer）的连接，实现视频流和（或）音频流或者其他任意数据的传输。WebRTC 包含的这些标准使用户在无需安装任何插件或者第三方的软件的情况下，创建点对点（Peer-to-Peer）的数据分享和电话会议成为可能。
 
-[WebRTC](https://developer.mozilla.org/zh-CN/docs/Web/API/WebRTC_API)
+### 实时通信和即时通信的区别
+
+IM 即时通信，就是通过文字聊天、语音消息发送、文件传输等方式通信，考虑的是**可靠性**；
+
+RTC 实时通信：音视频通话、电话会议，考虑的是**低延时**。
 
 ## WebRTC 发展史
 
 2011 年开始， Google 先后收购 GIPS 和 On2，组成 GIPS 音视频引擎 + VPx 系列视频编解码器，并将其代码开源，WebRTC 项目应运而生。
-2012 年，Google 将 WebRTC 集成到 Chrome 浏览器中。可以在浏览器之间快速地实现音视频通信。
 
+2012 年，Google 将 WebRTC 集成到 Chrome 浏览器中。于是我们就可以愉快的在浏览器之间进行音视频通信。
+
+当前除了 IE 之外的浏览器都已支持 WebRTC。
 ![can-i-use-webrtc.png](./images/can-i-use-webrtc.png)
+
+## WebRTC 应用场景
+
+WebRTC 的能力使其适用于各种实时通信场景：
+
+1. 点对点通讯：WebRTC 支持浏览器之间进行音视频通话，例如语音通话、视频通话等；
+2. 电话会议：WebRTC 可以支持多人音视频会议，例如腾讯会议、钉钉会议等；
+3. 屏幕共享：WebRTC 不仅可以传输音视频流，还可以用于实时共享屏幕；
+4. 直播：WebRTC 可以用于构建实时直播，用户可以通过浏览器观看直播内容。
+
+## WebRTC 组成部分
+
+在了解 WebRTC 通信过程前，我们需要先来了解下 WebRTC 的组成部分，这可以帮助我们快速建立 WebRTC 的知识体系。
+
+WebRTC 主要由三部分组成：**浏览器 API**、**音视频引擎**和**网络 IO**。
+
+![webrtc-architecture.png](./images/webrtc-architecture.png)
+
+### 浏览器 API
+
+用于**采集摄像头和麦克风**生成媒体流，并处理音视频通信相关的**编码、解码、传输**过程，可以使用以下 API 在浏览器中创建实时通信应用程序。
+
+- getUserMedia: 获取麦克风和摄像头的许可，使得 WebRTC 可以拿到本地媒体流；
+
+- RTCPeerConnection: 建立点对点连接的关键，提供了创建，保持，监控，关闭连接的方法的实现。像媒体协商、收集候选地址都需要它来完成；
+
+- RTCDataChannel: 支持点对点数据传输，可用于传输文件、文本消息等。
+
+### 音视频引擎
+
+有了 WebRTC，我们可以很方便的实现音视频通信；而如果没有 WebRTC 的情况下，我们想要实现音视频通信，就需要去了解音视频编码器相关技术。
+
+WebRTC 已经 **内置了强大的音视频引擎**，可以对媒体流进行编解码、回声消除、降噪、防止视频抖动等处理，我们使用者大可不用去关心如何实现 。主要使用的音视频编解码器有:
+
+- OPUS: 一个开源的低延迟音频编解码器，WebRTC 默认使用；
+
+- G711: 国际电信联盟 ITU-T 定制出来的一套语音压缩标准，是主流的波形声音编解码器；
+
+- VP8: VP8，VP9，都是 Google 开源的视频编解码器，现在主要用于 WebRTC 视频编码；
+
+- H264: 视频编码领域的通用标准，提供了高效的视频压缩编码，之前 WebRTC 最先支持的是自己家的 VP8，后面也支持了 H264、H265 等。
+
+还有像回声消除`AEC(Acoustic Echo Chancellor)`、背景噪音抑制`ANS(Automatic Noise Suppression)`和`Jitter buffer`用来防止视频抖动，这些问题在 WebRTC 中也提供了非常成熟、稳定的算法，并且提供图像增加处理，例如美颜，贴图，滤镜处理等。
+
+### 网络 I/O
+
+WebRTC 传输层用的是 **UDP** 协议，因为音视频传输对及时性要求更高，如果使用 TCP 当传输层协议的话，如果发生丢包的情况下，因为 TCP 的可靠性，就会尝试重连，如果第七次之后仍然超时，则断开 TCP 连接。而如果第七次收到消息，那么传输的延迟就会达到 2 分钟。在延迟高的情况下，想做到正常的实时通讯显然是不可能的，此时 TCP 的可靠性反而成了弊端。
+
+而 UDP 则正好相反，它只负责有消息就传输，不管有没有收到，这里从底层来看是满足 WebRTC 的需求的，所以 WebRTC 是采用 UDP 来当它的传输层协议的。
+
+这里主要用到以下几种协议/技术：
+
+- `RTP/SRTP`: 传输音视频数据流时，我们并不直接将音视频数据流交给 UDP 传输，而是先给音视频数据加个 RTP 头，然后再交给 UDP 进行，但是由于浏览器对安全性要求比较高，增加了加密这块的处理，采用 SRTP 协议；
+
+- `RTCP`：通过 RTCP 可以知道各端的网络质量，这样对方就可以做流控处理；
+
+- `P2P(ICE + STUN + TURN)`: 这是 WebRTC 最核心的技术，利用 ICE、STUN、TURN 等技术，实现了浏览器之间的直接点对点连接，解决了 NAT 穿透问题，实现了高质量的网络传输。
+
+除了以上三部分，WebRTC 还需要一个**信令服务**做会话管理，但 WebRTC 规范里没有包含信令协议，需要自行实现。
 
 ## WebRTC 通信过程
 
-如果想实现一对一音视频通信，需要以下 4 部分：
+基于以上，我们来思考下 WebRTC 实现一对一通信需要哪些基本条件？
 
-- WebRTC 终端（两个）：负责音视频采集、编解码、NAT 穿越以及音视频数据传输等。
+- `WebRTC 终端（两个）`：本地和远端，负责音视频采集、编解码、NAT 穿越以及音视频数据传输等；
 
-- Signal 信令服务器：负责信令处理，如加入房间、离开房间、媒体协商消息的传递等。
+- `Signal 信令服务器`：自行实现的信令服务，负责信令处理，如加入房间、离开房间、媒体协商消息的传递等；
 
-- STUN/TURN 服务器：负责获取 WebRTC 终端在公网的 IP 地址，以及 NAT 穿越失败后的数据中转服务。
+- `STUN/TURN 服务器`：负责获取 WebRTC 终端在公网的 IP 地址，以及 NAT 穿越失败后的数据中转服务。
 
 通信过程如下：
 
-1. 本地（WebRTC 终端）启动后，检测设备可用性，如果可用后开始音视频采集；
-2. 本地就绪后，发送“加入”信令到 Signal 服务器；
+1. 本地（WebRTC 终端）启动后，检测设备可用性，如果可用后开始进行音视频采集工作；
+2. 本地就绪后，发送“加入房间”信令到 Signal 服务器；
 3. Signal 服务器创建房间，等待加入；
 4. 对端（WebRTC 终端）同样操作，加入房间，并通知另一端；
-5. 双端创建媒体连接对象 [RTCPeerConnection](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection)，开始媒体协商；
+5. 双端创建媒体连接对象`RTCPeerConnection`，进行媒体协商；
 6. 双端进行连通性测试，最终建立连接；
-7. 将采集到的音视频数据通过 RTCPeerConnection 对象进行编码，最终通过 P2P 传送给对端/本地，再进行解码、展示。
+7. 将采集到的音视频数据通过`RTCPeerConnection`对象进行编码，最终通过 P2P 传送给对端/本地，再进行解码、展示。
 
-> 第 6 步在进行 P2P 穿越时很有可能失败。所以，当 P2P 穿越失败时，为了保障音视频数据仍然可以互通，则需要通过 TURN 服务器进行音视频数据中转。后面会讲到 TURN 服务是什么，以及如何搭建 TURN 服务。
+> 第 6 步在建立连接进行 P2P 穿越时很有可能失败。当 P2P 穿越失败时，为了保障音视频数据仍然可以互通，则需要通过 TURN 服务器进行音视频数据中转。后面会讲到 TURN 服务是什么，以及如何搭建 TURN 服务。
 
 接下来，我们按照通信过程，来一一讲解每一步要做的事情。
 
-### 第一步：音视频采集
+![webrtc-flow.png](./images/webrtc-flow.png)
 
-这一步，可以直接使用浏览器提供的 API 进行音视频采集：[getUserMedia](https://developer.mozilla.org/zh-CN/docs/Web/API/MediaDevices/getUserMedia)
+## 第一步：音视频采集
 
-语法
+采集音视频数据是 WebRTC 通信的前提，我们可以使用浏览器提供的 [getUserMedia](https://developer.mozilla.org/zh-CN/docs/Web/API/MediaDevices/getUserMedia) API 进行音视频采集。
 
 ```js
+const constraints = { video: true, audio: true }
 const localStream = navigator.mediaDevices.getUserMedia(constraints)
 ```
 
-传递参数[constraints](https://developer.mozilla.org/zh-CN/docs/Web/API/MediaDevices/getUserMedia#%E5%8F%82%E6%95%B0)用于指定 MediaStream 中包含哪些类型的媒体轨（音频轨、视频轨），并对媒体轨做设置。
+getUserMedia 接受参数[constraints](https://developer.mozilla.org/zh-CN/docs/Web/API/MediaDevices/getUserMedia#%E5%8F%82%E6%95%B0)用于指定 MediaStream 中包含哪些类型的媒体轨（音频轨、视频轨），并对媒体轨做设置（如设置视频的宽高、帧率等）。
 
-返回一个 promise 对象，成功后会获得 MediaStream 对象（包含从音视频设备中获取的音视频数据）；如果用户拒绝或无权限时，则返回 error。
+返回一个 promise 对象，成功后会获得流媒体对象 MediaStream（包含从音视频设备中获取的音视频数据）；
+使用 getUserMedia 时，浏览器会询问用户，开启音频和视频权限。如果用户拒绝或无权限时，则返回 error。
 
-#### Demo
+### Demo 展示
 
 通过`getUserMedia`成功回调拿到媒体流之后，通过将媒体流挂载到`videoDOM.srcObject`即可显示在页面上。
 
-效果如下：
+效果如下（帅照 🤵 自动马赛克）：
 
 ![video-demo.png](./images/video-demo.png)
 
-在线预览地址：[codepen.io](https://codepen.io/wang1xiang/pen/jOQdZJz)
+[👉🏻 在线体验地址](https://codepen.io/wang1xiang/pen/jOQdZJz)
 
-#### 其他相关 API
+### 其他相关 API
 
-##### [MediaDeviceInfo](https://developer.mozilla.org/en-US/docs/Web/API/MediaDeviceInfo)
+#### [MediaDeviceInfo](https://developer.mozilla.org/en-US/docs/Web/API/MediaDeviceInfo)
 
 用于表示每个媒体输入/输出设备的信息，包含以下 4 个属性：
 
 - deviceId: 设备的唯一标识；
-- groupId: 如果两个设备属于同一物理设备，则它们具有相同的组标识符 - 例如同时具有内置摄像头和麦克风的显示器。
-- label: 返回描述该设备的字符串，即设备名称（例如“外部 USB 网络摄像头”）；
-- kind: 设备种类，可用于识别出是音频设备还是视频设备，是输入设备还是输出设备：audioinput/audiooutput/videoinput
 
-通过`navigator.mediaDevices.enumerateDevices()`查看如下所示：
+- groupId: 如果两个设备属于同一物理设备，则它们具有相同的组标识符 - 例如同时具有内置摄像头和麦克风的显示器；
+
+- label: 返回描述该设备的字符串，即设备名称（例如“外部 USB 网络摄像头”）；
+
+- kind: 设备种类，可用于识别出是音频设备还是视频设备，是输入设备还是输出设备：`audioinput`/`audiooutput`/`videoinput`
+
+可以在浏览器控制台直接输入`navigator.mediaDevices.enumerateDevices()`返回如下所示：
 ![enumerateDevices-demo.png](./images/enumerateDevices-demo.png)
 
-##### [MediaDevices](https://developer.mozilla.org/zh-CN/docs/Web/API/MediaDevices)
+#### [MediaDevices](https://developer.mozilla.org/zh-CN/docs/Web/API/MediaDevices)
 
 该接口提供访问连接媒体输入的设备（如摄像头、麦克风）以及获取屏幕共享等方法。而我们需要获取可用的音视频设备列表，就是通过该接口中的方法来实现的，如前面提到的`getUserMedia`方法。
 
@@ -112,33 +186,30 @@ const localStream = navigator.mediaDevices.getUserMedia(constraints)
 
 - MediaDevices.getUserMedia()
 
-**需要 Https 环境支持，因为在浏览器上通过 HTTP 请求下来的 JavaScript 脚本是不允话访问音视频设备的，只有通过 HTTPS 请求的脚本才能访问音视频设备。**
+**需要 Https（或者 localhost）环境支持，因为在浏览器上通过 HTTP 请求下来的 JavaScript 脚本是不允话访问音视频设备的，只有通过 HTTPS 请求的脚本才能访问音视频设备。**
 
-### 第二/三/四步：双方发送信令
+## 第二/三/四步：信令交互
 
-#### 什么是信令服务器
+### 什么是信令服务器
 
 信令可以简单理解为消息，在协调通讯的过程中，为了建立一个 webRTC 的通讯过程，**在通信双方彼此连接、传输媒体数据之前，它们要通过信令服务器交换一些信息，如加入房间、离开房间及媒体协商**等，而这个过程在 webRTC 里面是没有实现的，需要自己搭建信令服务。
 
-#### 使用 Node 搭建信令服务器
+### 使用 Node 搭建信令服务器
 
 可以使用 [Socket.io](https://socket.io/zh-CN/) 来实现 WebRTC 信令服务器，Socket.io 已经内置了房间的概念，所以非常适合用于信令服务器的创建。
 
-Socket.io 发送消息和接受消息，有以下几种类型：
+以下使用 Socket.io 的过程中需要用到的知识点：
 
-- 给本次连接发消息
+- 给本次连接发消息 `emit`、`on`
 
   ```js
-  socket.emit()
   // 如 发送message消息
   const username = 'xx'
   const message = 'hello'
   // 发送消息
   socket.emit('message', username, message)
   // 接受消息
-  socket.on('message', (username, message) => {
-    console.log(`${username}: ${message}`)
-  })
+  socket.on('message', (username, message) => {})
   ```
 
 - 给某个房间内所有人发消息(除本连接外)
@@ -183,27 +254,24 @@ Socket.io 发送消息和接受消息，有以下几种类型：
 
    ```js
    // 监听连接
-   io.on(SOCKET_ON_SYS.CONNECTION, (socket) => {
-   const { query } = socket.handshake
-   // 获取socket连接参数 username和room
-   const { username, room } = query
-   ...
+   io.on('connection', (socket) => {
+    const { query } = socket.handshake
+    // 获取socket连接参数 username和room
+    const { username, room } = query
+    ...
    })
    ```
 
 4. 客户端同样注册接受/发送消息的事件，双方开始通信。
 
    ```js
-   socket.on(SOCKET_EMIT.MESSAGE, (room, data) => {
-     logger.debug(`收到消息: ${data}, 来自于房间: ${room}`)
-     socket.to(room).emit(SOCKET_EMIT.MESSAGE, room, data)
+   socket.on('message', (room, data) => {
+     socket.to(room).emit('message', room, data)
    })
-
-   socket.on(SOCKET_EMIT.LEAVE, (room, username) => {
+   
+   socket.on('leave', (room, username) => {
      socket.leave(room)
-     logger.debug(`离开房间: ${username}, 来自于房间: ${room}`)
-
-     socket.emit(SOCKET_EMIT.LEAVE, room, socket.id)
+     socket.emit('leave', room, socket.id)
    })
    ```
 
@@ -211,19 +279,17 @@ Socket.io 发送消息和接受消息，有以下几种类型：
 ![socketIO-demo.png](./images/socketIO-demo.png)
 
 顺便看一下日志信息：
-![socketIO-demo-log](./images/socketIO-demo-log.png)
+![socketIO-demo-log.png](./images/socketIO-demo-log.png)
 
-完成代码请参考：
+[👉🏻 完整代码地址](https://github.com/wang1xiang/webrtc-demo/tree/master/03-signal)
 
-### 第五步：创建 RTCPeerConnection 对象 媒体协商
+## 第五步：RTCPeerConnection 对象 媒体协商
 
-[RTCPeerConnection](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection)：代表一个由本地计算机到远端的 WebRTC 连接，该接口提供了创建，保持，监控，关闭连接的方法的实现。
+[RTCPeerConnection](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection)是一个由本地计算机到远端的 WebRTC 连接，该接口提供了创建，保持，监控，关闭连接的方法的实现，可以简单理解为功能强大的 socket 连接。
 
 通过`new RTCPeerConnection`即可创建一个 RTCPeerConnection 对象，此对象主要负责与**各端建立连接（NAT 穿越），接收、发送音视频数据**，并保障音视频的服务质量，接下来要说的端到端之间的媒体协商，也是基于 RTCPeerConnection 对象来实现的。
 
-简单点来说：“RTCPeerConnection 就是功能强大的 socket。”
-
-至于它是如何保障端与端之间的连通性，如何保证音视频的服务质量，又如何确定使用的是哪个编解码器等问题，作为应用者我们大可不必关心，因为所有的这些问题都已经在 RTCPeerConnection 对象的底层实现好了。
+至于它是如何保障端与端之间的连通性，如何保证音视频的服务质量，又如何确定使用的是哪个编解码器等问题，作为应用者的我们大可不必关心，因为所有的这些问题都已经在 RTCPeerConnection 对象的底层实现好了 👍。
 
 ```js
 const localPc = new RTCPeerConnection(rtcConfig)
@@ -233,38 +299,46 @@ localStream.getTracks().forEach((track) => {
 })
 ```
 
-我们在第一步获取音视频流后，需要将流添加到创建的 RTCPeerConnection 对象中，当 RTCPeerConnection 对象获得音视频流后，就可以开始与对端进行媒协体协商。
+> 在第一步获取音视频流后，需要将流添加到创建的 RTCPeerConnection 对象中，当 RTCPeerConnection 对象获得音视频流后，就可以开始与对端进行媒协体协商。
 
-#### 什么是媒体协商
+### 什么是媒体协商
 
-媒体协商的作用是找到双方共同支持的媒体能力，如双方各自支持的编解码器，音频的参数采样率，采样大小，声道数、视频的参数分辨率，帧率等等。类似于男女相亲的中间人，通过中间人男的知道了女的身高、颜值、身材，女的理解了男的家庭、财富、地位，你俩觉得“哇这么合适”，赶紧见面深入交流一下 💓。
+媒体协商的作用是**找到双方共同支持的媒体能力**，如双方各自支持的编解码器，音频的参数采样率，采样大小，声道数、视频的参数分辨率，帧率等等。
 
-上述说到的这些音频/视频的信息都会在 SDP（Session Description Protocal：即使用文本描述各端的“能力”）中进行描述。
+就好比两人相亲，通过介绍人男的知道了女的身高、颜值、身材，女的理解了男的家庭、财富、地位，然后找到你们的共同点“穷”，你俩觉得“哇竟然这么合适”，赶紧见面深入交流一下 💓。
+
+上述说到的这些音频/视频的信息都会在**SDP（Session Description Protocal：即使用文本描述各端的“能力”）** 中进行描述。
 
 > 一对一的媒体协商大致如下：首先自己在 SDP 中记录自己支持的音频/视频参数和传输协议，然后进行信令交互，交互的过程会同时传递 SDP 信息，另一方接收后与自己的 SDP 信息比对，并取出它们之间的交集，这个交集就是它们协商的结果，也就是它们最终使用的音视频参数及传输协议。
 
-#### 媒体协商过程
+### 媒体协商过程
 
-一对一通信中，发起方发送的 SDP 称为提议(Offer)，接收方发送的 SDP 称为应答(Answer)。每端保持两个描述：描述本身的**本地描述 LocalDescription**和描述呼叫的远端的**远程描述 RemoteDescription**。当通信双方 RTCPeerConnection 对象创建完成后，就可以进行媒体协商了，大致过程如下：
+一对一通信中，发起方发送的 SDP 称为`Offer`(提议)，接收方发送的 SDP 称为`Answer`(应答)。
 
-1. 发起方创建 Offer 类型的 SDP，保存为本地描述后再通过信令服务器发送到对端；
-2. 接收方接收到 Offer 类型的 SDP，将 Offer 保存为远程描述；
-3. 接收方创建 Answer 类型的 SDP，保存为本地描述，再通过信令服务器发送到发起方，此时接收方已知道连接双方的配置；
-4. 发起方接收到 Answer 类型的 SDP 后保存到远程描述，此时发起方也已知道连接双方的配置；
+每端保持两个描述：描述本身的本地描述`LocalDescription`，描述呼叫的远端的远程描述`RemoteDescription`。
+
+当通信双方 RTCPeerConnection 对象创建完成后，就可以进行媒体协商了，大致过程如下：
+
+1. 发起方创建 `Offer` 类型的 SDP，保存为本地描述后再通过信令服务器发送到对端；
+2. 接收方接收到 `Offer` 类型的 SDP，将 `Offer` 保存为远程描述；
+3. 接收方创建 `Answer` 类型的 SDP，保存为本地描述，再通过信令服务器发送到发起方，此时接收方已知道连接双方的配置；
+4. 发起方接收到 `Answer` 类型的 SDP 后保存到远程描述，此时发起方也已知道连接双方的配置；
 5. 整个媒体协商过程处理完毕。
+
+![webrtc-sdp.png](./images/webrtc-sdp.png)
 
 更详细的步骤请参考 MDN 中对[会话描述](https://developer.mozilla.org/zh-CN/docs/Web/API/WebRTC_API/Connectivity#%E4%BC%9A%E8%AF%9D%E6%8F%8F%E8%BF%B0)讲解。
 
-#### 代码实现媒体协商过程
+### 代码实现媒体协商过程
 
-通过 MDN 先了解下我们可能用到的 API：
+通过 MDN 先了解下我们需要用到的 API：
 
 - [createOffer](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection/createOffer)用于创建 Offer；
 - [createAnswer](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/createAnswer)用于创建 Answer；
 - [setLocalDescription](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/setLocalDescription)用于设置本地 SDP 信息；
 - [setRemoteDescription](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection/setRemoteDescription)用于设置远端的 SDP 信息。
 
-##### 发起方创建 RTCPeerConnection
+#### 发起方创建 RTCPeerConnection
 
 ```js
 // 配置
@@ -272,11 +346,7 @@ export const rtcConfig = null
 const localPc = new RTCPeerConnection(rtcConfig)
 ```
 
-##### 发起方/接收方创建 Offer 保存为本地描述
-
-发起方或接收方何时创建 Offer 呢？
-
-当房间内有两个人时，发起方/接收方开始创建 offer，并通过之前的信令服务器发送 Offer，代码如下：
+#### 发起方/接收方创建 Offer 保存为本地描述
 
 ```js
 let offer = await localPc.createOffer()
@@ -286,21 +356,20 @@ await localPc.setLocalDescription(offer)
 socket.emit('offer', offer)
 ```
 
-##### 接受 Offer 后 创建 Answer 并发送
+#### 接受 Offer 后 创建 Answer 并发送
 
 ```js
 socket.on('offer', offer) => {
   // 将 Offer 保存为远程描述；
-  await remotePc.setRemoteDescription(remoteDesc);
   remotePc = new RTCPeerConnection(rtcConfig)
-   await remotePc.setRemoteDescription(remoteDesc)
-   let remoteAnswer = await remotePc.createAnswer()
-   await remotePc.setLocalDescription(remoteAnswer)
-   socket.emit('answer', remoteAnswer)
+  await remotePc.setRemoteDescription(offer)
+  let remoteAnswer = await remotePc.createAnswer()
+  await remotePc.setLocalDescription(remoteAnswer)
+  socket.emit('answer', remoteAnswer)
 });
 ```
 
-##### 接受 Answer 存储为远程描述
+#### 接受 Answer 存储为远程描述
 
 ```js
 // 4. 发起方接收到 Answer 类型的 SDP 后保存到远程描述，此时发起方也已知道连接双方的配置；
@@ -310,15 +379,15 @@ socket.on('answer', answer) => {
 });
 ```
 
-至此，媒体协商结束，紧接着在 WebRTC 底层会收集 Candidate，并进行连通性检测，最终在通话双方之间建立起一条链路来。
+至此，媒体协商结束，紧接着在 WebRTC 底层会收集`Candidate`，并进行连通性检测，最终在通话双方之间建立起一条链路来。
 
-### 第六步：端与端建立连接
+## 第六步：端与端建立连接
 
 媒体协商结束后，双端统一了传输协议、编解码器等，此时就需要建立连接开始音视频通信了。
 
-但 WebRTC 既要保持音视频通信的**质量**，又要保证**联通**。所有，当同时存在多个有效连接时，它首先选择传输质量最好的线路，如能用内网连通就不用公网，优先 P2P 传输，如果 P2P 不通才会选择中继服务器（relay 服务器或 TURN 服务器），因为中继方式会增加双端传输的时长。
+但 WebRTC 既要保持音视频通信的**质量**，又要保证**联通性**。所有，当同时存在多个有效连接时，它首先选择传输质量最好的线路，如能用内网连通就不用公网，优先 P2P 传输，如果 P2P 不通才会选择中继服务器（relay），因为中继方式会增加双端传输的时长。
 
-#### 什么是 Candidate
+### 什么是 Candidate
 
 第五步最后，我们提到了媒体协商结束后，开始收集 Candidate，那么我们来了解下什么是 Candidate、以及它的作用是什么？
 
@@ -365,16 +434,17 @@ host 类型的 Candidate 是最好收集的，就是本机的 ip 地址 和端�
 ##### srflx 和 relay 类型
 
 srflx 类型的 Candidate 就是内网通过 NAT（Net Address Translation，作用是进行内外网的地址转换，位于内网的网关上）映射后的外网地址。如：访问百度时 NAT 会将主机内网地址转换为外网地址，发送请求到百度的服务器，服务器返回到公网地址和端口，在通过 NAT 转到内网的主机上。
+![net-address.png](./images/net-address.png)
 
-WebRTC 会怎么处理 NAT 呢？
+那 WebRTC 是怎么处理 NAT 的呢？
 
-没错，就是我们之前提到的 **STUN** 和 **TURN**
+没错，就是我们上面提到的 **STUN** 和 **TURN**
 
 ##### STUN 协议
 
 全称 Session Traversal Utilities for NAT（NAT 会话穿越应用程序），是一种网络协议，它允许位于 NAT 后的客户端找出自己的公网地址，也就是**遵守这个协议就可以拿到自己的公网 IP**。
 
-STUN 服务器可以直接使用 google 提供的免费服务 `stun.l.google.com:19302`，或者自己搭建。
+STUN 服务可以直接使用 google 提供的免费服务 `stun.l.google.com:19302`，或者自己搭建。
 
 ##### TURN 协议
 
@@ -387,7 +457,7 @@ relay 类型的 Candidate 获取是通过 TURN 协议完成，它的**连通率�
 WebRTC 首会先使用 STUN 服务器去找出自己的 NAT 环境，然后试图找出打“洞”的方式，最后试图创建点对点连接。
 当它尝试过不同的穿透方式都失败之后，为保证通信成功率会启用 TURN 服务器进行中转，此时所有的流量都会通过 TURN 服务器。这时如果 TURN 服务器配置不好或带宽不够时，通信质量就会变差。
 
-**STUN 服务器是用来获取外网地址进行 P2P；而 TURN 服务器是在 P2P 失败时进行转发的**
+**重点：STUN 服务器是用来获取外网地址进行 P2P；而 TURN 服务器是在 P2P 失败时进行转发的**
 
 ##### NAT 打洞/P2P 穿越
 
@@ -399,13 +469,12 @@ NAT 解决了 IPv4 地址不够用的情况，但因为有了 NAT，端与端之
 
 全称 Interactive Connectivity Establishment（交互式连通建立方式），ICE 协议通过一系列的技术（如 STUN、TURN 服务器）帮助通信双方发现和协商可用的公共网络地址，从而实现 NAT 穿越，也就是上面说的获取所有候选者类型的过程，即：在本机收集所有的 host 类型的 Candidate，通过 STUN 协议收集 srflx 类型的 Candidate，使用 TURN 协议收集 relay 类型的 Candidate。
 
-#### 代码实现收集 Candidate
+### 代码部分
 
 当 Candidate 被收集之后，会触发`icecandidate`事件，所以需要在代码中监听此事件，以对收集到的 Candidate 做处理。
 
 ```js
 localPc.onicecandidate = function (event) {
-  console.log('localPc:', event.candidate, event)
   // 回调时，将自己candidate发给对方，对方可以直接addIceCandidate(candidate)添加可以获取流
   if (event.candidate) socket.emit('candidate', event.candidate)
 }
@@ -423,9 +492,9 @@ localPc.onicecandidate = function (event) {
 await remotePc.addIceCandidate(candidate)
 ```
 
-如果 Candidate 连通性检测完成，那么端与端之间就建立了物理连接，这时媒体数据就可能通这个物理连接源源不断地传输了。
+如果 Candidate 连通性检测完成，那么端与端之间就建立了物理连接，这时媒体数据就可能通这个物理连接源源不断地传输了 🎉🎉🎉Ï。
 
-### 第七步：显示远端流
+## 第七步：显示远端流
 
 通信双方通过 RTCPeerConnection 建立连接后，本地的音视频数据源源不断的传输，要想在远端展示出来，就需要将 RTCPeerConnection 对象与`<video>`或`<audio>`进行绑定。
 
@@ -438,133 +507,15 @@ remotePc.ontrack = (e) => {
 }
 ```
 
-支持，一个完整的 WebRTC 通信过程就结束了 🎉🎉🎉。
+至此，一个完整的 WebRTC 通信过程就结束了。
 
-## 搭建 1 对 1 音视频聊天
+## 最后
 
-基于以上 WebRTC 通信过程的描述，我们来动手实践一对一音视频聊天。
+本文主要是针对小白的 WebRTC 扫盲教程，接下来会详细讲解一对一的音视频聊天，多人聊天，以及使用 Livekit 快速搭建多人音视频聊天系统。
 
-## TURN 服务器的搭建
+可以先体验我已经做好的 WebRTC 一对一视频聊天 👇👇👇
 
-TURN 服务有两个作用：一是提供 STUN 服务，客户端通过 STUN 服务获取自己的公网地址；而是提供数据中继服务（当数据通信双方无法通过 P2P 传输时，就需要通过中继的方式让通信双方的数据可以互通）。
+[👉🏻 在线体验地址](https://wangxiang.website/)
+[👉🏻 完整代码地址](https://github.com/wang1xiang/webrtc-demo/tree/master/04-one-to-one)
 
-1. 下载源码
-
-   目前最著名的 TURN 服务器是由 Google 发起的开源项目 [coturn](https://github.com/coturn/coturn),coturn 服务器完整的实现了 STUN/TURN/ICE 协议，支持 P2P 穿透防火墙。
-
-   ```bash
-   git clone https://github.com/coturn/coturn
-   ```
-
-2. 生成 Markfile
-
-   ```bash
-   cd coturn
-   ./configure --prefix=/usr/local/coturn
-   ```
-
-   需要安装 libevent 库，不然会报错
-
-   ![coturn-make-error.png](./images/coturn-make-error.png)
-
-3. 安装 libevent
-
-   如果已经安装过，则忽略这一步
-
-   首先安装运行 coturn 需要依赖的环境
-
-   ```bash
-   yum install openssl openssl-libs libevent2 libevent-devel
-   ```
-
-   如果 libevent2 安装失败，手动安装
-   下载地址：http://libevent.org/
-
-   ```bash
-   # 解压
-   tar -xf libevent-2.0.22-stable.tar.gz
-   cd ibevent-2.0.22-stable
-   # 生成Markfile
-    ./configure --prefix=/usr
-   # 执行make编译libevent
-   make
-   # 安装
-   make install
-   ```
-
-   完成后，测试是否安装成功
-
-   ```bash
-   ls -a /usr/lib |grep libevent
-   ```
-
-   ![libevent-success.png](./images/libevent-success.png)
-
-4. 继续安装 coturn
-
-   ```bash
-   ./configure
-   make
-   make install
-   ```
-
-5. 验证 coturn 服务是否安装成功
-
-   ```bash
-   which turnserver
-   # /usr/local/bin/turnserver
-   ```
-
-6. 生成签名
-
-   ```bash
-   cd /usr/local/etc/
-
-   openssl req -x509 -newkey rsa:2048 -keyout /usr/local/etc/turn_server_pkey.pem -out /usr/local/etc/turn_server_cert.pem -days 99999 -nodes
-   ```
-
-   一路回车即可，完成后在/use/local/etc 目录下就有了`turn_server_pkey.pem`和`turn_server_cert.pem`两个文件。
-
-7. 修改配置文件
-
-   ```bash
-   cp turnserver.conf.default turnserver.conf
-   vim turnserver.conf
-   ```
-
-   ```bash
-   # 网卡
-   listening-device=eth0
-   # 监听的端口
-   listening-port=3478
-   # 绑定的公网地址
-   external-ip=43.140.xxx.xx
-   # 用户名和密码
-   user=admin:123456
-   # 名称
-   realm=admin
-   ```
-
-8. 启动 turnserver
-
-   ```bash
-   ./turnserver ../etc/turnserver.conf
-   ```
-
-   查看是否启动成功
-
-   ```bash
-   ps -ef|grep turnserver
-   ```
-
-9. 检测
-
-   在线检测 ICE 穿透的地址：[https://webrtc.github.io...](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/)
-
-   上面这个地址用于检测 turn 服务是否可用，注意`查看服务器端口是否已开启`3478`
-
-   ![coturn-server-success.png](./images/coturn-server-success.png)
-
-   如果你测试一个 STUN 服务器，你能收集到一个类型为“srflx”的候选者，它就可以工作。如果你测试一个 TURN 服务器，你能收集到一个类型为“relay”的候选人，它就会工作。
-
-10.
+以上就是本文的全部内容，希望这篇文章对你有所帮助，欢迎点赞和收藏 🙏，如果发现有什么错误或者更好的解决方案及建议，欢迎随时联系。

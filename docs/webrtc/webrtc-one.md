@@ -100,7 +100,7 @@ WebRTC 一对一通话分为服务端和客户端，服务端使用 node 实现�
    })
    ```
 
-   注册以上三种事件，用于处理 WebRTC 双端进行媒体协商的过程
+   注册以上三种事件，用于处理 WebRTC 双端进行媒体协商和 ICE 候选的过程
 
 6. 离开房间/断开连接
 
@@ -116,7 +116,7 @@ WebRTC 一对一通话分为服务端和客户端，服务端使用 node 实现�
 
    当客户端调用`socket.disconnect()`断开连接时，服务端向房间内推送当前用户信息，客户端做相应处理。
 
-到这里，信令服务器服务端的代码已经完成
+到这里，信令服务器服务端的工作已经完成，接下来我们看下客户端。
 
 ## 客户端实现：搭建 1 对 1 音视频聊天
 
@@ -212,6 +212,12 @@ const initSocket = ({ username, room, remoteVideoRef, localStream }) => {
 
 ### 媒体协商
 
+上面我们在说到房间存在两人时，呼叫方开始发送 offer，即`sendOffer`方法，在此方法内部需要做以下事情：
+
+#### 创建 RTCPeerConnection 对象
+
+我们在[上篇文章](https://juejin.cn/post/7266417942182608955#heading-17)提到 RTCPeerConnection 对象的作用，还不太清楚的小伙伴可以回头再看一下。
+
 为了让 WebRTC 的相关 api 在各个浏览器中都能够正常的运行，强烈建议使用补充库，例如强大并且被广泛支持的 Adapter.js，引入它可以确保 WebRTC 在各个浏览器中的兼容性。
 
 两种方法引入：
@@ -233,13 +239,7 @@ const initSocket = ({ username, room, remoteVideoRef, localStream }) => {
    import adapter from 'webrtc-adapter'
    ```
 
-上面我们在说到房间存在两人时，呼叫方开始发送 offer，即`sendOffer`方法，在此方法内部需要做以下事情：
-
-#### 创建 RTCPeerConnection 对象
-
-我们在[上篇文章](https://juejin.cn/post/7266417942182608955#heading-17)提到 RTCPeerConnection 对象的作用，还不太清楚的小伙伴可以回头再看一下。
-
-这里的[rtcConfig](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection/RTCPeerConnection#%E5%8F%82%E6%95%B0)用于设置新连接的选项
+这里的[rtcConfig](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCPeerConnection/RTCPeerConnection#%E5%8F%82%E6%95%B0)用于设置新连接的选项：
 
 ```js
 export const rtcConfig = {
@@ -256,7 +256,7 @@ export const rtcConfig = {
 }
 ```
 
-如上所示，我们配置了`iceServers`，数组内每个对象描述一个可能被 ICE 代理使用的服务器；通常是 STUN 或 TURN 服务器。如果未指定，则将在没有可用的 STUN 或 TURN 服务器的情况下进行连接尝试，就只能实现 host 类型的 candidate 尝试连接，即局域网内 P2P。
+如上所示，我们配置了`iceServers`，数组内每个对象描述一个可能被 ICE 代理使用的服务器，也就是 STUN 或 TURN 服务器。如果未指定，则将在没有可用的 STUN 或 TURN 服务器的情况下进行连接尝试，就只能使用 host 类型的 candidate 尝试连接，即局域网内 P2P 通讯。
 
 ```js
 const sendOffer = async () => {
@@ -373,7 +373,7 @@ localPc.addIceCandidate(candidate)
 
 初始化 RTCPeerConnection 对象完成后，即`localPc`，我们调用了`addTrack()`方法可以将本地视频流`localStream`的每个轨道添加到`localPc`对象的一组轨道上。
 
-当建立连接完成后，这些 tracks 会被传输给对端，也就是我们称的推流。
+当建立连接完成后，这些 tracks 会源源不断的传输给对端，也就是我们称的推流。
 
 当对端收到 tracks 推送时，通过回调函数`localPc.ontrack`，就可以拿到远程推送的流媒体对象：
 
@@ -385,25 +385,55 @@ localPc.ontrack = (e) => {
 }
 ```
 
-当互相拿到对方的流媒体对象时，将流媒体通过`video.srcObject`赋给`<video />`标签，此时音视频数据就展现在当前页面上了。
+当互相拿到对方的流媒体对象时，将流媒体通过`video.srcObject`赋给`<video />`标签，此时音视频数据就展现在页面上了 🎉。
 
-## 后续工作
+## 更多
 
 ### 通过 RTCDataChannel 传输文本、文件等
 
-RTCDataChannel 接口是 WebRTC API 的一个功能，可以让您在两个对等体之间打开一个通道，您可以通过该通道发送和接收任意数据。API 有意地类似于 WebSocket API (en-US)，因此可以为每个 API 使用相同的编程模型。
-
-https://developer.mozilla.org/zh-CN/docs/Web/API/RTCDataChannel
-
-RTCPeerConnection 提供了一个方法用来创建 RTCDataChannel：
+[RTCDataChannel](https://developer.mozilla.org/zh-CN/docs/Web/API/RTCDataChannel) 接口是 WebRTC API 的一个功能，可以为通信双方打开一个通道，通过该通道发送和接收任意数据，如：文本、文件等
 
 ```js
 dataChannel = RTCPeerConnection.createDataChannel(label[, options]);
 ```
 
-假设使用 Peer A 的 RTCPeerConnection 创建了 RTCDataChannel，那么 Peer B 也需要创建 RTCDataChannel 吗？
-答案是：不用！
-Peer B 只需要监听 RTCPeerConnection 的 ondatachannel 事件即可，当 Peer A 创建 RTCDataChannel 成功后，Peer B 的 RTCPeerConnection 会收到通知，并触发 ondatachannel 事件传入 Peer A 的 RTCDataChannel 对象。
+通过 RTCPeerConnection 提供的`createDataChannel`方法来创建 RTCDataChannel，当通道连接成功后，触发回调函数`onopen`，这时候就可以通过`dataChannel.send(message)`发送消息了。
+
+```js
+let dataChannel
+const sendMessage = (username) => {
+  const button = document.querySelector('.data-channel__button')
+  const input = document.querySelector('.data-channel__input')
+  button.disabled = false
+  button.onclick = () => {
+    if (!input.value) return
+    const message = `${username}: ${input.value}`
+    dataChannel.send(message)
+    input.value = ''
+    receiveMessage(message)
+  }
+}
+const receiveMessage = (message) => {
+  const output = document.querySelector('.data-channel__output')
+  output.scrollTop = output.scrollHeight //窗口总是显示最后的内容
+  output.value = output.value + message + '\r'
+}
+const openDataChannel = (localPc, username) => {
+  // 创建datachannel通道
+  dataChannel = localPc.createDataChannel('test')
+  // datachannel通道打开 开始发送消息
+  dataChannel.onopen = () => sendMessage(username)
+  localPc.ondatachannel = (event) => {
+    // 成功拿到 RTCDataChannel
+    const dataChannel = event.channel
+    dataChannel.onmessage = (event) => receiveMessage(event.data)
+  }
+}
+
+export default openDataChannel
+```
+
+通过监听`ondatachannel`事件，获取到对端的`RTCDataChannel`，接着监听`onmessage`事件，即可拿到对端传输的消息。
 
 ### 中继方式：搭建 TURN 服务器
 

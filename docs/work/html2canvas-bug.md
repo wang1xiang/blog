@@ -229,7 +229,7 @@ ElementContainer 对象是一颗树状结构，层层递归，每个节点都包
 
 首先调用 parseStackingContexts 方法将 parseTree 生成的 ElementContainer 树来生成层叠上下文，树中的每一个 ElementContainer 节点都会产生一个 ElementPaint 对象，这个对象将会被直接作为第三阶段绘制该节点的依据。
 
-![html2canvas-canvas-parseStackingContexts](./images/html2canvas-canvas-parseStackingContexts.png)
+<!-- ![html2canvas-canvas-parseStackingContexts](./images/html2canvas-canvas-parseStackingContexts.png) -->
 
 ![html2canvas-renderNodeContent.png](./images/html2canvas-renderNodeContent.png)
 

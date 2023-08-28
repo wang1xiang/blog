@@ -6,7 +6,7 @@
   "scripts": {
     "zip": "cd .vitepress/dist && tar -zcvf ../dist.tar.gz *",
     "modify:github": "node scripts/modifyBase/github",
-    "build": "npm run modify:github && vitepress build",
+    "build": "vitepress build",
     "modify:server": "node scripts/modifyBase/server",
     "build:server": "npm run modify:server && cross-env APP_ENVKEY=server vitepress build && npm run zip",
     "dev": "cross-env NODE_ENV=development vitepress --port 9999",

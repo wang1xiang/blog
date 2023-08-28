@@ -99,6 +99,14 @@ livekit 的后台组件&命令行工具全部打包为 docker 镜像，这个对
 
 LiveKit 的 SFU 还包含服务器和客户端上的智能功能，会自动测量订阅者的下游带宽并相应地调整跟踪参数（例如分辨率或比特率），并且可以水平扩展 SFU 架构。
 
+### Video Simulcast
+Simulcast 使客户端能够发布同一视频轨道的多个版本，每个版本具有不同的比特率配置文件。此功能允许 LiveKit 根据每个接收者的可用带宽和首选分辨率动态转发最合适的流。
+
+### Adaptive Stream自适应流
+Adaptive Stream 自适应流允许开发人员构建动态视频应用程序，而不必担心界面设计或用户交互可能会影响视频质量。它使我们能够获取高质量渲染所需的最少位，并有助于扩展到非常大的会话。
+
+### Dynamic broadcasting动态广播
+LiveKit 采用端到端优化设计，可最大程度地减少带宽消耗。 动态广播 (Dynacast) 在订阅者未使用视频层时自动暂停视频层的发布。 此功能也扩展到联播视频：如果订阅者仅使用中低分辨率层，则高分辨率发布将暂停。
 ### sdk 完整
 
 有完整的 sdk 程序接口供开发人员使用
@@ -259,9 +267,26 @@ LiveKitRoom 组件为其所有子组件提供房间上下文。它通常是 Live
 2. 投入人少，项目催得紧，并且要求不高；
 3. 公司对音视频了解的人并不多。
 
-通过这一两周的摸索，目前对 WebRTC 有了一定的认知，但仅仅只是冰山一角，只是会使用或者只是能搭起来而已。
+通过这一两周的摸索，目前对 WebRTC 有了一定的认知，但仅仅只是冰山一角，只是会使用或者只是能搭起来而已，遇到问题还是得查资料或请教别人。
 
 ![tip-of-iceberg.png](./images/tip-of-iceberg.png)
 
-像最近有使用到 WebRTC 的调试工具：[webrtc-internals](chrome://webrtc-internals)去查看每个通道（RTCPeerConnection）的信息、查看带宽占用情况；
-有同事说视频一卡一卡的，然后去了解了“呼吸效应”等等，“深水区”的东西只有在慢慢使用过程中才会碰到，然后想办法解决才会得到提高 💪。
+像最近有使用到 WebRTC 的调试工具：<chrome://webrtc-internals/>去查看每个通道（RTCPeerConnection）的信息、查看带宽占用情况；
+
+有些同事反应画面静止不动播放时流畅且清晰，但是一旦有人经过或者背景剧烈运动，就会出现模糊的感觉，有个稍微懂 WebRTC 的同事让我去查下“呼吸效应”，然后就去了解了“呼吸效应”和“方块效应”等。
+
+**呼吸效应：视频编码中的呼吸效应是指由于 I 帧的插入造成图像质量忽然变好，切换到 P 帧后又忽然变差。**
+
+I 帧和 P 帧又是什么？参考[什么是 I 帧、P 帧和 B 帧？](https://zhuanlan.zhihu.com/p/489866125?utm_id=0#)
+
+**方块效应：主要是由视频图像采用基于块的编码方式和量化造成相邻块之间存在明显差异的现象，在视频编码中人眼察觉到的小块边界处的不连续。简单说就是视频编码的最小单元不是帧是宏块，每个宏块可能编码细节处理不一样，这样解码出来会发现视频中出问题总是一小块一小块的，一帧画面出现马赛克的地方有些区域很严重有些则能好点。**
+
+[视频编码中的块效应、振铃效应和呼吸效应分析](https://blog.csdn.net/u014470361/article/details/94641124?utm_medium=distribute.pc_relevant.none-task-blog-searchFromBaidu-3.control&depth_1-utm_source=distribute.pc_relevant.none-task-blog-searchFromBaidu-3.control)
+
+“深水区”的东西只有在慢慢使用过程中才会碰到，然后想办法解决才会得到提高。
+
+![upupup.png](./images/upupup.png)
+
+[👉🏻 本文代码地址](https://github.com/wang1xiang/webrtc-tutorial/tree/master/05-livekit)
+
+以上就是本文的全部内容，希望这篇文章对你有所帮助，欢迎点赞和收藏 🙏，如果发现有什么错误或者更好的解决方案及建议，欢迎随时联系。

@@ -168,6 +168,80 @@ cloneEle.querySelectorAll('.attachment-node-wrap').forEach((attach) => {
 })
 ```
 
+### CSS 问题
+
+8 月 30 号更新
+
+项目在本地运行时，通过 `document.head.querySelectorAll('style')` 便可以拿到所有样式信息。但是一旦打包上线，此时的样式文件都是通过外链的形式引入，以上获取 CSS 样式的代码就会获取不到。
+
+![css-link](./images/css-link.png)
+
+修改如下：
+
+```ts
+// 获取远程css资源 转为text文本
+const handleCssStream = async (result: Response) => {
+  if (!result.body) return ''
+  const reader = result.body.getReader()
+  const stream = await new ReadableStream({
+    start(controller) {
+      // The following function handles each data chunk
+      function push() {
+        // "done" is a Boolean and value a "Uint8Array"
+        reader.read().then(({ done, value }) => {
+          // If there is no more data to read
+          if (done) {
+            controller.close()
+            return
+          }
+          // Get the data and send it to the browser via the controller
+          controller.enqueue(value)
+          // Check chunks by logging to the console
+          push()
+        })
+      }
+      push()
+    },
+  })
+  const text = await new Response(stream, {
+    headers: { 'Content-Type': 'text/html' },
+  }).text()
+  return text
+}
+/**
+ * 处理css
+ * 线上环境 <link rel="stylesheet" type="text/css" href="/css/365.f542e1fc.css">
+ * 本地环境 <style type="text/css">
+ */
+const handleCss = async () => {
+  const styles = document.head.querySelectorAll('style')
+  const links = document.head.querySelectorAll('link[type="text/css"]')
+  // @ts-ignore
+  const remoteCSSPromise = [...links].map((link) => fetch(link.href))
+  const remoteCSSResult = await Promise.allSettled(remoteCSSPromise)
+
+  const remoteCSSStreamPromise = remoteCSSResult.map((item) => {
+    // @ts-ignore
+    const { status, value } = item
+    if (status === 'fulfilled') return handleCssStream(value)
+  })
+  const remoteCSSStreamResult = await Promise.allSettled(remoteCSSStreamPromise)
+  console.log('remoteCSSStreamResult', remoteCSSStreamResult)
+  const cssText = remoteCSSStreamResult.map((item) => {
+    // @ts-ignore
+    const { status, value } = item
+    if (status === 'fulfilled') return value
+  })
+  styles.forEach((css) => cssText.push(css.innerHTML))
+  return cssText
+}
+```
+
+1. 通过 `document.head.querySelectorAll('link[type="text/css"]')` 获取所有外链 CSS；
+2. 通过 fetch 获取远程 CSS 流，结果为[ReadableStream](https://developer.mozilla.org/zh-CN/docs/Web/API/ReadableStream)；
+3. 通过 `handleCssStream` 将可读流转换为 text 文本；
+4. 与其他 CSS 样式合并，最终转为文本内容，嵌入 html 内容中。
+
 ## 未解决的部分
 
 - 表情无法导出、钉钉、飞书都是如此

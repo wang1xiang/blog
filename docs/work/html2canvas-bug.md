@@ -6,7 +6,13 @@ tags:
 describe: html2canvas-bug
 ---
 
-## bug 行内元素设置背景换行
+## 🐛 问题复现
+
+之前在做文档内容导出为pdf、图片时用的是 html2canvas 生成截屏，感兴趣的同学可以看下这篇[一文搞定前端html内容转图片、pdf和word等文件](https://juejin.cn/post/7220434734966571068)，截图得到的图片内容、质量都没有什么问题。
+
+不过最近有个同事反应，他导出的图片有bug，这我倒挺好奇的，因为这个导出功能已经用了很久，并没有人反馈过有问题，于是我要了他的文档，果不其然，设置背景色文字
+
+![html2canvas-export-png](./images/html2canvas-export-png.png)
 
 检查一下它的 DOM 结构，发现是下面这样，那应该就是这个原因导致的。
 
@@ -182,7 +188,7 @@ render 方法执行很简单，首先通过 createForeignObjectSVG 将 DOM 内�
 
 接着通过。loadSerializedSVG 将上面的 SVG 序列化成 img 的 src（SVG 直接内联），调用`this.ctx.drawImage(img, ...);` 将图片绘制到 `this.canvas` 上，返回生成好的 canvas 即可。
 
-接着点击下一步，知道回到最开始的断点处，将生成好的 canvas 挂在到 DOM 上：
+接着点击下一步，直到回到最开始的断点处，将生成好的 canvas 挂在到 DOM 上：
 
 ```js
 document.body.appendChild(canvas)
@@ -198,6 +204,14 @@ document.body.appendChild(canvas)
 
 > 而且使用 foreignObject 渲染还有其他问题，后面再说。
 
+##### foreignObject 绘制 canvas 的流程
+
+1. 首先克隆原始 DOM，并将所有样式都转为行内样式，避免修改到页面
+2. 构建 ForeignObjectRenderer 渲染器实例，调用 renderer 方法
+3. 将 DOM 内容通过 createForeignObjectSVG 转为 svg 元素
+4. 通过 loadSerializedSVG 将上面的 svg 序列化成 img 的 src
+5. 通过 drawImage 绘制图片到 canvas 上
+
 #### 使用纯 canvas 绘制
 
 首先需要将 DOM 树转换为为 canvas 可以使用的数据类型，也就是 `parseTree` 这个方法。
@@ -212,58 +226,118 @@ parseTree 首先将根节点转换为 ElementContainer 对象，接着在 parseN
 
 最终将 DOM 节点转换为一个 ElementContainer 树，该对象主要包含 DOM 元素的信息：
 
-- bounds - 位置信息（宽/高、横/纵坐标）
+- bounds - 位置大小信息（宽/高、横/纵坐标）
 - styles - 样式数据
-- textNodes - 文本节点数据
-- elements - 子元素信息
+- textNodes - 当前节点下的文本节点（text: 文本内容，textBounds: 位置和大小信息）
+- elements - 除文本节点外的子元素
 - flags - 标志位，用来决定如何渲染的标志
 
 ElementContainer 对象是一颗树状结构，层层递归，每个节点都包含以上字段：
 ![html2canvas-canvas-ElementContainer](./images/html2canvas-canvas-ElementContainer.png)
 
-通过 parseTree 把目标 DOM 节点转换为 ElementContainer 树之后，就需要结合 Canvas 调用渲染方法了。
+通过 parseTree 把目标 DOM 节点转换为 ElementContainer 树之后，就需要使用 canvas 的渲染方法。
 
 首先通过 `CanvasRenderer` 创建一个渲染器 `renderer`，创建 `this.canvas`和`this.ctx`对象与 `ForeignObjectRenderer` 类似
 
 得到渲染器后，调用 render 方法生成 canvas，在这里就与 `ForeignObjectRenderer` 的 render 方法产生差别了:
 
-首先调用 parseStackingContexts 方法将 parseTree 生成的 ElementContainer 树来生成层叠上下文，树中的每一个 ElementContainer 节点都会产生一个 ElementPaint 对象，这个对象将会被直接作为第三阶段绘制该节点的依据。
+通过[渲染上下文（The rendering context）](https://developer.mozilla.org/zh-CN/docs/Web/API/Canvas_API/Tutorial/Basic_usage#%E6%B8%B2%E6%9F%93%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%88the_rendering_context%EF%BC%89)一节，可以了解到 canvas 绘制节点时需要先计算出整个目标节点里子节点渲染时所展现的不同层级，所以会先调用 parseStackingContexts 方法将 parseTree 生成的 ElementContainer 树转为层叠上下文（请拜读[深入理解 CSS 中的层叠上下文和层叠顺序](https://www.zhangxinxu.com/wordpress/2016/01/understand-css-stacking-context-order-z-index/)），树中的每一个 ElementContainer 节点都会产生一个 ElementPaint 对象，最终生成层叠上下文的 StackingContext 如下：
 
-<!-- ![html2canvas-canvas-parseStackingContexts](./images/html2canvas-canvas-parseStackingContexts.png) -->
+![html2canvas-canvas-StackingContext](./images/html2canvas-canvas-StackingContext.png)
+
+数据结构如下：
+
+```ts
+// ElementPaint 数据结构如下
+ElementPaint: {
+  // 当前元素的container
+  container: ElementContainer
+  // 当前元素的border信息
+  curves: BoundCurves
+}
+
+// StackingContext 数据结构如下
+{
+  element: ElementPaint;
+  // z-index为负的元素行测会给你的层叠上下文
+  negativeZIndex: StackingContext[];
+  // z-index为零或auto、transform或者opacity元素形成的层叠上下文
+  zeroOrAutoZIndexOrTransformedOrOpacity: StackingContext[];
+  // 定位或z-index大于等于1的元素形成的层叠上下文
+  positiveZIndex: StackingContext[];
+  // 非定位的浮动元素形成的层叠上下文
+  nonPositionedFloats: StackingContext[];
+  // 内联的非定位元素形成的层叠上下文
+  nonPositionedInlineLevel: StackingContext[];
+  // 内联元素
+  inlineLevel: ElementPaint[];
+  // 非内联元素
+  nonInlineLevel: ElementPaint[];
+}
+```
+
+渲染层叠内容时会根据 StackingContext 来决定渲染的顺序，接着继续执行，调用 renderStack 方法，renderStack 执行 renderStackContent 方法，我们直接进入 renderStackContent 内：
+
+![html2canvas-canvas-renderStackContent](./images/html2canvas-canvas-renderStackContent.png)
+
+canvas 绘制时遵循 w3c 规定的渲染规则 [painting-order](https://www.w3.org/TR/css-position-3/#painting-order)，renderStackContent 是对 painting-order 的一个代码实现，步骤如下：
+
+此处的步骤 1-7 对应上图代码中的 1-7:
+
+1. 渲染当前层叠上下文的元素的背景和边框；
+2. 渲染具有负 z-index 级别的子层叠上下文（最负的第一个）；
+3. 对于流式布局、非定位的子元素调用 renderNodeContent 和 renderNode 进行渲染：
+4. 渲染所有未定位的浮动子元素，对于其中每一个，将该元素视为创建了一个新的堆栈上下文；
+5. 渲染正常流式布局、内联元素、非定位的子元素；
+6. 渲染 z-index 为 0 或 auto，或者 transform、opacity 等属性的子元素；
+7. 渲染由 z-index 大于或等于 1 的子元素形成的层叠上下文，按 z-index 顺序（最小的在前）。
+
+可以看到遍历时会对形成层叠上下文的子元素递归调用 renderStack，最终达到对整个层叠上下文树进行递归的目的：
+
+而对于未形成层叠上下文的子元素，就直接调用 renderNode 或 renderNodeContent 这两个方法，renderNode 函数内部调用 renderNodeBackgroundAndBorders 和 renderNodeContent 方法，两者对比，renderNode 多了一层渲染节点的边框和背景色的方法。
+
+renderNodeContent 用于渲染一个元素节点里面的内容，分为八种类型：纯文本、图片、canvas、svg、iframe、checkbox 和 radio、input、li 和 ol。
+
+除了 iframe 的绘制比较特殊：重新生成渲染器实例，调用 render 方法重新绘制，其他的绘制都是调用 canvas 的一些 API 来实现，比如绘制文字主要用 fillText 方法、绘制图片、canvas、svg 都是调用 drawImage 方法。
+
+![html2canvas-canvas-renderNode](./images/html2canvas-canvas-renderNode.png)
+
+##### 纯 canvas 绘制流程
+
+1. 首先克隆原始 DOM，避免修改到页面
+2. 构建 CanvasRenderer 渲染器实例，调用 renderer 方法
+3. 使用 parseTree 递归遍历 html，生成 ElementContainer 树（与原始 DOM 层级结构类似）
+4. 遍历上一步生成的 ElementContainer，根据层叠规则生成层叠上下文 StackingContext（与原始 DOM 层级结构区别较大）
+5. 遍历层叠上下文，递归地对层叠上下文各层中的节点和子层叠上下文进行解析并按顺序绘制在 Canvas 上，针对要绘制的每个节点，主要有以下两个过程：
+6. 创建画布，根据上一步生成的层叠对象递归渲染，最终绘制到画布 canvas 上
+
+## 针对此 Bug 分析
+
+ok，当我们走了一遍 html2canvas 的流程之后，再来看这个问题，很显然就是 canvas 渲染的时候的问题，也就是 renderNodeContent 方法，那我们直接在这里打个断点进行调试（为了方便我只输入一行文字进行调试），只有当是文本节点时会进入到此断点，等到 mark 标签中对应的元素进入断点时，查看：
 
 ![html2canvas-renderNodeContent.png](./images/html2canvas-renderNodeContent.png)
 
-## 总结过程
-
-1. 解析原始 DOM 为 ElementContainer（与原始 DOM 层级结构类似）
-2. 解析 ElementContainer 为一组树状的层叠上下文（stackingContext，与原始 DOM 层级结构区别较大）
-3. 从最上层的层叠上下文开始，递归地对层叠上下文各层中的节点和子层叠上下文进行解析并按顺序绘制在 Canvas 上，针对要绘制的每个节点，主要有以下两个过程：
-   - 解析节点的”效果“（变换、剪切、透明度）并应用于 Canvas 上
-   - 在 Canvas 上绘制
+可以看到此时 width 和 height 已经是父节点的宽高，果真如此，那这就算不上 bug 了，只能说是特性。
 
 ## 解决方案
 
-### foreignObject 弊端
+既然已经知道了问题所在，那么我们开始解决问题，有以下两种解决方案可供参考：
 
-本来想着这样就算解决完了，但是又出现了新问题：图片不展示了 🐎
+### foreignObjectRendering
+
+在 html2canvas 配置中设置 `foreignObjectRendering` 为 `true`，此问题即可解决。但是这样又会出现引出新的问题：导出的图片内容丢失 🐎
 
 这是为什么呢？
 
-通过 W3C 对[SVG 的介绍](https://svgwg.org/specs/integration/#static-image-document-mode)可知：**SVG 不允许连接外部的资源**，比如 HTML 中图片链接、CSS link 方式的资源链接等，在 SVG 中都会有限制；
+通过 W3C 对[SVG 的介绍](https://svgwg.org/specs/integration/#static-image-document-mode)可知：**SVG 不允许连接外部的资源**，比如 HTML 中图片链接、CSS link 方式的资源链接等，在 SVG 中都会有限制。
 
-SVG 的位置大小和 foreignObject 标签的位置大小不能够确定，需要计算。
+需要将图片资源转为 base64，然后再去生成截图。
 
-#### 解决方案
+### 对包含背景色的内联标签截断处理
 
-在 HTML 文档中存在 img 图片标签的链接为外部资源，需要处理为 base64 资源，通过 loadAndInlineIages 函数进行处理，以下是 loadAndInlineIages 函数。
+在对内联元素进行截断前，**如何确定 p 标签中的 mark 标签有没有换行？**
 
-而这个在 html2canvas 中是没有进行处理的，需要我们自己进行处理。
-
-### 标签截断
-
-既然已经知道了问题所在，那么我们开始解决问题。
-
-首先，**怎么确定 `<p>` 标签中的 `<mark>` 标签有没有换行？**
+如果 mark 标签的高度超过 p 标签的一半时，就说明已经换行了，然后将 `<mark>要求一</mark>` 替换为 `<mark>要</mark><mark>求</mark><mark>一</mark>` 即可，代码如下：
 
 ```ts
 const handleMarkTag = (ele: HTMLElement) => {
@@ -279,7 +353,7 @@ const handleMarkTag = (ele: HTMLElement) => {
     ).getBoundingClientRect()
     // mark的高度没有超过p标签的一半时 则没有换行
     if (height < parentHeight / 2) continue
-    // 超过一半时说明换行了 将<mark>测试文案</mark>替换为<mark>测</mark><mark>试</mark><mark>文</mark><mark>案</mark>
+    // 超过一半时说明换行了
     const innerText = sel.innerText
     const outHtml = sel.outerHTML
     let newHtml = ''
@@ -291,30 +365,10 @@ const handleMarkTag = (ele: HTMLElement) => {
 }
 ```
 
-## 新问题
-
-### 远程 css 加载
-
-fetch
-
-结果为[ReadableStream](https://developer.mozilla.org/zh-CN/docs/Web/API/ReadableStream)
-
-### pdf 导出画面不清晰
-
-html2canvas 的 scale 是用于控制渲染的比例，默认为浏览器的设备像素比即 window.devicePixelRatio。
-如果觉得模糊，增加一倍即可，同时导出的文件大小也会同步增加
-
-window.devicePixelRatio \* 2 解决
-通过设置 html2canvas 的 scale 参数， 对 canvas 进行等比放大，可以使 canvas 生成的图片更清晰，但是放大越大生成的文件也就越大，默认像素比\*2，基本满足需求。
-
-大致原理： 使用扩大 Canvas 画布宽高并缩放绘制内容的方式来提高图像清晰度。
-
-具体来说，如果将 Canvas 画布宽高扩大两倍，再将绘制的图像通过 scale() 方法在水平和垂直方向同时缩小一半（context.scale(0.5, 0.5)），最终呈现的图像占用的像素相比原来没有变化，但是细节更加清晰，像素点更加紧密。
-
-这种方式能够提高清晰度的原因是，当将 Canvas 宽高扩大时，每个像素点的密度也会相应增加，细节更加清晰。而 scale() 方法的缩小是在突出像素的细节的同时，对整个图像进行压缩，使得图像占用的像素数不变，从而在原有像素上为图像提高了清晰度。不过需要注意，如果扩大倍数过高，图像可能会出现失真等问题，这时需要调整扩大倍数和缩放比例来达到最佳效果。
-
 ## 总结
 
-1. html 内容导出图片的流程
-2. svg xmnls 的作用
-3. 
+通过对此 bug 的修复，跑了一遍 html2canvas 的代码，学到了
+
+1. html2canvas 截图的原理及核心流程
+2. svg xmnls 作用以及渲染 HTML 内容的 foreignObject 标签
+3. CSS 层叠上下文

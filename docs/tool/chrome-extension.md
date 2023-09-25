@@ -1,6 +1,6 @@
 ---
 date: 2023-6-30
-title: 前端开发，推荐一些好用的浏览器插件
+title: 软技能，如何用好浏览器插件
 tags:
   - tool
 describe: 前端开发，推荐一些好用的浏览器插件
@@ -10,7 +10,6 @@ describe: 前端开发，推荐一些好用的浏览器插件
 
 ## 插件总览
 
-- [Grow in 掘金](https://chrome.google.com/webstore/detail/grow-in-%E6%8E%98%E9%87%91/kiejcjemfigohhmeielfbifkikkiefeg)
 - [Pretty Js](https://chrome.google.com/webstore/detail/pretty-js/kililblhcfpodipkcbobnbgnbbhgbkji)
 - [Ajax interceptor](https://chrome.google.com/webstore/detail/ajax-modifier/nhpjggchkhnlbgdfcbgpdpkifemomkpg)
 - [Cookie-Editor](https://chrome.google.com/webstore/detail/hlkenndednhfkekhgcdicdfddnkalmdm)
@@ -20,11 +19,6 @@ describe: 前端开发，推荐一些好用的浏览器插件
 - [Google 翻译](https://chrome.google.com/webstore/detail/google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb)
 - [Octotree](https://chrome.google.com/webstore/detail/octotree-github-code-tree/bkhaagjahfmjljalopjnoealnfndnagc?utm_source=chrome-ntp-icon)
 - [油猴](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
-
-### Grow in 掘金
-
-![grow-in-juejin.png](./images/grow-in-juejin.png)
-插件那么多，必须首推咱们 jym 都喜欢的`Grow in 掘金`插件 🥹。可以看到安装完之后，主页多了社区活跃度、成长趋势、偏好分布、进行中的活动以及我的活动进度等选项。
 
 ### Pretty Js
 

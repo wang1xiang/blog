@@ -1,6 +1,6 @@
 ---
 date: 2023-8-21
-title: html2canvas工作流程：它到底是怎么截图的？？？卷他
+title: 悟了，html2canvas截图原理，它到底是怎么截图的？卷他
 tags:
   - work
 describe: html2canvas-bug
@@ -14,15 +14,15 @@ describe: html2canvas-bug
 
 ![html2canvas-export-png](./images/html2canvas-export-png.png)
 
-检查一下它的 DOM 结构，发现是下面这样，那应该就是这个原因导致的。
+检查一下它的 DOM 结构，发现是下面这样，猜测是就是这个原因导致的。
 
 ![html2canvas-mark-bug](./images/html2canvas-mark-bug.png)
 
-为了验证自己的猜想，浅浅调试一下 html2canvas 的源码，看下 html2canvas 是怎样一个流程，是如何转成 canvas 的。
+为了验证自己的猜想，浅浅调试一下 html2canvas 的源码，看下 html2canvas 是怎样一个流程，它是如何将 html 内转成 canvas 的。
 
 ## 调试开始
 
-我们在 html2canvas 执行的地方打个端点，开始调试代码：
+我们在 html2canvas 执行的地方打个断点，开始调试代码：
 
 ![html2canvas-point.png](./images/html2canvas-point.png)
 
@@ -49,7 +49,8 @@ describe: html2canvas-bug
 
 ![html2canvas-merge-options](./images/html2canvas-merge-options.png)
 
-构建配置项，将传入的 `opts` 与默认配置合并，同时初始化一个 `context` 对象：
+构建配置项，将传入的 `opts` 与默认配置合并，同时初始化一个 `context` 上下文对象（缓存、日志等）：
+
 ![html2canvas-context.png](./images/html2canvas-context.png)
 
 ##### 缓存对象 cache
@@ -80,12 +81,12 @@ describe: html2canvas-bug
 
 ### 绘制 canvas
 
-前面几步很简单，主要是对传入的 DOM 元素进行解析，获取目标节点的样式和内容。而重点就是要将 DOM 渲染为 canvas，html2canvas 提供了两种绘制 canvas 的方式：
+前面几步很简单，主要是对传入的 DOM 元素进行解析，获取目标节点的样式和内容。重点是 `toCanvas` 即将 DOM 渲染为 canvas 这个过程，html2canvas 提供了两种绘制 canvas 的方式：
 
 1. 使用 foreignObject 方式绘制 canvas
 2. 使用纯 canvas 方法绘制
 
-我们继续执行，当代码执行到这里时判断是否使用 foreignObject 的方式生成 canvas：
+咱们接着执行，当代码执行到这里时判断是否使用 foreignObject 的方式生成 canvas：
 
 ![html2canvas-foreignObjectRendering](./images/html2canvas-foreignObjectRendering.png)
 
@@ -336,7 +337,7 @@ ok，当调试了一遍 html2canvas 的流程之后，再回到我们的问题�
 
 ![html2canvas-renderNodeContent.png](./images/html2canvas-renderNodeContent.png)
 
-可以看到此时 width 和 height 已经是父节点的宽高，果真如此，那这就算不上 bug 了，只能说是特性 🤪。
+可以看到此时 width 和 height 已经是父节点的宽高，果真如此 😱。
 
 ## 解决方案
 
@@ -352,11 +353,11 @@ ok，当调试了一遍 html2canvas 的流程之后，再回到我们的问题�
 
 通过 W3C 对[SVG 的介绍](https://svgwg.org/specs/integration/#static-image-document-mode)可知：**SVG 不允许连接外部的资源**，比如 HTML 中图片链接、CSS link 方式的资源链接等，在 SVG 中都会有限制。
 
-解决方法：需要将图片资源转为 base64，然后再去生成截图，放弃。
+解决方法：需要将图片资源转为 base64，然后再去生成截图，foreighnObject 这种方法更适合截取内容为文字内容居多的场景。
 
 ### 对包含背景色的内联标签截断处理
 
-在对内联元素进行截断前，**如何确定 p 标签中的 mark 标签有没有换行？**
+在对内联元素进行截断前，**如何确定 p 标签中的 mark 标签有没有换行？** 因为我们没必要对所有内联标签做处理。
 
 如果 mark 标签的高度超过 p 标签的一半时，就说明已经换行了，然后将 `<mark>要求一</mark>` 替换为 `<mark>要</mark><mark>求</mark><mark>一</mark>` 即可，代码如下：
 
@@ -393,8 +394,8 @@ ok，再次尝试一下，完美解决，这下可以收工了。
 通过对一个 bug 的分析，尝试调试了一遍 html2canvas 的代码，弄懂了浏览器截图的原理及 html2canvas 的核心流程，并从中学到了几点新知识：
 
 1. svg xmnls 作用以及渲染 HTML 内容的 foreignObject 标签；
-2. CSS 层叠上下文的概念；
-3. canvas 绘图的一些方法。。。
+2. CSS 层叠上下文的概念；；
+3.  使用 foreignObject 实现快速截图的方法；
+4. canvas 绘图的一些方法。。。
 
-发现 canvas 真是一个有趣的东西，什么都能画，像我现在用于画图的工具[excalidraw](https://excalidraw.com/)、图表库[g6](https://g6.antv.antgroup.com/)、[g2](https://g2.antv.antgroup.com/)、[echarts](https://echarts.apache.org/zh/index.html)都是用的 canvas 搞的，看来得抽时间学习一下 canvas，没准学完就能用到。
-
+发现 canvas 真是一个有趣的东西，什么都能画，像我现在用于画图的工具[excalidraw](https://excalidraw.com/)、图表库[g6](https://g6.antv.antgroup.com/)、[g2](https://g2.antv.antgroup.com/)、[echarts](https://echarts.apache.org/zh/index.html)都是用的 canvas 搞的，看来得抽时间学习一下 canvas，不要等到“书到用时方恨少“。

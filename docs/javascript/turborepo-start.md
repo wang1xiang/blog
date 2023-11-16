@@ -1,9 +1,9 @@
 ---
 date: 2023-4-26
-title: turborepo学习笔记
+title: Turborepo学习笔记
 tags:
   - javascript
-describe: Turborepo-start
+describe: 使用Turborepo改造公司项目
 ---
 
 ## 前言
@@ -169,26 +169,178 @@ turbo build lint
   }
   ```
 
-1. 创建任务管道 pipeline
+## Monorepo 配置
 
-   用配置文件定义任务之间的关系，然后让 Turborepo 优化构建内容和时间。
+假设一个 Monorepo 的项目如下所示：
 
-   **任务管道也就是命令**，类似 gulp 的 task(任务)，可以将需要使用“涡轮增压”的命令配置在这里。
+![monorepo-demo](./images/monorepo-demo.png)
 
-   pipeline 配置声明了在 monorepo 中哪些任务相互依赖:
+根目录的 package.json 有一个 workspaces 字段，该字段用来让 Turborepo 知道目录下有哪些 workspace，这些 workspace 就交给 Turborepo 管理；
 
-   pipeline 是一个核心的概念，Turborepo 也是通过 pipeline 来处理各个任务和他们的依赖关系的。
+```json
+"workspaces": [
+  "apps/*",
+  "packages/*"
+],
+```
 
-   如果 Turbo 发现一个工作空间有一个 package.json scripts 对象中有一个匹配的键，它会在执行时将 pipeline 任务配置应用到那个 npm 脚本上。这样你就可以使用 pipeline 来设置你整个 Turborepo 的约定。
+在根目录 npm i，会把各 workspace 的 npm 依赖安装在根目录的 node_modules 中，而不是安装在各 workspace 的 node_modules 中；
 
-   上面的示例中，`build`和`test`这两个任务具有依赖性，必须要等他们的依赖项对应的任务完成后才能执行，所以这里用`^`来表示。
+全局安装
 
-   在传统的 monorepo 仓库中，比如使用了 lerna 或者 yarn 的 workspace 进行管理，每个 npm 包的 script(如 build 或者 test)，都是依赖执行或者独立并行的执行。如果一个命令存在包的依赖关系，那么在执行的时候，CPU 的核心可能会被闲置，这样会导致计算性能和时间上的浪费。
+```bash
+npm i vue -w
+```
 
-   Turborepo 提供了一种声明式的方法来指定各个任务之间的关系，这种方式能够更容易理解各个任务之间的关系，并且 Turborepo 也能通过这种显式的声明来优化任务的执行并充分调度 CPU 的多核心性能。
+单独为某一个 workspace 安装 npm 依赖：
 
-   ```json
-   "pipeline": {
+```bash
+npm i vue-router -w=xxx
+```
+
+各 workspace 的 package.json 中的 name 字段很关键，它是 Turborepo 用来区分不同 workspace 的字段。
+
+### 任务管道 pipeline
+
+作用：**任务管道也就是命令，用配置文件定义任务之间的关系，然后让 Turborepo 优化构建内容和时间**。
+
+pipeline 配置声明了在 monorepo 中哪些任务相互依赖，Turborepo 是通过 pipeline 来处理各个任务和他们的依赖关系的。
+
+如果 Turbo 发现一个工作空间有一个 package.json scripts 对象中有一个匹配的键，它会在执行时将 pipeline 任务配置应用到那个 npm 脚本上。这样你就可以使用 pipeline 来设置你整个 Turborepo 的约定。
+
+#### 配置 pipeline
+
+pipeline 中每个键名都可以通过运行`turbo run`来执行，并且可以使用`dependsOn`来执行当前管道的依赖项。
+
+```json
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "dev": {
+      "dependsOn": ["^dev"],
+      "cache": false
+    },
+    "test": {
+      "dependsOn": ["lint", "build"]
+    }
+  }
+}
+```
+
+##### dependsOn 依赖
+
+- 常规依赖
+
+  如果一个任务的执行，只依赖自己包其他的任务，那么可以把依赖的任务放在 dependsOn 数组里
+
+  ```json
+  {
+    "turbo": {
+      "pipeline": {
+        "test": {
+          "dependsOn": ["lint", "build"]
+        }
+      }
+    }
+  }
+  ```
+
+- 拓扑依赖
+
+  可以通过`^`符号来显式声明该任务具有拓扑依赖性，需要依赖的包执行完相应的任务后才能开始执行自己的任务
+
+  ```json
+  {
+    "turbo": {
+      "pipeline": {
+        "build": {
+          "dependsOn": ["^build"]
+        }
+      }
+    }
+  }
+  ```
+
+- 空依赖
+
+  如果一个任务的 dependsOn 为`undefined`或者`[]`，那么表明这个任务可以在任意时间被执行
+
+  ```json
+  {
+    "turbo": {
+      "pipeline": {
+        "lint": {
+          "outputs": []
+        }
+      }
+    }
+  }
+  ```
+
+比如`web`中 package.json 文件中 devDependencies 或者 dependencies 添加了`web1`和`web2`的依赖，此时执行`turbo build`命令运行`web`的打包命令时，会先等待`web1`和`web2`的`build`命令执行完成后，才会执行`web`中的`build`命令：
+
+![turborepo-build](./images/turborepo-build.png)
+
+上面的 dependsOn 配置解释如下：
+
+- build：依赖于其依赖项的 build 命令执行完成
+- dev：依赖于其依赖项的 dev 命令执行完成
+- test： 依赖于自身的 lint 和 build 命令执行完成
+- lint：任何时候可以执行
+
+### 其他字段
+
+- env
+
+  任务所依赖的环境变量，与 globalEnv 作用类似
+
+- outputs
+
+  构建产物输出的目录，当开启缓存时，Turbo 会将对应目录的产物进行缓存
+
+- cache
+
+  布尔类型，是否开启缓存，默认为 true
+
+- inputs
+
+  默认为[]，用于指定哪些文件的变化会触发任务的重新执行。
+
+- outputMode
+
+  设置输出日志记录的类型
+  full：默认设置，显示所有输出
+  hash-only: 只显示任务的 hash 值
+  new-only: 只显示没有命中缓存的任务输出
+  errors-only: 只显示失败的任务输出
+  none: 隐藏所有任务输出
+
+- persistent
+
+  如果当前任务是一个长时间运行的进程，比如 dev 命令，则可以设为 true
+
+- globalEnv
+
+  globalEnv 是一个字符串数组，用来指定一些环境变量作为全局的哈希依赖。这些环境变量的内容会被包含在全局的哈希算法中，影响所有任务的哈希值。例如，你可以在 globalEnv 中指定 GITHUB_TOKEN，这样当 GITHUB_TOKEN 的值发生变化时，所有任务的缓存都会失效。
+
+  globalEnv 的值是从运行 turbo 命令的环境中获取的，你可以在终端中设置或者使用 .env 文件来管理。
+
+- globalDependencies
+
+  globalDependencies 是一个字符串数组，用来指定一些文件作为全局的哈希依赖。这些文件的内容会被包含在全局的哈希算法中，影响所有任务的哈希值，例如配置 tsconfig.json、jest.config.js，当这些文件内容有变化时，所有构建缓存将会失效
+
+最后贴一下我们项目的 turbo 配置：
+
+```js
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
     "_build": {
       "description": "web 打包指令， 依赖的 word 的 pack 结果",
       "dependsOn": ["^_build", "^pack"],
@@ -211,210 +363,12 @@ turbo build lint
       "dependsOn": ["^pack"],
       "cache": false
     }
-   }
-   ```
-
-   "dependsOn": ["^build"] // 其依赖项构建命令完成后，进行构建
-   "dependsOn": ["build"] // 自身的构建命令完成后，进行测试（故上图存在错误）
-   "dependsOn": ["build", "test", "lint"] // 自身 lint 构建测试命令完成后，进行部署
-
-   ```json
-   {
-     "turbo": {
-       "pipeline": {
-         "build": {
-           "dependsOn": ["^build"],
-           "outputs": [".next/**"]
-         },
-         "test": {
-           "dependsOn": ["^build"],
-           "outputs": []
-         },
-         "lint": {
-           "outputs": []
-         },
-         "dev": {
-           "cache": false
-         }
-       }
-     }
-   }
-   ```
-
-   ### 配置 pipeline
-
-   pipeline 中每个键名都可以通过运行`turbo run`来执行，并且可以使用`dependsOn`来执行当前管道的依赖项。
-
-   上图的执行流程，可以配置成如下的格式
-
-   ```json
-   {
-     "turbo": {
-       "pipeline": {
-         "build": {
-           "dependsOn": ["^build"]
-         },
-         "test": {
-           "dependsOn": ["build"],
-           "outputs": []
-         },
-         "lint": {
-           "outputs": []
-         },
-         "deploy": {
-           "dependsOn": ["build", "test", "lint"]
-         }
-       }
-     }
-   }
-   ```
-
-   通过`dependsOn`的配置，可以看出各个命令的执行顺序：
-
-   - 因为 A 和 C 依赖于 B，所以包的构建存在依赖关系，根据 build 的 dependsOn 配置，会先执行依赖项的 build 命令，依赖项执行完后才会执行自己的 build 命令。从上面的瀑布流中也可以看出，B 的 build 先执行，执行完以后 A 和 C 的 build 会并行执行
-   - 对于 test，只依赖自己的 build 命令，只要自己的 build 命令完成了，就立即执行 test
-   - lint 没有任何依赖，在任何时间都可以执行
-   - 自己完成 build、test、lint 后，再执行 deploy 命令
-
-   所有的 pipeline 可以通过下面的命令执行：
-
-   ```bash
-   npx turbo run build test lint deploy
-   ```
-
-   ### 常规依赖
-
-   如果一个任务的执行，只依赖自己包其他的任务，那么可以把依赖的任务放在 dependsOn 数组里
-
-   ```json
-   {
-     "turbo": {
-       "pipeline": {
-         "deploy": {
-           "dependsOn": ["build", "test", "lint"]
-         }
-       }
-     }
-   }
-   ```
-
-   ### 拓扑依赖
-
-   可以通过`^`符号来显式声明该任务具有拓扑依赖性，需要依赖的包执行完相应的任务后才能开始执行自己的任务
-
-   ```json
-   {
-     "turbo": {
-       "pipeline": {
-         "build": {
-           "dependsOn": ["^build"]
-         }
-       }
-     }
-   }
-   ```
-
-   ### 空依赖
-
-   如果一个任务的 dependsOn 为`undefined`或者`[]`，那么表明这个任务可以在任意时间被执行
-
-   ```json
-   {
-     "turbo": {
-       "pipeline": {
-         "lint": {
-           "outputs": []
-         }
-       }
-     }
-   }
-   ```
-
-   ### 特定依赖
-
-   在一些场景下，一个任务可能会依赖某个包的特定的任务，这时候我们需要去手动指定依赖关系。
-
-   ```json
-   {
-     "turbo": {
-       "pipeline": {
-         "build": {
-           "dependsOn": ["^build"]
-         },
-         "test": {
-           "dependsOn": ["build"],
-           "outputs": []
-         },
-         "lint": {
-           "outputs": []
-         },
-         "deploy": {
-           "dependsOn": ["build", "test", "lint"]
-         },
-         "frontend#deploy": {
-           "dependsOn": ["ui#test", "backend#deploy"]
-         }
-       }
-     }
-   }
-   ```
-
-   在上面的例子中，增加了一个前端的部署任务。这个部署任务，依赖于一个 UI 组件库和对应的后端项目，只有这个 UI 组件库通过单测，然后后端项目部署成功，才会进行部署。对于指定包的依赖，使用`<package>#<task>`语法。
-
-   ```js
-   {
-      "turbo": {
-        "pipeline": {
-          "build": {
-            "dependsOn": ["^build"]
-          },
-          "test": {
-            "dependsOn": ["build"]
-          },
-          "deploy": {
-            "dependsOn": ["build", "test", "lint"]
-          },
-          "lint": {}
-        }
-      }
-    }
-   ```
-
-   上面描述的大致意思是：
-
-   build 命令执行依赖于其依赖项的 build 命令执行完成
-   test 命令执行依赖于自身的 build 命令执行完成
-   lint 命令可以任何时候执行
-   deploy 命令执行依赖于自身的 buildtestlint 命令执行完成
-
-2.
-
-根目录的 package.json 有一个 workspaces 字段，该字段用来让 Turborepo 知道目录下有哪些 workspace，这些 workspace 就交给 Turborepo 管理；
-
-```json
-"workspaces": [
-  "apps/*",
-  "packages/*"
-],
+  },
+  "globalEnv": ["VITE_API_URL", "VUE_APP_*", "VITE_*"]
+}
 ```
 
-在根目录 npm i，会把各 workspace 的 npm 依赖安装在根目录的 node_modules 中，而不是安装在各 workspace 的 node_modules 中；
-
-全局安装
-
-```bash
-npm i vue -w
-```
-
-单独为某一个 workspace 安装 npm 依赖：
-
-```bash
-npm i vue-router -w=workspace_name
-```
-
-各 workspace 的 package.json 中的 name 字段很关键，它是 Turborepo 用来区分不同 workspace 的字段；
-
-### Turborepo 优势
+## Turborepo 优势
 
 - 增量构建：缓存构建内容，并跳过已经计算过的内容，通过增量构建来提高构建速度
 - 内容 hash：通过文件内容计算出来的 hash 来判断文件是否需要进行构建
@@ -423,23 +377,4 @@ npm i vue-router -w=workspace_name
 - 任务管道：通过定义任务之间的关系，让 Turborepo 优化构建的内容和时间
 - 约定式配置：通过约定来降低配置的复杂度，只需要几行简单的 JSON 就能完成配置
 
-## 总结
-
-从上面的例子可以看出，执行的任务数量越多，并且依赖越复杂的情况，Turborepo 在利用 CPU 多核心方面的优势就越明显。并且由于缓存的存在，在某些场景下，比如前后端依赖部署，只修改了前端的代码，那么后端代码的构建缓存就能被直接使用，这种情况下可以大大缩减构建时间，提高构建的效率。
-
-所以在现阶段使用 Turboreop 来代替 Lerna 进行构建，对于复杂的 monorepo 项目来说，可以大大减少构建的时间，提高开发体验，具有相当可观的收益。
-
-## 遇到问题
-
-### 依赖版本冲突
-
-1. 新建一个项目，该项目由于依赖问题无法启动
-2. 新建一个项目，其他项目由于依赖问题无法启动
-
-### 依赖安装速度慢
-
-1. 初始化安装依赖 20min+
-2. 新增一个依赖 3min+
-3. build/test/lint 等任务执行慢
-
-Turbo 的核心是永远不会重新构建已经构建过的内容。turbo 会把每次构建的产物与日志缓存起来，下次构建时只有文件发生变动的部分才会重新构建，没有变动的直接命中缓存并重现日志。
+## 后续

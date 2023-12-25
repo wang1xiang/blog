@@ -175,13 +175,22 @@ turbo build lint
 
 ![monorepo-demo](./images/monorepo-demo.png)
 
-根目录的 package.json 有一个 workspaces 字段，该字段用来让 Turborepo 知道目录下有哪些 workspace，这些 workspace 就交给 Turborepo 管理；
+根目录的 package.json 有一个 workspaces 字段，该字段用来让 Turborepo 知道目录下有哪些 workspace，这些 workspace 就交给 Turborepo 管理，应用程序放 apps 里面，apps 依赖包放 packages 里面。
 
 ```json
 "workspaces": [
   "apps/*",
   "packages/*"
 ],
+```
+
+修改根目录下的 package.json 的`scripts`
+
+```json
+"scripts": {
+  "build": "turbo run build",
+  "dev": "turbo run dev --parallel",
+}
 ```
 
 在根目录 npm i，会把各 workspace 的 npm 依赖安装在根目录的 node_modules 中，而不是安装在各 workspace 的 node_modules 中；

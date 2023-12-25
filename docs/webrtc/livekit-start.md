@@ -3,7 +3,7 @@ date: 2023-7-18
 title: 不了解WebRTC？使用Livekit搭建多人音视频通话
 tags:
   - javascript
-  - WebRTC
+  - webrtc
 describe: 小白快速上手Livekit
 ---
 

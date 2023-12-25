@@ -3,7 +3,7 @@ date: 2023-7-18
 title: WebRTC这么火🔥，前端靓仔，请收下这篇入门教程
 tags:
   - javascript
-  - WebRTC
+  - webrtc
 describe: 本文是针对小白的 WebRTC 快速入门课，如果你还之前还不了解 WebRTC，不了解实时通讯，希望你能认真阅读本文，实现对 WebRTC 的零的突破 💪。
 ---
 

@@ -2,6 +2,7 @@
 date: 2023-8-8
 title: WebRTC实战 | 快速搭建1对1音视频通话
 tags:
+  - javascript
   - webrtc
 describe: webrtc-one
 ---

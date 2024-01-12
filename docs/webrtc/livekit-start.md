@@ -1,10 +1,10 @@
 ---
 date: 2023-7-18
-title: 不了解WebRTC？使用Livekit搭建多人音视频通话
+title: 刚学WebRTC两天，领导让搭建多人视频会议，怎么整？
 tags:
   - javascript
   - webrtc
-describe: 小白快速上手Livekit
+describe: 我刚学WebRTC两天，领导让我搭建多人视频会议，怎么整？还好找到LiveKit，让我这个WebRTC的新手也能搭建稳定又好用的多人视频会议系统。
 ---
 
 我们在第一篇主要学习了 WebRTC 的相关概念以及通信的过程，这是 WebRTC 的基础，读完第一篇那么你对 WebRTC 也有了一定的概念；于是第二篇我们立马来了一对一的实战，来巩固大家的学习成果，看评论也有人跟着实现了一遍 👍。

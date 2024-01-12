@@ -1,9 +1,9 @@
 ---
 date: 2023-9-5
-title: 使用document.execCommand打造一款简单好用的富文本编辑器
+title: 玩遍Web中的“选区”和“范围”，下次不要再百度了
 tags:
   - work
-describe: contentEdit-div-insert
+describe: 平时没少遇到Selection和Range对象吧？所以你搞清楚他们分别是什么了吗？没有就来好好学习。
 ---
 
 ## 前言

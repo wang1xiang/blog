@@ -1,9 +1,9 @@
 ---
 date: 2023-9-27
-title: 我跟html2canvas干上了——利用webWorker调教Safari浏览器速度慢的问题
+title: 利用webWorker调教Safari浏览器速度慢的问题
 tags:
   - javascript
-describe: 我跟html2canvas干上了——利用webWorker调教Safari浏览器速度慢的问题
+describe: 利用webWorker调教Safari浏览器速度慢的问题
 ---
 
 我们来手动修改一下 HTML 内容，增加更多的 DOM 节点，看看它的导出情况

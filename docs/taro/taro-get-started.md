@@ -26,7 +26,7 @@ $ npx @tarojs/cli init myApp
 
 直接使用 Taro 脚手架工具初始化一个 Taro 项目：
 
-![Alt text](image.png)
+![taro-init.png](./images/taro-init.png)
 
 选择模板：在创建项目时，Taro 会提示您选择一个模板。根据您的需求选择适合的模板，这里以微信小程序为例，选择微信小程序模板。
 

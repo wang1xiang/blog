@@ -10,7 +10,7 @@ npm run build
 cd .vitepress/dist 
  
 # 如果是发布到自定义域名
-# echo 'www.example.com' > CNAME
+# echo 'www.wangxiang.website' > CNAME
 
 git init
 git add -A

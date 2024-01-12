@@ -1,10 +1,10 @@
 ---
-date: 2023-8-8
+date: 2023-7-17
 title: WebRTC实战 | 快速搭建1对1音视频通话
 tags:
   - javascript
   - webrtc
-describe: webrtc-one
+describe: 通过上一篇文章，各位小伙伴们应该都了解了 WebRTC 相关概念以及通信过程后，趁热打铁，我们来动手搭建一个 WebRTC 一对一音视频通话项目。
 ---
 
 WebRTC 系列教程分为三篇进行介绍，本篇为第二篇，上一篇[WebRTC 这么火 🔥，前端靓仔，请收下这篇入门教程](https://juejin.cn/post/7266417942182608955)。

@@ -1,6 +1,6 @@
 ---
 date: 2023-6-10
-title: 基于 Yjs 实现 Quill 的协同操作
+title: 使用yjs实现脑图的协同编辑
 tags:
   - tiptap
 describe:

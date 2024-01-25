@@ -1,6 +1,6 @@
 ---
 date: 2023-8-2
-title: electron-start
+title: Electron基础及常用到的点
 tags:
   - work
 describe: electron-start

@@ -8,11 +8,11 @@ describe:
 
 ## Electron 自动更新失败
 
-在 Electron 应用某次更新，出现了如下循环更新的问题：
+我们公司的桌面端应用在某次更新时，有位同事出现了如下循环更新的问题：
 
 ![auto-update-bug](./images/auto-update-bug.gif)
 
-此时，查询日志，发现报错如下 `Error: Object has been destroyed`：
+因为其他人都是正常的，只有一个人那里出现了这个问题。通过查询日志，发现报错如下 `Error: Object has been destroyed`：
 
 ![auto-update-bug](./images/auto-update-bug.png)
 
@@ -54,15 +54,17 @@ function onMainClose(e: Electron.Event) {
 ```js
 function onMainClose(e: Electron.Event) {
   if (isQuit) return
-  if (!mainWindow?.isDestroyed()) return
+  if (mainWindow?.isDestroyed() !== false) return
   ...
 ```
 
-重新打包，上传成功后，再次出发自动更新，即可正常了。顺便说一下我们 Electron 应用的更新流程。
+通过在他的电脑上进行测试，之前的频繁推出的问题没有了，自动更新正常了。
+
+顺便说一下我们 Electron 应用的更新流程。
 
 ## 打包
 
-首先是打包，打包时需要更新 package.json 中的版本和说明
+首先是打包，打包时需要更新 package.json 中的版本号和版本说明：
 
 ```json
 {
@@ -71,7 +73,7 @@ function onMainClose(e: Electron.Event) {
 }
 ```
 
-修改完后，Mac 和 Windows 各自打包，并上传到服务器。
+修改完后，Mac 和 Windows 各自打包签名，并上传到服务器。
 
 ## 自动更新流程
 

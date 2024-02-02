@@ -1,6 +1,6 @@
 ---
 date: 2023-6-10
-title: 基于 Yjs 实现 Quill 的协同操作
+title: 初识“恶魔”协同编辑——基于 Yjs 实现 Quill 的协同操作
 tags:
   - tiptap
 describe:
@@ -8,9 +8,11 @@ describe:
 
 最近使用 yjs 给我们的思维导图加上了协同编辑的功能，效果如下面动图所示。是不是挺有意思的，其实实现起来很简单，yjs 已经帮我们做了很多事情，我们只需要简单的引用即可。
 
-![效果图]()
+<!-- ![效果图]() -->
 
 那么接下来同我一起揭秘 yjs 的奥秘吧！
+
+[👉🏻 本文源码](https://github.com/wang1xiang/tiptap-editor/tree/master/02-quill-collab)
 
 ## yjs 介绍
 
@@ -18,36 +20,15 @@ describe:
 
 通过上文想必大家已经对 OT 和 CRDT 这两种协同编辑算法有所了解。[yjs](https://docs.yjs.dev/) 是基于 CRDT ，帮助实现高性能的协作应用程序。
 
-只要我们将自己的数据转换为 Y.js 提供的 Y.Array、Y.Map 类型，Y.js 就会自动帮我们做数据的一致性处理和同步。
-
-### 支持多种富文本编辑器
-
-Yjs 支持多种流行的文本和富文本编辑器，如
-
-- ProseMirror：[https://docs.yjs.dev/ecosystem/editor-bindings/prosemirror](https://docs.yjs.dev/ecosystem/editor-bindings/prosemirror)
-- Tiptap：[https://tiptap.dev/docs/editor/guide/collaborative-editing](https://tiptap.dev/docs/editor/guide/collaborative-editing)
-- Remirror：[https://docs.yjs.dev/ecosystem/editor-bindings/remirror](https://docs.yjs.dev/ecosystem/editor-bindings/remirror)
-- milkdown：[https://milkdown.dev/docs/guide/collaborative-editing](https://milkdown.dev/docs/guide/collaborative-editing)
-- Quill：[https://docs.yjs.dev/ecosystem/editor-bindings/quill](https://docs.yjs.dev/ecosystem/editor-bindings/quill)
-- Slate：[https://github.com/BitPhinix/slate-yjs/](https://github.com/BitPhinix/slate-yjs/)
-- Monaco：[https://docs.yjs.dev/ecosystem/editor-bindings/monaco](https://docs.yjs.dev/ecosystem/editor-bindings/monaco)
-- CodeMirror：[https://docs.yjs.dev/ecosystem/editor-bindings/codemirror](https://docs.yjs.dev/ecosystem/editor-bindings/codemirror)
-
 如果目前使用的编辑器是上述其中之一时，根据上述 demo 便可以很简单的完成协同编辑。当我们学习完成后，就可以用它来实现各种想要的协同编辑操作。
 
-### 在线 demo
-
-[demos](https://demos.yjs.dev/)
+[在线 demo](https://demos.yjs.dev/)
 
 ### 对比
 
-[automerge](https://automerge.org/)：一个用于构建协作应用程序的数据结构库
+[automerge](https://automerge.org/)是一个用于构建协作应用程序的数据结构库，通过[对比](https://github.com/dmonad/crdt-benchmarks?tab=readme-ov-file#results)得到 yjs 是迄今为止最快的 CRDT 实现。
 
-通过[对比](https://github.com/dmonad/crdt-benchmarks?tab=readme-ov-file#results)得到 yjs 是迄今为止最快的 CRDT 实现。
-
-## yjs 核心
-
-## 使用 yjs 实现
+## 基础代码
 
 这是基础的 yjs 代码，现在看不懂没关系，通过我们的学习，后面再回来看，就看得懂了。
 
@@ -77,7 +58,7 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
 
 ## 5 分钟打造基于 Quill 的协同编辑器
 
-本节主要是让我们更好的了解 yjs 的基本概念。
+通过打造 Quill 富文本编辑器的协同编辑我们来一起学习下 Yjs 的使用吧。
 
 1. 通过`npx create-vite quill-collab`创建一个 vue 项目
 2. 安装 quill 即插件 quill-cursor
@@ -209,13 +190,11 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
    此时效果就正常了
    ![quill-collab](./images/quill-collab.gif)
 
-基于以上实现 quill 协同编辑的过程，我们来整理下 yjs 几个比较重要的概念。
+我们通过短短的几十行代码，就实现了 quill 富文本编辑器的协同编辑，有了这个前提，那我们来整理下 yjs 几个比较重要的概念。
 
-y-websocket: Websocket Provider 实现了一个经典的 C/S 模型。客户端通过 Websocket 连接到单个端点。服务器在客户端之间分发 awareness 信息且进行文档更新。
+### Yjs
 
-Yjs: 包含最核心的数据结构及逻辑。如数据类型的定义，数据读写编码 encoding 模块，事件监听，状态管理 StructStore，Undo/Redo 管理器等。
-
-接入层：各种第三方编辑器接入层。
+包含最核心的数据结构及逻辑。如数据类型的定义，数据读写编码 encoding 模块，事件监听，状态管理 StructStore，Undo/Redo 管理器等。
 
 ### Documents
 
@@ -227,8 +206,8 @@ const doc = new Y.Doc()
 
 通过 `new Y.Doc()` 会创建一个 Doc 实例（即一个 Yjs 文档），作用：
 
-1. 承载共享数据 Shared Types 的容器
-2. 网络传输 Provider 的载体，将 ydoc 传入 WebSocket 的 provider 后即可支持网络同步
+1. 是承载共享数据 Shared Types 的容器
+2. 是网络传输 Provider 的载体，将 ydoc 传入 WebSocket 的 provider 后即可支持网络同步
 
 ```js
 // 连接到 websocket
@@ -312,15 +291,15 @@ ymap.observeDeep(() => console.log('observeDeep'))
 
 **the most unique feature of Yjs yet: Shared Types.**
 
-Shared Types 是 Yjs 的核心内容，用于表示可协同编辑的数据结构。通过它可以实现任何应用的协作，比如：文档、表格、绘图等等。
+Shared Types 是 Yjs 最核心的内容，用于表示可协同编辑的数据结构。通过它可以实现任何应用的协作，比如：文档、表格、绘图等等。
 
 Yjs 提供了多种类型的 Shared Types：包括常见的数据结构 [Y.Map](https://docs.yjs.dev/api/shared-types/y.map)、[Y.Array](https://docs.yjs.dev/api/shared-types/y.array)、[Y.Text](https://docs.yjs.dev/api/shared-types/y.text)，使用起来就和 js 的 map、array 对象基本是一样的，具体使用哪种需要根据实际的数据结构来决定。比如上一节中将 Y.Text 通过 `y-quill` “绑定”到 Quill 的编辑器实例以自动同步编辑器内容。
 
-想要实现协同编辑的，我们就需要构造好一个 Shared Types，监听它的变化，将变化通知其他端即可。看下在 yjs 中是怎么实现的？
+想要实现协同编辑的，我们就需要**构造好一个 Shared Types，监听它的变化，将变化通知其他端**即可。看下在 yjs 中是怎么实现的？
 
 #### 构造 Shared Types
 
-比如我们有如下数据
+比如我们有如下数据：
 
 ```js
 {
@@ -334,7 +313,9 @@ Yjs 提供了多种类型的 Shared Types：包括常见的数据结构 [Y.Map](
 }
 ```
 
-尝试将它转为 Y.Map 格式如下：
+![yjs-kunkun](./images/yjs-kunkun.png)
+
+尝试将他转为 Y.Map 格式如下：
 
 ```js
 import * as Y from 'yjs'
@@ -370,9 +351,9 @@ console.log(ymap.toJSON())
 
 #### 监听变化
 
-yMap 已经构造完成，对于它的变化如何监听呢？
+yMap 已经构造完成，那么接下来便是监听它的变化作相应的处理。
 
-yjs 通过 observe 和 observeDeep 来监听数据的变化，当数据变化时，会触发监听的回调函数，回调函数会通过更新事件 [YEvent](https://docs.yjs.dev/api/y.event) 传入当前的更新内容，从而执行相应的操作。。
+Shared Types 中通过 observe 和 observeDeep 来监听数据的变化，当数据变化时，会触发监听的回调函数，回调函数会通过更新事件 [YEvent](https://docs.yjs.dev/api/y.event) 传入当前的更新内容，从而执行相应的操作。
 
 - ymap.observe：注册一个 observe，当修改数据时会调用该方法
 - ymap.unobserve：取消注册在 ymap.observe 中方法
@@ -406,16 +387,16 @@ ymap.observe(event => {
 
 #### 更新同步
 
-通过 observe 已经可以监听到 Shared Types 的变化，那么如何将变化应用到所有端呢？
+通过 observe 已经可以监听到 Shared Types 的变化，那么如何将变化应用到其他副本呢？
 
-首先，协作编辑时传输数据就很频繁，Yjs 为了减少每次传输数据的大小，对数据进行二进制编码（高度压缩）后，通过 [Update API](https://docs.yjs.dev/api/document-updates#update-api) 与其他文档进行同步，所有客户端收到所有文档更新后都会同步，主要使用下面两个 API：
+首先，协作编辑时传输数据很频繁，并且一般数据量都比较大，Yjs 为了减少每次传输数据的大小，对数据进行二进制编码（高度压缩）后，通过 [Update API](https://docs.yjs.dev/api/document-updates#update-api) 与其他文档进行同步，所有客户端收到所有文档更新后都会同步，主要使用下面两个 API 进行同步：
 
 - Y.applyUpdate：将当前更新应用到一个新副本
 - Y.encodeStateAsUpdate：编码整个文档为单个更新消息
 
 之前我们提到了发生变更时的事件执行顺序，Shared Types 变更时通过 `ydoc.on('update', )` 接收 `ytype.observe` 所发出的增量更新，将计算出的增量更新发送到所有连接的客户端。
 
-我们可以创建 2 个 YDoc 实例来模拟 2 个客户端，验证一下：
+我们可以同时创建两个 YDoc 实例来模拟 2 个客户端，验证一下：
 
 ```js
 const ydoc1 = new Y.Doc()
@@ -493,7 +474,7 @@ console.log(ymap1.toJSON())
 console.log(ymap2.toJSON())
 ```
 
-输出结果如下所示：
+输出结果如下所示，可以看到最终打印出的两个 yMap 的结果一致：
 
 ![yjs-event-update](./images/yjs-event-update.png)
 
@@ -512,17 +493,45 @@ console.log(ymap2.toJSON())
 
 这一套组合 API 看似和我们常用的 map、array 等相似，但它真正的强大之处在于 `Conflict-free`，在它的内部就已经包含了冲突解决的机制。对使用者来说，我们只是简单的使用 Shared Types 所提供的 API，协同编辑时所存在的状态冲突被 Yjs 自动解决了。
 
-而在项目项目中使用 JavaScript/JSON 对象来表示应用的状态。现在只需增加一个简单的 Binding 层，将其转化为 Yjs 的 Shared Types，应用就能够自然地获得多人编辑的能力。
+而在项目项目中使用 JavaScript/JSON 对象来表示应用的状态。现在只需增加一个简单的 Binding 层，将其转化为 Yjs 的 Shared Types，类似于 Quill 的 y-quill，应用就能够自然地获得多人编辑的能力。
+
+通过以上的内容，我们可以不需要 y-quill，自己实现 quill 的协作编辑：
+
+1. 创建 ydoc、ytext、quill 实例
+2. 监听 quill 的`text-change` 事件，拿到 Delta 数据`delta.ops`
+3. 在 `transact` 事物中，使用 `ytext.applyDelta` 将 Delta 数据应用于 ytext 实例
+4. 通过 `observe` 监听变化，此处需要过滤当前事务
+5. 使用 `updateContents` 更新 quill 数据
+
+完整代码如下：
+
+```js
+// 模拟编辑器绑定
+quill.on('text-change', (delta, content, source) => {
+  // 过滤非用户输入的事件
+  if (source === 'api') return
+  ydoc.transact(() => ytext.applyDelta(delta.ops))
+})
+ytext.observe((event, origin) => {
+  // 本地的变化不会引起quill更新
+  if (origin.local) return
+  quill.updateContents(event.delta)
+})
+```
+
+同样也能达到 quill 的协同编辑效果。
 
 ### Providers
 
 #### Connection Providers
 
-通过上一节，我们已经将简单的 JSON 数据转换为 Yjs 提供的 Shared Types，使它有了自动解决冲突的能力，并且在本地已实现了不同客户端的数据同步，此时就需要网络通信来达到多个副本之间的同步。
+通过上一节，我们已经将普通的 JSON 数据转换成了 Shared Types 的 yMap，使它有了自动解决冲突的能力，并且在本地已模拟了不同客户端的数据同步，而为了能够在不同的网络之间同步共享数据，就需要通过网络通信来完成。
 
 CRDT 本身和网络方案是解耦的，我们可以选择任意的通信方案，只要能保证更新数据成功的同步到远端即可。
 
-Yjs 提供了 [Connection Provider](https://docs.yjs.dev/ecosystem/connection-provider) 来实现副本间的通信，如：y-websocket、y-webrtc、y-dat 等，websocket 和 webrtc 大家应该都有所了解，Dat 是一个 P2P 协议，是一个去中心化、安全、快速的文件传输协议，适用于各种需要传输文件的情况[dat](https://docs.dat.foundation/docs/intro)。
+Yjs 自身提供了 [Connection Provider](https://docs.yjs.dev/ecosystem/connection-provider) 来实现副本间的通信，如：y-websocket、y-webrtc、y-dat 等。
+
+websocket 和 webrtc 大家应该都有所了解，[Dat](https://docs.dat.foundation/docs/intro) 是一个 P2P 协议，是一个去中心化、安全、快速的文件传输协议，适用于各种需要传输文件的情况。
 
 这里我们使用 y-websocket 来实现服务端与各个客户端之间的文档同步。
 
@@ -535,7 +544,7 @@ const ydoc = new Y.Doc()
 
 const wsProvider = new WebsocketProvider(
   'ws://localhost:1234',
-  'my-roomname',
+  'my-room-name',
   ydoc
 )
 
@@ -659,13 +668,38 @@ button.onclick = () => yText.insert(0, Math.floor(Math.random() * 10) + '')
 
 #### Database Provider
 
-YJs 不仅提供了 Connection Provider 来实现客户端的协作，并且提供了 Database Provider 将文档数据同步到数据库或离线存储：如 y-indexeddb、y-redis。
+YJs 不仅提供了 Connection Provider 来实现客户端的协作，并且提供了 Database Provider 将文档数据同步到数据库或离线存储：如 y-indexeddb、y-redis 等。
+
+```bash
+yarn add y-redis
+```
+
+```js
+const { RedisPersistence } = require('y-redis')
+const redisConfig = {
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD,
+  db: process.env.REDIS_DB,
+  keyPrefix: process.env.REDIS_KEY_PREFIIX,
+}
+
+const rp = new RedisPersistence({ redisOpts: redisConfig })
+const persistence = {
+  provider: rp,
+  bindState: async (docName, ydoc) => {
+    rp.closeDoc(docName)
+    return rp.bindState(docName, ydoc)
+  },
+  writeState: async (docName, ydoc) => {},
+}
+```
 
 ### Awareness & Presence
 
-上一节我们通过 Connect Provider 来实现数据的同步，但协同编辑不仅仅是数据的同步，还需要一些交互上的优化，诸如：当前在线用户列表、用户编辑位置以及光标位置，这些信息被称为 Awareness。
+上一节我们通过 Connect Provider 实现了不同副本之间的协作，但协同编辑不仅仅是数据的同步，还需要一些交互上的优化，诸如：当前在线用户列表、用户编辑位置以及光标位置，这些信息被称为 `Awareness`。
 
-通常这些信息数据量较少，因此 Yjs 内部采用了 `state-based Awareness CRDT` 将信息转为 JSON 对象传播给所有用户。但它并不是 yjs 模块，它是在 [y-protocols](https://github.com/yjs/y-protocols) 内部定义的，并且所有的 Providers 都默认实现了，并且提供了[Awareness CRDT API](https://docs.yjs.dev/api/about-awareness#awareness-crdt) 帮助我们获取 Awareness 的变化和更新等状态。
+通常这些信息数据量较少，因此 Yjs 内部采用了 `state-based Awareness CRDT` 将信息转为 JSON 对象传播给所有用户。但它并不是 yjs 模块，它是在 [y-protocols](https://github.com/yjs/y-protocols) 内部定义的，所有的 Providers 都默认实现了，并且提供了[Awareness CRDT API](https://docs.yjs.dev/api/about-awareness#awareness-crdt) 帮助我们获取 Awareness 的变化和更新等状态。
 
 #### awareness = new awarenessProtocol.Awareness(ydoc: Y.Doc)
 
@@ -804,16 +838,171 @@ Awareness CRDT 更新的工作方式与 Yjs 更新类似，之前我们再讲 y-
    }, pingTimeout)
    ```
 
-## 实现脑图协同编辑
+### UndoManager
 
-之前我们说过，yjs 绑定 quill 的过程：
+Yjs 提供了 UndoManager，用来追踪本地更改，自然提更了 uodo/redo 功能。
 
-1. 创建 yjs 文档，用于保存共享数据；
-2. 创建 ytext 对象，用于表示文本的共享数据结构；
-3. 通过 `QuillBinding` 将 ytext 与 Quill 编辑器保持同步（在 `QuillBinding` 方法中实现脑图数据与协同数据的转换，以及 awareness 的实现。）。
+```js
+import * as Y from 'yjs'
 
-想要实现脑图的协同编辑，我们可以仿照 quill 的协同过程来实现。不过与 quill 不同的是，脑图的感知信息思维显示其他协作者的实时鼠标位置其实没有必要，因为大多数操作都是要在选中节点的情况下进行的，所以只要在激活的节点上显示激活该节点的协作人员信息即可，同样有相关的事件可以监听：
+const ytext = doc.getText('text')
+const undoManager = new Y.UndoManager(ytext)
 
-主要是用来提示当前这里谁在编辑，你就不要过来了，虽说冲突可以被处理掉，但是实际上大多数时候的协同编辑都是大家一起编辑一个文档不同的部分，而不是一起互相制造冲突，那样可能会打起来，效率反而低了。
+ytext.insert(0, 'abc')
+undoManager.stopCapturing()
+undoManager.undo()
+ytext.toString() // => ''
+undoManager.redo()
+ytext.toString() // => 'abc'
+```
 
-可以通过 awareness 属性获取 Connection Provider 提供的感知数据处理对象，然后在节点的激活事件回调函数中设置或更新协作人员激活的节点列表，同样，awareness 也提供了监听其他协作者感知数据改变的方法：
+结合以上代码，我们来看下它的 API
+
+#### const undoManager = new Y.UndoManager(scope: Y.AbstractType | Array<Y.AbstractType> [, {captureTimeout: number, trackedOrigins: Set<any>, deleteFilter: function(item):boolean}])
+
+在 Shared Types 上创建 Y.UndoManager，如果任何指定类型或其任何子类型被修改，UndoManager 将在其堆栈上添加反向操作。
+
+默认情况下追踪所有本地更改，Shared Types 每次更改都会有来源，所以可以通过指定 `trackedOrigins` 来过滤特定来源的更改，默认为 null，即不过滤。
+
+```js
+const undoManager = new Y.UndoManager(ytext, {
+  trackedOrigins: new Set([42, CustomBinding]),
+})
+```
+
+UndoManager 合并在特定 `captureTimeout`（默认为 500ms）内创建的编辑，将其设置为 0 以单独捕获每个更改。
+
+```js
+const undoManager = new Y.UndoManager(ytext, {
+  captureTimeout: 0,
+})
+```
+
+#### undoManager.undo()/undoManager.redo()/undoManager.clear()
+
+在 undoManager 实例上有两个堆栈 undoStack 和 redoStack 用于记录 undo/redo 操作：
+
+undo 方法会撤消 undoStack 堆栈上的最后一个操作，将栈顶添加到 redoStack 上。
+
+redo 方法重做 redoStack 堆栈上的最后一个操作，将栈顶添加到 undoStack 上。
+
+clear 方法会清空这两个堆栈。
+
+#### undoManager.stopCapturing()
+
+前面提到 UndoManager 会默认合并 `captureTimeout` 设置的时间间隔内的操作，如果每步都想单独成为历史记录的话，可以设置 `captureTimeout` 为 0 即可；
+
+而如果只是想设置单步的记录时，可以通过调用 stopCapturing() 方法确保 UndoManager 的下一个操作不会与上一个操作合并。
+
+```js
+const undoManager = new Y.UndoManager(yText)
+
+yText.insert(0, 'abc')
+undoManager.stopCapturing()
+yText.insert(3, 'def')
+console.log(undoManager)
+```
+
+未调用 stopCapturing 方法：
+![yjs-no-captureTimeout](./images/yjs-no-captureTimeout.png)
+
+调用 stopCapturing 方法：
+![yjs-captureTimeout](./images/yjs-captureTimeout.png)
+
+可以看到未调用 stopCapturing 方法后，在`undoStack` 堆栈只会形成一条数据，而调用之后，会生成两条堆栈信息。
+
+#### on('stack-item-added',...) / on('stack-item-popped', ...)
+
+监听 undo/redo 事件，如可在事件发生时向 StackItems 添加附加信息，用来恢复光标位置或文档视图等
+
+```js
+undoManager.on('stack-item-added', (event) => {
+  // 将当前光标位置保存在堆栈项上
+  // getRelativeCursorLocation()
+  event.stackItem.meta.set('cursor-location', 12)
+})
+
+undoManager.on('stack-item-popped', (event) => {
+  // 恢复堆栈项上的当前光标位置
+  const cursorLocation = event.stackItem.meta.get('cursor-location')
+  console.log(cursorLocation)
+  // restoreCursorLocation()
+})
+```
+
+### Offline Support
+
+我们前面介绍了 Yjs 通过 Network Provider 可以在不同网络间传输，DataBase Provider 可以将文档更新同步到数据库。
+
+y-indexeddb 是 DataBase Provider 的其中一种 ，可以将文档更新同步到 [IndexDB](https://developer.mozilla.org/zh-CN/docs/Web/API/IndexedDB_API) 数据库，实现离线编辑功能。
+
+每个 Provider 都可以与其他 Provider 进行合作，比如我们可以通过 y-websocket 进行网络之间的同步，也可以通过 y-redis、y-indexeddb 等将文档持久化到 redis 或 IndexedDB 中。
+
+这样在弱网或无网络状态时文档的修改也会记录在 indexedDB 中，网络正常后再同步到服务端，不会造成文档内容的丢失；
+同时使用 y-indexeddb 和 y-websocket 会将会在每个副本的 IndexedDB 数据库中存储下来，如果某个副本或者服务器丢失一些数据时，其他副本也会将最新的文档同步回服务器。
+
+```bash
+yarn add y-indexeddb
+```
+
+```js
+import { IndexeddbPersistence } from 'y-indexeddb'
+
+const ydoc = new Y.Doc()
+const roomName = 'quill-room-name'
+
+const indexDBProvider = new IndexeddbPersistence(roomName, ydoc)
+indexDBProvider.set('version', '1')
+indexDBProvider.on('synced', () => {
+  console.log('从IndexDB加载文档')
+})
+```
+
+y-indexeddb 与之前 y-websocket 的工作方式类似，也是传入房间名称和 Yjs 文档，通过房间名称来连接 Yjs 文档，所有相同房间名称的文档都将同步。
+
+此时，文档的更改都会保存到 IndexedDB 数据库中，重新访问站点时，将首先从 IndexedDB 数据库加载文档。
+
+![y-indexedDB](./images/y-indexedDB.png)
+
+可以看到 `quill-room-name` 命名的 IndexedDB 中包含 `custom` 和 `updates` 两个对象存储区， `custom`主要用来存储自定义属性，`updates` 主要是记录文档的更新信息。
+
+#### provider = new IndexeddbPersistence(docName: string, ydoc: Y.Doc)
+
+创建 indexedDB 的 provider
+
+#### provider.on('synced', function(idbPersistence: IndexeddbPersistence))
+
+当与 IndexedDB 数据库的连接建立并且所有可用内容都已加载时，将触发 `synced` 事件。**当尚无内容可用时，也会触发该事件**。
+
+#### provider.set(key: any, value: any)/get/del
+
+通过 provider.set 可以在 provider 实例上设置自定义属性，存储文档的相关元信息，通过 get/del 获取或删除单个属性。
+
+#### provider.destroy(): Promise
+
+关闭与 IndexedDB 数据库的连接并停止同步文档。当 Yjs 文档被销毁时，会自动调用此方法。
+
+#### provider.clearData(): Promise
+
+销毁 IndexedDB 数据库并删除存储的文档和所有相关元信息。
+
+### Yjs 与不同编辑器的绑定
+
+在文章前面我们介绍 quill 的协同编辑时，使用 `y-quill` 将 Yjs 与 quill 进行绑定，实现了 quill 的协同编辑。同时也在不使用 `y-quill` 的情况下，使用 Yjs 自带的 API 实现了 quill 的协同编辑。
+
+回忆下整个过程：
+
+1. 首先监听 quill 文本的变化；
+2. 接着将 quill 的 Delta 数据结构转换为 yText 结构；
+3. yText 改变时通过 y-websocket 发送到其他副本；
+4. 其他副本监听 yText 的变化，解析出 quill 的 Delta 数据，回填到编辑器中。
+
+Yjs 已经提供了常用的编辑器的数据绑定，像[Prosemirror](https://docs.yjs.dev/ecosystem/editor-bindings/prosemirror)、[Tiptap](https://docs.yjs.dev/ecosystem/editor-bindings/tiptap2)、[Monaco](https://docs.yjs.dev/ecosystem/editor-bindings/monaco)、[Quill](https://docs.yjs.dev/ecosystem/editor-bindings/quill) 等等，我们可以看下[y-quill](https://github.com/yjs/y-quill/blob/master/src/y-quill.js)和[y-monaco](https://github.com/yjs/y-monaco/blob/HEAD/src/y-monaco.js)的源码，Yjs 应用到不同的编辑器，基本都是这一套逻辑：
+
+首先监听编辑器的数据变化，当发生变化时，将编辑器数据转为 Yjs 的 Shared Types 数据结构，当本地 Yjs 数据发生变化时会通过 Network Provider 将数据结构同步给所有协同者，其他协同者再通过监听 Yjs 数据的变动，将 Yjs 数据转为编辑器数据，利用自身的 API 将变化填充到编辑器中，从而实现协同编辑。
+
+![yjs-flow](./images/yjs-flow.png)
+
+从流程图可以看出每一个客户端都维护了一个 Yjs 数据结构的副本，这个数据结构副本所表达的内容与 Slate 编辑器数据所表达的内容完全一样，只是它们承担职责不同，Slate 数据供编辑器及其插件渲染使用，然后 Yjs 数据结构用于处理冲突、保证数据一致性，数据的修改最终是通过 Yjs 的数据结构来进行同步的。
+
+## 总结

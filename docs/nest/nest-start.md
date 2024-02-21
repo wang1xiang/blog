@@ -20,7 +20,7 @@ Nest 项目初始化有两种方式：
 
    ```bash
    npm install -g @nestjs/cli
-   next new xxx
+   nest new xxx
    ```
 
 2. 直接使用 npx 安装
@@ -251,7 +251,7 @@ bootstrap()
 
 ### url param
 
-url param 就是将 url 直接写在 url 上，比如 `http://localhost:3000/person/12`，其中 `12` 就是路径中的参数（url param）
+url param 就是将 url 直接写在 url 上，比如 `http://localhost:3000/api/person/12`，其中 `12` 就是路径中的参数（url param）
 
 在 Nest 中通过 `@Get(':id')` 和 `@Param('id')` 配合拿到它。
 
@@ -264,3 +264,184 @@ findOne(@Param('id') id: string) {
   // return this.personService.findOne(+id);
 }
 ```
+
+此时我们在浏览器地址栏直接输入 `http://localhost:3000/api/person/12`，便会得到以下结果：
+![url-param-location](./images/url-param-location.png)
+
+或者在静态资源 `/public/index.html` 中通过 http 请求：
+
+```js
+async function urlParam() {
+  const res = await axios.get('/api/person/1')
+  console.log(res)
+}
+urlParam()
+```
+
+结果如下：
+
+![url-param-http](./images/url-param-http.png)
+
+### query
+
+query 同样是通过 url 来传递参数，通过 url 中 ？后面的用 & 分隔的字符串传递数据，比如 `http://localhost:3000/api/person/find?name=li&age=12`。
+
+在 Nest 中通过 `@Query()` 可以获取到传递的参数。
+
+```js
+@Get('find')
+find(@Query('name') name: string, @Query('age') age: number) {
+  return `received: name=${name},age=${age}`;
+}
+@Get(':id')
+findOne(@Param('id') id: string) {
+  return `received id: ${id}`;
+}
+```
+
+注意，我们新添加的 `find` 路由要放到 `:id` 路由的前面，因为 Nest 是从上往下匹配的，如果放在后面，那匹配的就是 `:id` 的路由。
+
+此时我们可以直接通过 url 访问 `http://localhost:3000/api/person/find?name=li&age=12` 或者构造 http 请求：
+
+```js
+async function query() {
+  const res = await axios.get('/api/person/find', {
+    params: {
+      name: 'li',
+      age: 12,
+    },
+  })
+  console.log(res)
+}
+query()
+```
+
+结果如下：
+
+![url-query-http](./images/url-query-http.png)
+
+### form urlencoded
+
+前面两种都是 get 请求，将传递的参数存放在 url 中，而接下来的几种数据传输方式都是 post 请求，将传递的参数存放在 body 中。
+
+form urlencoded 是通过表单提交数据，就是将 query 的数据放在 body 中发送 post 请求提交。
+
+通过表单提交的数据，会以 `application/x-www-form-urlencoded` 的格式提交，Nest 中可以通过 `@Body()` 解析请求体，注入到 `dto` 中，`dto` 就是 data transfer object，即封装传输数据的对象。
+
+```js
+export class CreatePersonDto {
+  name: string
+  age: number
+}
+```
+
+```js
+@Post()
+body(@Body() createPersonDto: CreatePersonDto) {
+  return `received: ${JSON.stringify(createPersonDto)}`;
+}
+```
+
+构造 http 请求：
+
+```js
+async function formUrlEncoded() {
+  const res = await axios.post(
+    '/api/person',
+    Qs.stringify({
+      name: 'li',
+      age: 12,
+    }),
+    {
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    }
+  )
+  console.log(res)
+}
+formUrlEncoded()
+```
+
+结果如下：
+
+![form-urlencoded-http](./images/form-urlencoded-http.png)
+
+### form data
+
+form data 大多用于传输文件，axios 中需要指定 content type 为 `multipart/form-data`，并且用 FormData 对象来封装传输的内容。
+
+Nest 中要使用 `FilesInterceptor` 来处理其中的 binary 字段，用 `@UseInterceptors` 装饰器启用，配置 `dest` 为上传文件的目录，然后通过 `@UploadedFiles` 来读取，其余非文件字段用 `@Body` 来读取。
+
+```js
+@Post('file')
+@UseInterceptors(AnyFilesInterceptor({
+  dest: 'uploads/'
+}))
+body2(@Body() createPersonDto: CreatePersonDto, @UploadedFiles() files: Array<Express.Multer.File>) {
+  console.log(files);
+  return `received: ${JSON.stringify(createPersonDto)}`
+}
+```
+
+构造 http 请求：
+
+```html
+<input id="fileInput" type="file" multiple />
+<script>
+  const fileInput = document.querySelector('#fileInput')
+
+  async function formData() {
+    const data = new FormData()
+    data.set('name', 'li')
+    data.set('age', 12)
+    data.set('file1', fileInput.files[0])
+    data.set('file2', fileInput.files[1])
+
+    const res = await axios.post('/api/person/file', data, {
+      headers: { 'content-type': 'multipart/form-data' },
+    })
+    console.log(res)
+  }
+
+  fileInput.onchange = formData
+</script>
+```
+
+结果如下：
+
+![form-data-http](./images/form-data-http.png)
+
+服务端成功接收到我们上传的文件，并且保存在配置的 `dest` 目录中：
+
+![form-data-dest](./images/form-data-dest.png)
+
+### json
+
+json 格式应该是最为常用的了，直接将 json 数据作为请求体发送，Nest 中通过 `@Body()` 来解析请求体，注入到 `dto` 中。
+
+form urlencoded 和 json 都是从 body 取值，Nest 内部会根据 content type 做区分，使用不同的解析方式。
+
+```js
+@Post()
+body(@Body() createPersonDto: CreatePersonDto) {
+  return `received: ${JSON.stringify(createPersonDto)}`
+}
+```
+
+构造 http 请求：
+
+```js
+async function json() {
+  const res = await axios.post('/api/person', {
+    name: 'li',
+    age: 12,
+  })
+  console.log(res)
+}
+json()
+```
+
+结果如下：
+
+![json-http](./images/json-http.png)
+
+这 5 种 http 的传输数据的方式覆盖了绝大多数开发场景，如果你想进阶全栈，理解这 5 种接口是首先要做到的。

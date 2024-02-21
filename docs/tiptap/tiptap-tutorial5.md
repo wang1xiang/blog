@@ -1,10 +1,12 @@
 ---
 date: 2023-6-10
-title: 初识“恶魔”协同编辑——OT 和 CRDT 算法
+title: 初识协同编辑：OT和CRDT算法，文档协作的“魔法石”
 tags:
   - tiptap
 describe:
 ---
+
+本文是协同编辑的入门课程，主要讲解协同编辑的两种算法：`OT` 和 `CRDT`。如果你对协同编辑感兴趣，希望能认真阅读本文，了解下协同编辑的基础知识。
 
 ![ot-&-crdt.png](./images/ot-&-crdt.png)
 
@@ -36,7 +38,7 @@ describe:
 2. 那么使用`锁机制`可行吗？显然不可行，限制同时只能一人编辑，别人编辑时也只能干等着；
 3. `diff-patch`虽然可行，但需要额外的操作步骤和成本，实时性很差，不适合高频同时修改的场景。
 
-于是就引出了`OT 和 CRDT`这类专门用于**处理协同文档**的方案。
+于是就引出了`OT 和 CRDT`这类专门用于**处理协同文档**的方案，我们接下来主要是使用基于 CRDT 的 Yjs 方案实现一系列协同操作，不过也需要对 OT 做简单了解。
 
 ## What is OT
 
@@ -64,6 +66,10 @@ OT 算法的优点在于它可以实时地反映用户的操作，并且可以�
 
 ![quill-delta](./images/quill-delta.png)
 
+- retain 保留
+- insert 插入
+- delete 删除
+
 还有 slate 的 [JSON](https://docs.slatejs.org/api/operations) 模型，通过 insert_text、remove_text 等等操作来完成整篇文档的描述。
 
 ### Transformation 转换
@@ -78,13 +84,13 @@ OT 算法的优点在于它可以实时地反映用户的操作，并且可以�
 
 ![ot-demo](./images/ot-demo.png)
 
-`OT 算法会通过一系列的变化来调整其中一个操作`，而这个调整转化的核心就是[transform](https://github.com/Operational-Transformation/ot.js/blob/master/lib/simple-text-operation.js#L88)方法，它可以对不同的操作进行修正。
+`OT 算法会通过一系列的变化来调整其中一个操作`，而这个调整转化的核心就是[transform](https://github.com/Operational-Transformation/ot.js/blob/master/lib/simple-text-operation.js#L88)方法，通过操作到达的时间顺序，对不同的操作进行修正，最终得到一致的结果。
 
 我们可以通过[OT 算法可视化](https://operational-transformation.github.io/index.html)来看下 OT 算法的实现过程。
 
 ![ot-demo.gif](./images/ot-demo.gif)
 
-上面这个演示体现了**OT 算法对网络要求更高**的说法，Alice 先修改的文档，由于网络的原因 Bob 的请求先到的服务器，所以此时得到的结果并不是想要的结果，但 OT 算法的期望是得到**一致的结果**，所以这一点看来也是没错的 😂。
+上面这个演示体现了**OT 算法对网络要求更高**的说法，Alice 先修改的文档，由于网络的原因 Bob 的请求先到的服务器，但 OT 算法的期望是得到**一致的结果**，所以这一点看来也是没错的 😂。
 
 ## What is CRDT
 
@@ -179,7 +185,7 @@ CRDT 算法全称为 Conflict-free Replicated Data Type，即**无冲突复制�
 
 CRDT 不依赖于编辑器实现，使用它可以实现任意一款编辑器的协同编辑，只需要将对应的数据结构转换成 CRDT 的数据结构，内部会自动处理冲突和同步，并且可以不依赖中心化的服务器，在复杂的网络中表现更加稳健。
 
-并且随着 CRDT 的逐步崛起以及去中心化（web3.0）的流行，新的产品也更多地开始基于 CRDT 开发协同编辑功能，例如 [Figma](https://www.figma.com/file/o7ekFKPe01QCYrozrD1WWj/Untitled?type=whiteboard&node-id=0-1&t=qUzVTtGC4OU34fjz-0)、[Miro](https://miro.com/app/board/uXjVN25OUr0=/)等。
+但可能存在网络先后达到顺序问题，并不能完全保证顺序是按照真实的用户意图发生，OT 跟 CRDT 都是为了让所有的节点看到相同的内容，达到**强一致性结果**。
 
 ### CRDT 开源实现：Yjs
 
@@ -240,8 +246,8 @@ Yjs 自身提供了快照机制，保存历史版本不用保存全量数据，�
 
 ## 总结
 
-本篇文章主要学习 OT 和 CRDT 协同算法的原理，以及它们之间的对比，CRDT 未来会有更好的发展。并且初步了解了一下 Yjs，接下来我们会着重学习 Yjs，并讲解如何使用 Yjs 来实现富文本编辑器、脑图、文档等的协同编辑。
+本篇文章主要学习 OT 和 CRDT 协同算法，以及它们之间的对比，并且初步了解了一下 Yjs，接下来我们会着重学习 Yjs，并讲解如何使用 Yjs 来实现富文本编辑器、脑图、文档等的协同编辑。
 
-然后说下开题的结论，OT 和 CTDT 之间也不能说谁赢，只能就目前趋势来说，CRDT 已经在性能、可用性等方面已经赶上 OT，并且有着去中心化的优势，近些年新产品的协作编辑方面都会优先考虑使用 CRDT 方案来实现。
+然后说下开题的结论，OT 和 CRDT 之间也不能说谁更强，只能就目前趋势来说，CRDT 已经在性能、可用性等方面已经赶上 OT，并且随着去中心化（web3.0）的流行，新的产品也更多地开始基于 CRDT 开发协同编辑功能，例如 [Figma](https://www.figma.com/file/o7ekFKPe01QCYrozrD1WWj/Untitled?type=whiteboard&node-id=0-1&t=qUzVTtGC4OU34fjz-0)、[Miro](https://miro.com/app/board/uXjVN25OUr0=/)等。
 
 以上就是本文的全部内容，希望这篇文章对你有所帮助，欢迎点赞和收藏 🙏，如果发现有什么错误或者更好的解决方案及建议，欢迎随时联系。

@@ -1,5 +1,5 @@
 ---
-date: 2023-6-10
+date: 2024-2-22
 title: 使用yjs实现脑图的协同编辑
 tags:
   - tiptap

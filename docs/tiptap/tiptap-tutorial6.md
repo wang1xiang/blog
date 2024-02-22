@@ -1,36 +1,32 @@
 ---
-date: 2023-6-10
+date: 2024-2-21
 title: 再遇协同编辑：Yjs + Quill，文档协同编辑竟如此简单 🎸
 tags:
   - tiptap
-describe:
+describe: Quill 协同编辑
 ---
 
-> WebRTC 系列教程分为三篇进行介绍，本篇为第二篇，上一篇 WebRTC 这么火 🔥，前端靓仔，请收下这篇入门教程。
+通过上一篇文章[初识协同编辑：OT 和 CRDT 算法，文档协作的“魔法石”](https://juejin.cn/post/7336761948066332723)，相信各位小伙伴对 OT 和 CRDT 协同算法有了一定的了解，并且对 Yjs 有了初步的认识，本文主要教会大家如何使用 Yjs 来实现 Quill 的协同编辑，以及针对 Yjs 的一些重要概念的讲解。
 
-通过上一篇文章，各位小伙伴们应该都了解了 WebRTC 相关概念以及通信过程后，趁热打铁，我们来动手搭建一个 WebRTC 一对一音视频通话项目。
-
-[👉🏻 在线体验地址](https://wangxiang.website/)
-
-[👉🏻 完整代码地址](https://github.com/wang1xiang/tiptap-editor/tree/master/02-quill-collab)
+> 因为协作需要服务端的支持，所有没有 demo，具体实现请[👉🏻 查看源码](https://github.com/wang1xiang/tiptap-editor/tree/master/02-quill-collab)。
 
 ## Yjs 介绍
 
 官方介绍：**用于构建 Google Docs 和 Figma 等协作应用程序的模块化构建块**。
 
-通过上文想必大家已经对 OT 和 CRDT 这两种协同编辑算法有所了解。[Yjs](https://docs.yjs.dev/) 是基于 CRDT ，帮助实现高性能的协作应用程序。
+[Yjs](https://docs.yjs.dev/) 基于 CRDT ，帮助实现高性能的协作应用程序。
 
-如果目前使用的编辑器是上述其中之一时，根据上述 demo 便可以很简单的完成协同编辑。当我们学习完成后，就可以使用它来实现各类应用的协同编辑。
+[官方 demo](https://demos.yjs.dev/)
 
-[在线 demo](https://demos.yjs.dev/)
+如果目前使用的编辑器是上述其中之一时，根据上述 demo 便可以轻松完成协同编辑。但当我们学习完成后，能够实现的协同编辑就不再仅仅局限于上述编辑器了。
 
 ### 对比
 
 [automerge](https://automerge.org/)是一个用于构建协作应用程序的数据结构库，也是基于 CRDT 算法实现的，通过它与 Yjs 的[对比](https://github.com/dmonad/crdt-benchmarks?tab=readme-ov-file#results)可知 Yjs 是迄今为止最快的 CRDT 实现。
 
-## 基础代码
+### 基础代码
 
-这是基础的 Yjs 代码，现在看不懂没关系，通过我们的学习，后面再回来看，就看得懂了。
+下面便是最基础的 Yjs 代码，一脸懵逼吧 🤷‍♂️！没事，现在看不懂没关系，等学完本文再回来看，你会发现“哦，原来那么简单“。
 
 ```js
 import * as Y from 'yjs'
@@ -56,21 +52,23 @@ Y.applyUpdate(ydoc, update)
 console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
 ```
 
-## 5 分钟打造基于 Quill 的协同编辑器
+## Yjs + Quill 协同编辑
 
-之前提过 Quill 的 delta 结构是在在 2012 年开源的，
-通过打造 Quill 富文本编辑器的协同编辑我们来一起学习下 Yjs 的使用吧。
+✅ 步入正文啦。接下来我们用短短几十行代码，便可打造一个 Quill 富文本编辑器的协同编辑。很简单，别光看，动手撸起来。
 
-1. 通过`npx create-vite quill-collab`创建一个 vue 项目
-2. 安装 quill 即插件 quill-cursor
+### 初始化项目
+
+通过`npx create-vite quill-collab`创建一个 vue 项目
+
+### 初始化 Quill 富文本编辑器
+
+1. 安装 quill 及插件 quill-cursor
 
    ```bash
    yarn add quill quill-cursors
    ```
 
-   覆盖 main.ts 代码
-
-   使用以下代码覆盖 main.ts
+2. 修改 main.ts 代码，使用以下代码覆盖 main.ts
 
    ```js
    import Quill from 'quill'
@@ -99,17 +97,21 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
    })
    ```
 
-   启动服务
+启动服务，Quill 编辑器初始化完成。
 
-3. 引入 Yjs 绑定 Quill 编辑器
+### 引入 Yjs 与 Quill 实现绑定
+
+将 Yjs 的数据模型与 Quill 的数据模型进行绑定，完成后 Yjs 就会自动解决共享数据的并发更改（自动解决冲突）。
+
+1. 安装依赖
 
    ```bash
    yarn add yjs y-quill
    ```
 
-   y-quill 是 Yjs 官方提供的，通过它可以将 Quill 数据模型和 Yjs 数据模型进行绑定。
+   `y-quill` 是 Yjs 官方提供的，通过它可以将 Quill 数据模型和 Yjs 数据模型进行绑定。
 
-   main.ts 添加如下代码
+2. 修改 main.ts，添加如下代码：
 
    ```js
    import * as Y from 'yjs'
@@ -123,24 +125,25 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
    const binding = new QuillBinding(ytext, quill)
    ```
 
-   首先通过`new Y.Doc()`创建 Yjs 文档，用于保存共享数据；
-   接着创建名为 Quill 的 ytext 对象，用于表示文本的共享数据结构；
-   最后通过 `QuillBinding` 将 ytext 与 Quill 编辑器保持同步。
-   几乎所有编辑器与 Yjs 进行绑定时都是以上三步。
+   - 首先通过`new Y.Doc()`创建 Yjs 文档，用于保存 Shared Types 共享数据；
+   - 接着创建名为 `quill` 的 ytext 对象，用于表示文本的共享数据结构；
+   - 最后通过 `QuillBinding` 将 ytext 与 Quill 编辑器进行绑定，及**数据保持同步**（Yjs 数据改变时 Quill 编辑器数据自动更新，Quill 编辑器数据改变时 Yjs 数据也自动更新）。
 
-   Yjs 自动解决共享数据的并发更改，因此我们不必再担心冲突解决。
+   **几乎所有编辑器与 Yjs 进行绑定时都是以上三个步骤**。
 
-4. 使用 y-websocket 进行数据传输
+### 使用 y-websocket 进行数据传输
 
-   前三步客户端的操作已经完成，接下来就是要接上服务端，实现数据传输了。
+前三步客户端的操作已经完成，接下来就是要接上服务端，实现数据传输了，Yjs 提供了 [Provider](https://docs.yjs.dev/ecosystem/connection-provider) 来实现。
 
-   Yjs 提供了多种类型的[Provider](https://docs.yjs.dev/ecosystem/connection-provider)用于数据传输，如：WebSocket、WebRTC、Dat。
+Yjs 提供了多种类型的 Provider 用于数据传输，如：WebSocket、WebRTC、Dat。
+
+1. 安装依赖
 
    ```bash
    yarn add y-websocket
    ```
 
-   修改代码：
+2. 修改代码
 
    ```js
    import { WebsocketProvider } from 'y-websocket'
@@ -154,23 +157,27 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
    const binding = new QuillBinding(ytext, quill, provider.awareness)
    ```
 
-   大多数 Provider 的共同点是他们使用房间名称的概念来连接 Yjs 文档。在上面的示例中，所有指定“quill-demo-room”作为房间名称的文档都将同步。
+   大多数 Provider 的共同点是他们**使用房间名称的概念**来连接 Yjs 文档。在上面的示例中，所有指定“quill-demo-room”作为房间名称的文档都将同步。
 
-5. 协同效果
+3. 协同效果如下
 
    ![quill-collab-error](./images/quill-collab-error.gif)
 
-   因为 websocket 服务连接失败，不同浏览器之间的协同是没有生效的。
+   上面是用 chrome 浏览器和 safari 浏览器同时测试的效果，因为官方提供的 websocket 服务连接失败，不同浏览器之间的协同是没有生效的。
 
    ![yjs-demo-wss](./images/yjs-demo-wss.png)
 
-   那为什么同一浏览器的两个 tab，没连上服务也能做协同编辑呢？
+   那为什么同一浏览器的两个 tab，没连上 socket 服务也能做协同编辑呢？
 
    这是因为 Yjs 会**优先通过浏览器的同 host 共享状态的方式进行通信**，然后才是网络通信。
 
-6. 创建本地服务
+### 使用本地 socket 服务
 
-   Yjs 提供的体验服务器既然无法连接，那么我们可以自己本地通过 npx 启一个 y-websocket 服务：
+既然 Yjs 提供的体验服务无法连接，那么我们可以自己本地启一个 y-websocket 服务。
+
+1. 在当前项目下启动 y-websocket 服务
+
+   当前项目已经安装 y-websocket 依赖，可直接使用；如果在别处启用时，需要先安装 y-websocket 依赖。
 
    ```bash
    PORT=1234 npx y-websocket
@@ -178,7 +185,7 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
 
    ![local-websocket](./images/local-websocket.png)
 
-   修改 ws 服务的地址
+2. 修改 ws 服务的地址
 
    ```js
    const provider = new WebsocketProvider(
@@ -188,14 +195,18 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
    )
    ```
 
-   此时效果就正常了
-   ![quill-collab](./images/quill-collab.gif)
+此时效果就正常了
+![quill-collab](./images/quill-collab.gif)
 
-我们通过短短的几十行代码，就实现了 Quill 富文本编辑器的协同编辑，有了这个前提，那我们来整理下 Yjs 几个比较重要的概念。
+### 小结
 
-### Yjs
+我们用不到 70 行代码（[👉🏻 完整代码](https://github.com/wang1xiang/tiptap-editor/tree/master/02-quill-collab)），就实现了 Quill 富文本编辑器的协同编辑。主要是通过将 Yjs 与 Quill 编辑器进行绑定，实现了数据的联动；然后再通过网络服务将 Yjs 数据在不同客户端之间进行传递。
 
-包含最核心的数据结构及逻辑。如数据类型的定义，数据读写编码 encoding 模块，事件监听，状态管理 StructStore，Undo/Redo 管理器等。
+有了这个前提，接下来整理下 Yjs 几个比较重要的概念。
+
+## Yjs 的核心概念
+
+Yjs：包含最核心的数据结构及逻辑。如数据类型的定义，数据读写编码 encoding 模块，事件监听，状态管理 StructStore，Undo/Redo 管理器等。
 
 ### Documents
 
@@ -207,23 +218,28 @@ const doc = new Y.Doc()
 
 通过 `new Y.Doc()` 会创建一个 Doc 实例（即一个 Yjs 文档），作用：
 
-1. 是承载共享数据 Shared Types 的容器
-2. 是网络传输 Provider 的载体，将 ydoc 传入 WebSocket 的 provider 后即可支持网络同步
+- **容器**：是承载共享数据 Shared Types 的容器
 
-```js
-// 连接到 websocket
-const provider = new WebsocketProvider(
-  'ws://localhost:1234',
-  'quill-demo-room',
-  ydoc
-)
-```
+  ```js
+  const ytext = ydoc.getText('quill')
+  ```
+
+- **载体**：是网络传输 Provider 的载体，将 ydoc 传入 WebSocket 的 provider 后即可支持网络同步
+
+  ```js
+  // 连接到 websocket
+  const provider = new WebsocketProvider(
+    'ws://localhost:1234',
+    'quill-demo-room',
+    ydoc
+  )
+  ```
 
 Y.doc 上有很多有用的属性，如：
 
 #### doc.clientID: number
 
-**只读属性**，标识会话的客户端的唯一 ID, Yjs 旨在为每个会话创建一个新的 clientID，以避免同步冲突。同一用户打开多个 tab 页时 clientID 也是唯一的，不允许跨会话重复使用，可见[FAQ](https://docs.yjs.dev/api/faq#i-get-a-new-clientid-for-every-session-is-there-a-way-to-make-it-static-for-a-peer-accessing-the-doc)。
+**只读属性**，标识会话的`客户端的唯一 ID`, Yjs 会为每个会话创建一个新的 clientID，以避免同步冲突。同一用户打开多个 tab 页时 clientID 也是唯一的，不允许跨会话重复使用，可见[FAQ](https://docs.yjs.dev/api/faq#i-get-a-new-clientid-for-every-session-is-there-a-way-to-make-it-static-for-a-peer-accessing-the-doc)。
 
 #### doc.gc: boolean
 
@@ -231,17 +247,17 @@ Y.doc 上有很多有用的属性，如：
 
 #### doc.transact(function(Transaction): void [, origin:any])
 
-Yjs 中 Documents/Shared Types 的所有更改都发生在事务中，每次事务后都会触发 `observer` 调用和 `update` 事件，触发监听和更新操作。
+Yjs 中 Documents/Shared Types 的所有更改都发生在事务中，每次发生事务后都会触发 `observer` 调用和 `update` 事件，触发**监听和更新**操作。
 
 #### doc.get(string, Y.[TypeClass]): [Type]
 
-获取共享类型的顶级实例
+获取共享类型的顶级实例，可以看到 `gc` 默认为 `true`，`clientID` 为一个随机数
 
 ![y-doc-property](./images/y-doc-property.png)
 
 #### doc.getText/getArray/getMap
 
-用于定义 Shared Types 类型
+用于定义 Shared Types 类型（text、array、map 等）
 
 #### doc.on/once/off
 
@@ -249,7 +265,7 @@ Yjs 中 Documents/Shared Types 的所有更改都发生在事务中，每次事�
 
 #### doc.on('beforeTransaction', function(tr: Transaction, doc: Y.Doc))
 
-事件处理程序在每次事务之前都会被调用
+事件处理程序在每次**事务之前**都会被调用
 
 #### doc.on('beforeObserverCalls', function(tr: Transaction, doc: Y.Doc))
 
@@ -257,11 +273,13 @@ Yjs 中 Documents/Shared Types 的所有更改都发生在事务中，每次事�
 
 #### doc.on('afterTransaction', function(tr: Transaction, doc: Y.Doc))
 
-事件处理程序在每次事务之后立即调用
+事件处理程序在每次**事务之后**立即调用
 
 #### doc.on('update', function(update: Uint8Array, origin: any, doc: Y.Doc, tr: Transaction))
 
 监听 Shared Types 上的最新消息，所有更新消息都传播给所有用户，每个人最终都会统一相同的状态。
+
+#### 事件调用顺序
 
 前面说了“Yjs 中 Documents/Shared Types 的所有更改都发生在事务中”，当发生变更时，事件按以下顺序调用：
 
@@ -286,17 +304,17 @@ ymap.observeDeep(() => console.log('observeDeep'))
 
 ![yjs-event-order-test](./images/yjs-event-order-test.png)
 
-完整属性可见[这里](https://docs.yjs.dev/api/y.doc)
+Documents 的完整属性可见[这里。](https://docs.yjs.dev/api/y.doc)
 
 ### Shared Types
 
-**the most unique feature of Yjs yet: Shared Types.**
+**The most unique feature of Yjs yet: Shared Types.**
 
-Shared Types 是 Yjs 最核心的内容，用于表示可协同编辑的数据结构。通过它可以实现任何应用的协作，比如：文档、表格、绘图等等。
+Shared Types 是 Yjs 最核心的内容，用于表示`可协同编辑的数据结构`。通过它可以实现任何应用的协作，比如：文档、表格、绘图等等。
 
-Yjs 提供了多种类型的 Shared Types：包括常见的数据结构 [Y.Map](https://docs.yjs.dev/api/shared-types/y.map)、[Y.Array](https://docs.yjs.dev/api/shared-types/y.array)、[Y.Text](https://docs.yjs.dev/api/shared-types/y.text)，使用起来就和 js 的 map、array 对象基本是一样的，具体使用哪种需要根据实际的数据结构来决定。比如上一节中将 Y.Text 通过 `y-quill` “绑定”到 Quill 的编辑器实例以自动同步编辑器内容。
+Yjs 提供了多种类型的 Shared Types：包括常见的数据结构 [Y.Map](https://docs.yjs.dev/api/shared-types/y.map)、[Y.Array](https://docs.yjs.dev/api/shared-types/y.array)、[Y.Text](https://docs.yjs.dev/api/shared-types/y.text)，使用起来就和 js 的 map、array 对象基本是一样的，具体使用哪种需要根据实际的数据结构来决定。比如上一节中将 Y.Text 通过 `y-quill` “绑定”到 Quill 的编辑器实例后自动同步编辑器内容。
 
-想要实现协同编辑的，我们就需要**构造好一个 Shared Types，监听它的变化，将变化通知其他端**即可。看下在 Yjs 中是怎么实现的？
+如何实现协同编辑？我们只需要**构造好一个 Shared Types 数据结构，监听它的变化，将变化通过网络发送到其他端**即可。看下在 Yjs 中是怎么实现的？
 
 #### 构造 Shared Types
 
@@ -316,7 +334,7 @@ Yjs 提供了多种类型的 Shared Types：包括常见的数据结构 [Y.Map](
 
 ![yjs-kunkun](./images/yjs-kunkun.png)
 
-尝试将他转为 Y.Map 格式如下：
+尝试将上面数据转为 Y.Map 格式如下：
 
 ```js
 import * as Y from 'yjs'
@@ -350,7 +368,7 @@ console.log(ymap.toJSON())
 
 上面的 API 可参考[yMap](https://docs.yjs.dev/api/shared-types/y.map)
 
-#### 监听变化
+#### 监听 Ymap 变化
 
 yMap 已经构造完成，那么接下来便是监听它的变化作相应的处理。
 
@@ -388,16 +406,16 @@ ymap.observe(event => {
 
 #### 更新同步
 
-通过 observe 已经可以监听到 Shared Types 的变化，那么如何将变化应用到其他副本呢？
+通过 observe 已经可以监听到 Shared Types 的变化，那么如何将变化应用到其他客户端呢？
 
-首先，协作编辑时传输数据很频繁，并且一般数据量都比较大，Yjs 为了减少每次传输数据的大小，对数据进行二进制编码（高度压缩）后，通过 [Update API](https://docs.yjs.dev/api/document-updates#update-api) 与其他文档进行同步，所有客户端收到所有文档更新后都会同步，主要使用下面两个 API 进行同步：
+首先，协作编辑时传输数据很频繁，并且一般数据量都比较大，Yjs 为了减少每次传输数据的大小，对**数据进行二进制编码**（高度压缩）后，通过 [Update API](https://docs.yjs.dev/api/document-updates#update-api) 与其他文档进行同步，所有客户端收到所有文档更新后都会同步，主要使用下面两个 API 进行同步：
 
 - Y.applyUpdate：将当前更新应用到一个新副本
 - Y.encodeStateAsUpdate：编码整个文档为单个更新消息
 
 之前我们提到了发生变更时的事件执行顺序，Shared Types 变更时通过 `ydoc.on('update', )` 接收 `ytype.observe` 所发出的增量更新，将计算出的增量更新发送到所有连接的客户端。
 
-我们可以同时创建两个 YDoc 实例来模拟 2 个客户端，验证一下：
+我们可以在本地同时创建两个 YDoc 实例来模拟 2 个客户端，验证一下：
 
 ```js
 const ydoc1 = new Y.Doc()
@@ -492,11 +510,9 @@ console.log(ymap1.toJSON())
 console.log(ymap2.toJSON())
 ```
 
-这一套组合 API 看似和我们常用的 map、array 等相似，但它真正的强大之处在于 `Conflict-free`，在它的内部就已经包含了冲突解决的机制。对使用者来说，我们只是简单的使用 Shared Types 所提供的 API，协同编辑时所存在的状态冲突被 Yjs 自动解决了。
+#### 实现 Quill 协同编辑
 
-而在项目项目中使用 JavaScript/JSON 对象来表示应用的状态。现在只需增加一个简单的 Binding 层，将其转化为 Yjs 的 Shared Types，类似于 Quill 的 y-quill，应用就能够自然地获得多人编辑的能力。
-
-通过以上的内容，我们可以不需要 y-quill，自己实现 Quill 的协作编辑：
+通过以上的内容，我们可以不需要 y-quill，自己实现绑定层：
 
 1. 创建 ydoc、ytext、quill 实例
 2. 监听 Quill 的`text-change` 事件，拿到 Delta 数据`delta.ops`
@@ -520,23 +536,29 @@ ytext.observe((event, origin) => {
 })
 ```
 
-同样也能达到 Quill 的协同编辑效果。
+同样也能实现协同编辑效果。
+
+#### 小结
+
+这一套组合 API 看似和我们常用的 map、array 等相似，但它真正的强大之处在于 `Conflict-free`，在它的内部就已经包含了**冲突解决**的机制。对使用者来说，我们只是简单的使用 Shared Types 所提供的 API，协同编辑时所存在的状态冲突会被 Yjs 自动解决。
+
+通常在代码中使用数组或对象表示应用的状态，现在只需增加一个简单的 Binding 层，将其转化为 Yjs 的 Shared Types，类似于 Quill 的 y-quill，应用就能够自然地获得多人编辑的能力。
 
 ### Providers
 
 #### Connection Providers
 
-通过上一节，我们已经将普通的 JSON 数据转换成了 Shared Types 的 yMap，使它有了自动解决冲突的能力，并且在本地已模拟了不同客户端的数据同步，而为了能够在不同的网络之间同步共享数据，就需要通过网络通信来完成。
+通过上一节，我们将 JSON 数据转换成了 Shared Types 的 yMap，使它有了自动解决冲突的能力，并且在本地模拟了不同客户端的数据同步，而为了能够在不同的客户端之间同步共享数据，就需要通过网络通信来完成。
 
-CRDT 本身和网络方案是解耦的，我们可以选择任意的通信方案，只要能保证更新数据成功的同步到远端即可。
+**CRDT 本身和网络是解耦**的，我们可以选择任意的通信方案，只要能保证更新数据成功的同步到远端即可。
 
-Yjs 自身提供了 [Connection Provider](https://docs.yjs.dev/ecosystem/connection-provider) 来实现副本间的通信，如：y-websocket、y-webrtc、y-dat 等。
+Yjs 自身提供了 [Connection Provider](https://docs.yjs.dev/ecosystem/connection-provider) 来实现不同客户端之间的通信，如：y-websocket、y-webrtc、y-dat 等。
 
-websocket 和 webrtc 大家应该都有所了解，[Dat](https://docs.dat.foundation/docs/intro) 是一个 P2P 协议，是一个去中心化、安全、快速的文件传输协议，适用于各种需要传输文件的情况。
+websocket 和 webrtc （请阅读 WebRTC 这么火 🔥，前端靓仔，请收下这篇入门教程](https://juejin.cn/post/7266417942182608955)）大家应该都有所了解，[Dat](https://docs.dat.foundation/docs/intro) 是一个 P2P 协议，是一个去中心化、安全、快速的文件传输协议，适用于各种需要传输文件的情况。
 
-这里我们使用 y-websocket 来实现服务端与各个客户端之间的文档同步。
+这里我们使用 y-websocket 来实现服务端与各客户端之间的文档同步。
 
-y-websocket 支持 `cross-tab communication`：即当在同一浏览器的不同页签打开同一文档时，文档上的更改将通过跨选项卡通信进行交换（[Broadcast Channel](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API)和 localStorage）。
+y-websocket 支持 `cross-tab communication`：即当在同一浏览器的不同页签打开同一文档时，文档上的更改将通过**跨选项卡通信**进行交换（[Broadcast Channel](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API)和 localStorage）。
 
 我们以 ytext 为例来看下：
 
@@ -581,6 +603,12 @@ button.onclick = () => yText.insert(0, Math.floor(Math.random() * 10) + '')
 1. 创建 Websocket 连接
 
    在 `/bin/server.js` 中，通过 `ws` 启动一个 socket 服务，服务端只需要提供基础的消息转发能力即可
+
+   ```js
+   const WebSocket = require('ws')
+   const http = require('http')
+   const wss = new WebSocket.Server({ noServer: true })
+   ```
 
 2. 初始化 Yjs 实例
 
@@ -669,7 +697,7 @@ button.onclick = () => yText.insert(0, Math.floor(Math.random() * 10) + '')
 
 #### Database Provider
 
-YJs 不仅提供了 Connection Provider 来实现客户端的协作，并且提供了 Database Provider 将文档数据同步到数据库或离线存储：如 y-indexeddb、y-redis 等。
+YJs 不仅提供了 Connection Provider 来实现客户端的协作，并且提供了 Database Provider 将文档数据同步到持久化层或离线存储层：如 y-indexeddb、y-redis 等。
 
 ```bash
 yarn add y-redis
@@ -698,7 +726,7 @@ const persistence = {
 
 ### Awareness & Presence
 
-上一节我们通过 Connect Provider 实现了不同副本之间的协作，但协同编辑不仅仅是数据的同步，还需要一些交互上的优化，诸如：当前在线用户列表、用户编辑位置以及光标位置，这些信息被称为 `Awareness`。
+上一节我们通过 Connect Provider 实现了不同客户端之间的协作，但协同编辑不仅仅是数据的同步，还需要一些交互上的优化，诸如：**当前在线用户列表、用户编辑位置以及光标位置**，这些信息被称为 `Awareness`。
 
 通常这些信息数据量较少，因此 Yjs 内部采用了 `state-based Awareness CRDT` 将信息转为 JSON 对象传播给所有用户。但它并不是 Yjs 模块，它是在 [y-protocols](https://github.com/yjs/y-protocols) 内部定义的，所有的 Providers 都默认实现了，并且提供了[Awareness CRDT API](https://docs.yjs.dev/api/about-awareness#awareness-crdt) 帮助我们获取 Awareness 的变化和更新等状态。
 
@@ -841,7 +869,7 @@ Awareness CRDT 更新的工作方式与 Yjs 更新类似，之前我们再讲 y-
 
 ### UndoManager
 
-Yjs 提供了 UndoManager，用来追踪本地更改，自然提更了 uodo/redo 功能。
+Yjs 提供了 UndoManager，用来追踪本地更改，提供 uodo/redo 功能。
 
 ```js
 import * as Y from 'yjs'
@@ -931,16 +959,16 @@ undoManager.on('stack-item-popped', (event) => {
 })
 ```
 
-### Offline Support
+## Offline Support 离线支持
 
 我们前面介绍了 Yjs 通过 Network Provider 可以在不同网络间传输，DataBase Provider 可以将文档更新同步到数据库。
 
 y-indexeddb 是 DataBase Provider 的其中一种 ，可以将文档更新同步到 [IndexDB](https://developer.mozilla.org/zh-CN/docs/Web/API/IndexedDB_API) 数据库，实现离线编辑功能。
 
-每个 Provider 都可以与其他 Provider 进行合作，比如我们可以通过 y-websocket 进行网络之间的同步，也可以通过 y-redis、y-indexeddb 等将文档持久化到 redis 或 IndexedDB 中。
+单个 Provider 都可以与其他 Provider 进行合作，比如我们可以通过 y-websocket 进行网络之间的同步，也可以通过 y-redis、y-indexeddb 等将文档持久化到 redis 或 IndexedDB 中。
 
 这样在弱网或无网络状态时文档的修改也会记录在 indexedDB 中，网络正常后再同步到服务端，不会造成文档内容的丢失；
-同时使用 y-indexeddb 和 y-websocket 会将会在每个副本的 IndexedDB 数据库中存储下来，如果某个副本或者服务器丢失一些数据时，其他副本也会将最新的文档同步回服务器。
+同时使用 y-indexeddb 和 y-websocket 会将会在每个客户端的 IndexedDB 数据库中存储下来，如果某个客户端或者服务器丢失一些数据时，其他客户端也会将最新的文档同步回服务器。
 
 ```bash
 yarn add y-indexeddb
@@ -987,16 +1015,16 @@ y-indexeddb 与之前 y-websocket 的工作方式类似，也是传入房间名�
 
 销毁 IndexedDB 数据库并删除存储的文档和所有相关元信息。
 
-### Yjs 与不同编辑器的绑定
+## Yjs 与不同编辑器的绑定
 
-在文章前面我们介绍 Quill 的协同编辑时，使用 `y-quill` 将 Yjs 与 Quill 进行绑定，实现了 Quill 的协同编辑。同时也在不使用 `y-quill` 的情况下，使用 Yjs 自带的 API 实现了 Quill 的协同编辑。
+在文章前面我们介绍 Quill 的协同编辑时，使用 y-quill 将 Yjs 与 Quill 进行绑定，实现了 Quill 的协同编辑。同时也在不使用 y-quill 的情况下，使用 Yjs 自带的 API 实现了 Quill 的协同编辑。
 
 回忆下整个过程：
 
 1. 首先监听 Quill 文本的变化；
 2. 接着将 Quill 的 Delta 数据结构转换为 yText 结构；
-3. yText 改变时通过 y-websocket 发送到其他副本；
-4. 其他副本监听 yText 的变化，解析出 Quill 的 Delta 数据，回填到编辑器中。
+3. yText 改变时通过 y-websocket 发送到其他客户端；
+4. 其他客户端监听 yText 的变化，解析出 Quill 的 Delta 数据，回填到编辑器中。
 
 Yjs 已经提供了常用的编辑器的数据绑定，像[Prosemirror](https://docs.yjs.dev/ecosystem/editor-bindings/prosemirror)、[Tiptap](https://docs.yjs.dev/ecosystem/editor-bindings/tiptap2)、[Monaco](https://docs.yjs.dev/ecosystem/editor-bindings/monaco)、[Quill](https://docs.yjs.dev/ecosystem/editor-bindings/quill) 等等，我们可以看下[y-quill](https://github.com/yjs/y-quill/blob/master/src/y-quill.js)和[y-monaco](https://github.com/yjs/y-monaco/blob/HEAD/src/y-monaco.js)的源码，Yjs 应用到不同的编辑器，基本都是这一套逻辑：
 
@@ -1008,4 +1036,4 @@ Yjs 已经提供了常用的编辑器的数据绑定，像[Prosemirror](https://
 
 ## 总结
 
-本文通过实现 Quill 的协同编辑，我们学到了 短发 dafd 大方
+本文通过实现 Yjs + Quill 的协同编辑，学习 Yjs 基本使用方法，以及一些 Yjs 的核心概念：Documents、Shared Types、Provider、 Awareness 等。最后介绍了 Yjs 与不同编辑器的绑定，可以使用 y-quill、y-monaco、y-prosemirror、y-tiptap 等编辑器绑定，实现不同编辑器的协同编辑，如需实现其他应用的协同编辑时，最重要的也是实现 Yjs 数据模型和应用数据模型的绑定，可以通过阅读以上几个编辑器的绑定源码来实现。

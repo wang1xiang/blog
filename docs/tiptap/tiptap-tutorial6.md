@@ -6,7 +6,7 @@ tags:
 describe: Quill 协同编辑
 ---
 
-通过上一篇文章[初识协同编辑：OT 和 CRDT 算法，文档协作的“魔法石”](https://juejin.cn/post/7336761948066332723)，相信各位小伙伴对 OT 和 CRDT 协同算法有了一定的了解，并且对 Yjs 有了初步的认识，本文主要教会大家如何使用 Yjs 来实现 Quill 的协同编辑，以及针对 Yjs 的一些重要概念的讲解。
+通过上一篇文章[初识协同编辑：OT 和 CRDT 算法，文档协作的“魔法石”](https://juejin.cn/post/7336761948066332723)，相信各位小伙伴对 OT 和 CRDT 协同算法有了一定的了解，并且对 Yjs 有了初步的认识，本文主要教会大家如何使用 Yjs 来实现 Quill 的协同编辑，以及针对 Yjs 的一些重要概念进行讲解。
 
 > 因为协作需要服务端的支持，所有没有 demo，具体实现请[👉🏻 查看源码](https://github.com/wang1xiang/tiptap-editor/tree/master/02-quill-collab)。
 
@@ -26,7 +26,7 @@ describe: Quill 协同编辑
 
 ### 基础代码
 
-下面便是最基础的 Yjs 代码，一脸懵逼吧 🤷‍♂️！没事，现在看不懂没关系，等学完本文再回来看，你会发现“哦，原来那么简单“。
+下面便是最基础的 Yjs 代码，一脸懵逼吧 🤷‍♂️！没事，现在看不懂没关系，等学完本文再回来看，你会发现“soga，原来那么简单！“。
 
 ```js
 import * as Y from 'yjs'
@@ -52,7 +52,7 @@ Y.applyUpdate(ydoc, update)
 console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
 ```
 
-## Yjs + Quill 协同编辑
+## Yjs + Quill 打造协同编辑文档
 
 ✅ 步入正文啦。接下来我们用短短几十行代码，便可打造一个 Quill 富文本编辑器的协同编辑。很简单，别光看，动手撸起来。
 
@@ -74,9 +74,9 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
    import Quill from 'quill'
    import QuillCursors from 'quill-cursors'
    import 'quill/dist/quill.snow.css'
-
+   
    Quill.register('modules/cursors', QuillCursors)
-
+   
    const quill = new Quill(document.querySelector('#app'), {
      modules: {
        cursors: true,
@@ -101,7 +101,7 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
 
 ### 引入 Yjs 与 Quill 实现绑定
 
-将 Yjs 的数据模型与 Quill 的数据模型进行绑定，完成后 Yjs 就会自动解决共享数据的并发更改（自动解决冲突）。
+这一步是为了将 Yjs 的数据模型与 Quill 的数据模型进行绑定，绑定后 Yjs 就会自动处理数据的并发更改（**自动解决冲突**）。
 
 1. 安装依赖
 
@@ -109,7 +109,7 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
    yarn add yjs y-quill
    ```
 
-   `y-quill` 是 Yjs 官方提供的，通过它可以将 Quill 数据模型和 Yjs 数据模型进行绑定。
+   `y-quill` 是 Yjs 官方提供的，通过它提供的 `QuillBinding` 方法可以将 Quill 数据模型和 Yjs 数据模型进行绑定。
 
 2. 修改 main.ts，添加如下代码：
 
@@ -120,7 +120,7 @@ console.log(ymap.toJSON()) // => { keyA: 'valueA', keyB: 'valueB' }
    const ydoc = new Y.Doc()
    // 在文档上定义共享文本类型
    const ytext = ydoc.getText('quill')
-
+   
    // 创建一个编辑器绑定 将quill编辑器“绑定”到 Y.Text 类型。
    const binding = new QuillBinding(ytext, quill)
    ```
@@ -554,7 +554,7 @@ ytext.observe((event, origin) => {
 
 Yjs 自身提供了 [Connection Provider](https://docs.yjs.dev/ecosystem/connection-provider) 来实现不同客户端之间的通信，如：y-websocket、y-webrtc、y-dat 等。
 
-websocket 和 webrtc （请阅读 WebRTC 这么火 🔥，前端靓仔，请收下这篇入门教程](https://juejin.cn/post/7266417942182608955)）大家应该都有所了解，[Dat](https://docs.dat.foundation/docs/intro) 是一个 P2P 协议，是一个去中心化、安全、快速的文件传输协议，适用于各种需要传输文件的情况。
+websocket 和 webrtc （请阅读 [WebRTC 这么火 🔥，前端靓仔，请收下这篇入门教程](https://juejin.cn/post/7266417942182608955)）大家应该都有所了解，[Dat](https://docs.dat.foundation/docs/intro) 是一个 P2P 协议，是一个去中心化、安全、快速的文件传输协议，适用于各种需要传输文件的情况。
 
 这里我们使用 y-websocket 来实现服务端与各客户端之间的文档同步。
 

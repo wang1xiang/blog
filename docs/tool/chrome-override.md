@@ -6,17 +6,38 @@ tags:
 describe: 本文介绍了 Chrome 浏览器的 Overrides 功能
 ---
 
-最近看到 Chrome117 发布的 Overrides 功能，怀着试试看的态度使用了一下，没想到居然挺好用的。
+## 前言
 
-Mock 工具可能是大多前端开发最常用的工具之一，Mock 数据的方式多种多样，可以直接使用 JSON 文件，也可以使用前端的 Mock 工具，或者写一个简单的 Node 中间件。也可以尝试一下像 [Ajax Modifier](https://chromewebstore.google.com/detail/nhpjggchkhnlbgdfcbgpdpkifemomkpg) 这种浏览器插件。
+Chrome 浏览器的 Overrides 功能，已经发布有一段时间了，因为一直在用 Ajax Modifier 的缘故，所以并没有使用过，但是最近在使用的时候，发现 Overrides 在对请求头 Headers 的修改上，比 Ajax Modifier 更加友好且方便，并且使用后就不需要再安装多余的浏览器插件。
 
-而 Overrides 功能就像一个浏览器原生的 Mock 工具，让我们可以更方便的实现对请求数据的覆盖。
+## 传统 Mock 工具
+
+Mock 工具可能是大多前端开发最常用的工具之一，Mock 数据的方式多种多样，可以直接使用 JSON 文件，也可以使用前端的 Mock 工具，如：mockjs，或者写一个简单的 Node 服务。
+
+### 弊端
+
+- 直接使用 JSON 很方便，就是 Mock 数据只能是固定的，每次测试都要去修改 JSON 文件，有点麻烦；
+- mockjs 也很好用，但是需要在项目中引入 mockjs 的依赖，而且需要学习 mockjs 的语法；
+- 使用 Node 服务，请求本地接口，则需要启动 Node 服务，每次测试都要启动 Node 服务，有点麻烦。
+
+### Ajax Modifier
+
+如果不想这么麻烦，可以尝试一下像 [Ajax Modifier](https://chromewebstore.google.com/detail/nhpjggchkhnlbgdfcbgpdpkifemomkpg) 这样的浏览器插件。
+
+![ajax-modifier](./images/ajax-modifiler-png.png)
+
+可以通过图中的 Switch 按钮切换 Mock 请求的开启状态。
+
+接下来，我们来介绍一下 Chrome 浏览器的 Overrides 功能，功能类似 Ajax Modifier，就像一个浏览器原生的 Mock 工具，让我们可以更方便的实现对请求数据的覆盖。
 
 ## Overrides 的使用场景
 
 ### 修改请求头
 
 Overrides 功能允许我们在对接口的 header 信息，如下图，我们可以直接点击字段旁边的编辑符号，或者在请求接口上右键->override headers 就可以实现对请求头的修改。
+
+之前有次我们后端的 nginx 配置不对，导致返回的 xml 文件的 `Content-Type` 为 `text/xml`，而我们期望的是 `text/html`，直接通过 Overrides 就可以修改返回的 `Content-Type` 为 `text/html`。
+
 ![overrides-xml](./images/overrides-xml.png)
 
 ### 修改请求返回结果
@@ -60,6 +81,8 @@ Overrides 功能允许我们在对接口的 header 信息，如下图，我们�
 2. 直接点击`Clear configuration`清空所有本地 mock 数据
 3. 单独删除某一个请求的本地 mock 数据
 
+![override-content-delete](./images/override-content-delete.png)
+
 ## 结语
 
-Overrides 功能的推出为我们提供了一个更为灵活、便捷的 Mock 工具，让我们在开发的过程中可以不再对后端有比较重的依赖，灵活应对各种数据交互情景。
+Overrides 功能的推出为我们提供了一个更为灵活、便捷的 Mock 工具，让我们在开发的过程中可以不再对后端有比较重的依赖，灵活处理各种数据交互情景。

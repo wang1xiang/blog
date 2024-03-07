@@ -1,27 +1,33 @@
 ---
 date: '2020-10-22'
-title: 微信小程序使用指南
+title: 微信小程序入门指南
 tags:
   - wechat
 describe: 微信小程序学习笔记
 ---
 
+## 注册微信小程序
+
+如果想要开发微信小程序，前提是需要注册小程序账号，[小程序注册](https://mp.weixin.qq.com/wxopen/waregister?action=step1)，很容易注册，用邮箱即可
+
+## 创建小程序
+
+![first-wx-app](./images/first-wx-app.png)
+
 ## 1 代码组成
 
 1. 页面需手动在`app.json`注册，否则不能访问
 2. `pages`数组第一项代表小程序初始页面，减少需删除对应文件夹
-3. 直接修改`this.data`无效，无法改变页面状态`this.setData({})`
-4. `tabBar`最多设置5个
-5. 没有`a`标签，无法嵌套`iframe`
-6. 没有`window`对象，提供`wx`全局方法集
+3. 直接修改`this.data`无效，无法改变页面状态，需要使用`this.setData({})`
+4. `tabBar`最多设置 5 个
+5. 没有`a`标签，无法嵌套`iframe`，直接使用 `wx.navigateTo()`实现跳转
+6. 没有`window`对象，提供`wx`全局[方法集](https://developers.weixin.qq.com/miniprogram/dev/api/base/wx.env.html)
 
 ### 1.1 主体
 
-```
-app.js 注册全局变量或方法，可以被所有页面获取到
-app.json 小程序配置 pages组成页面 window 设置状态栏、标题栏、导航条、窗口背景 tabBar 配置tab栏样式和对应页面
-app.wxss 小程序公共样式表 可引入其他.wxss文件
-```
+- app.js 注册全局变量或方法，可以被所有页面获取到
+- app.json 小程序配置 pages 组成页面 window 设置状态栏、标题栏、导航条、窗口背景 - - - tabBar 配置 tab 栏样式和对应页面
+- app.wxss 小程序公共样式表 可引入其他.wxss 文件
 
 `app.json`示例：
 
@@ -77,7 +83,7 @@ app.wxss 小程序公共样式表 可引入其他.wxss文件
 
 公共代码抽取的`js`文件，作为模块使用，通过`module.export`对外暴露，使用`const utils = require('../../utils/util.js')`阴用
 
-## 2 视图层WXML
+## 2 视图层 WXML
 
 ### 2.1 数据绑定
 
@@ -89,11 +95,11 @@ app.wxss 小程序公共样式表 可引入其他.wxss文件
 
 ```js
 Page({
-    data: {
-        message: "Hello",
-        id:0,
-        status: true
-    }
+  data: {
+    message: 'Hello',
+    id: 0,
+    status: true,
+  },
 })
 ```
 
@@ -108,7 +114,7 @@ Page({
 
 ```xml
 <view hidden="{{status ? true : false}}"> Hidden </view>
-<view> {{a + b}} + c </view> 
+<view> {{a + b}} + c </view>
 <view wx:if="{{num > 6}}"> </view>
 <view>{{"hello" + word}}</view>
 ```
@@ -129,9 +135,9 @@ Page({
 </view>
 ```
 
-### 2.4 模板template
+### 2.4 模板 template
 
-`name`定义组件模板名称，引用模板使用`is`属性指定，is可以进行简单的三目运算
+`name`定义组件模板名称，引用模板使用`is`属性指定，is 可以进行简单的三目运算
 
 模板有自己作用域，只能通过`data`传入数据
 
@@ -169,23 +175,23 @@ Page({
 ```javascript
 //app.js
 App({
-  onLaunch: function() { 
-      //小程序初始化(全局只触发一次)
+  onLaunch: function () {
+    //小程序初始化(全局只触发一次)
   },
-  onShow: function() {
-      //小程序显示
+  onShow: function () {
+    //小程序显示
   },
-  onHide: function() {
-      //小程序隐藏
+  onHide: function () {
+    //小程序隐藏
   },
-  onError: function(msg) {
-      //小程序错误
+  onError: function (msg) {
+    //小程序错误
   },
 })
 //其他 开发者可以添加任意的函数或数据到 Object 参数中，用 this 可以访问
 ```
 
-### 3.2 Page页面生命周期
+### 3.2 Page 页面生命周期
 
 每个页面有自己生命周期
 
@@ -199,19 +205,19 @@ App({
 ```javascript
 //index.js
 Page({
-  onLoad: function(options) {
+  onLoad: function (options) {
     //页面加载-----(一个页面只会调用一次)
   },
-  onReady: function() {
+  onReady: function () {
     //页面渲染-----(一个页面只会调用一次)
   },
-  onShow: function() {
+  onShow: function () {
     //页面显示-----(每次打开页面都会调用一次)
   },
-  onHide: function() {
+  onHide: function () {
     //页面隐藏-----(当navigateTo或底部tab切换时调用)
   },
-  onUnload: function() {
+  onUnload: function () {
     //页面卸载-----(当redirectTo或navigateBack的时候调用)
   },
 })
@@ -234,13 +240,13 @@ Page({
 
 ### 4.2 数量限制
 
-- 底部或顶部可以添加`tab`按钮区域 `tabBar` 是一个数组，只能配置最少2个、最多5个 `tab`，`tab`按数组的顺序排序
-- 一个应用同时只能打开5个页面
-- 小程序的`wx.request`请求最开始最大并发数是10个
+- 底部或顶部可以添加`tab`按钮区域 `tabBar` 是一个数组，只能配置最少 2 个、最多 5 个 `tab`，`tab`按数组的顺序排序
+- 一个应用同时只能打开 5 个页面
+- 小程序的`wx.request`请求最开始最大并发数是 10 个
 
 ### 4.3 大小限制
 
-- `tabBar`上按钮`iconPath`图片路径、`selectedIconPath`选中图片路径，icon大小限制为`40kb`
+- `tabBar`上按钮`iconPath`图片路径、`selectedIconPath`选中图片路径，icon 大小限制为`40kb`
 - `setData`页面数据传递单次设置数据不能超过`1024kb`
 - `setStorage`本地缓存最大`10mb`
 - 小程序源码打包后大小限制`2m`
@@ -248,14 +254,14 @@ Page({
 ## 5 路由
 
 - 微信路由接口有三个，分别是`wx.redirectTo`、`wx.navigateTo`和`wx.switchTab`
-  `wx.navigateTo`全局最多调用5次
+  `wx.navigateTo`全局最多调用 5 次
 - 如果某页面设置为`tab`页，则只支持`wx.switchTab`，不支持其他两种路由方式访问
 
 ### 5.1 触发页面跳转
 
 - 小程序启动，初始化第一个页面
-- 打开新页面，调用API`wx.navigateTo` 或使用`<navigator />`组件
-- 页面重定向，调用API`wx.navigateTo` 或使用`<navigator />`组件
+- 打开新页面，调用 API`wx.navigateTo` 或使用`<navigator />`组件
+- 页面重定向，调用 API`wx.navigateTo` 或使用`<navigator />`组件
 - 页面返回，调用 API `wx.navigateBack`或用户按左上角返回按钮
 - `tarbar`切换
 
@@ -268,7 +274,7 @@ wx.navigateTo({ // 原页面会保留
   success: function(res){},
   ...
 })
-    
+
 wx.redirectTo({ // 关闭原页面 不能返回
   //目的页面地址
   url: 'pages/logs/index',
@@ -287,11 +293,11 @@ wx.redirectTo({ // 关闭原页面 不能返回
 
 ```javascript
 wx.navigateBack({
-    delta: 1
+  delta: 1,
 })
 ```
 
-`delta`为1时返回上一页，为2时表示上上一页。如果`dalta`大于已打开的页面总数，则返回到首页
+`delta`为 1 时返回上一页，为 2 时表示上上一页。如果`dalta`大于已打开的页面总数，则返回到首页
 
 ### 5.4 页面跳转传值
 
@@ -309,13 +315,13 @@ url?key=value&key1=value1 传递的参数没有被URIEncode,传递中文没有�
 ### 5.6 页面栈
 
 - 小程序提供了`getCurrentPages()`函数获取页面栈，第一个元素为首页，最后一个元素为当前页面
-- 使用`wx.navigateTo`重复打开页面，会在页面栈顶部添加一个与二级页面初始状态一样的界面，两个页面状态独立，页面栈大小加1
+- 使用`wx.navigateTo`重复打开页面，会在页面栈顶部添加一个与二级页面初始状态一样的界面，两个页面状态独立，页面栈大小加 1
 - 使用`wx.redirectTo`重定向，关闭当前页面，使用新页面替换当前页面，两个状态是独立的
-- 使用`wx.navigateBack`返回，页面栈减1
+- 使用`wx.navigateBack`返回，页面栈减 1
 
 ## 6 数据通信
 
-### 6.1  页面之间通信
+### 6.1 页面之间通信
 
 - 使用全局变量`app.globalData`
 - 使用本地缓存`wx.setStorageSync`
@@ -326,7 +332,7 @@ url?key=value&key1=value1 传递的参数没有被URIEncode,传递中文没有�
 
 // 需要注意的是，wx.switchTab 中的 url 不能传参数。
 wx.navigateTo({
-   url:'../pageD/pageD?name=raymond&gender=male'
+  url: '../pageD/pageD?name=raymond&gender=male',
 })
 
 // B页面-接收数据//
@@ -334,10 +340,11 @@ wx.navigateTo({
 //通过onLoad的option...
 
 Page({
-onLoad: function(option){
- console.log(option.name +'is'+ option.gender)// raymond is male
-  this.setData({option: option })
-}})
+  onLoad: function (option) {
+    console.log(option.name + 'is' + option.gender) // raymond is male
+    this.setData({ option: option })
+  },
+})
 ```
 
 ### 6.2 参数传递
@@ -348,11 +355,11 @@ onLoad: function(option){
 
    ```js
    // 通常把不会更改的数据放在app.js的Data中，在各个页面中都可以通过APP实例获取Data数据
-   var app = getApp();
-   var data = app.data;
+   var app = getApp()
+   var data = app.data
    ```
 
-2. 通过拼接URL直接传递
+2. 通过拼接 URL 直接传递
 
    ```js
    // 1.通过wx.navigateTo携带参数
@@ -363,9 +370,9 @@ onLoad: function(option){
    onLoad (options) {
     const id = options.id
    }
-   
-   
-   // 2.通过navigator跳转url传递参数 
+
+
+   // 2.通过navigator跳转url传递参数
    <navigator url="../../pages/test/test?testId={{testData.testId}}"></navigator>
    // 如果传递为数组
    <navigator url="../../pages/test/test?albumList={{testData.albumList}}"></navigator>
@@ -373,7 +380,7 @@ onLoad: function(option){
    Page({
        data: {
            albumList: [],
-       },    
+       },
        onLoad: function (options) {
            var that = this;
            that.setData({
@@ -381,7 +388,7 @@ onLoad: function(option){
            });
        }
    })
-   
+
    ```
 
 3. 在`wxml`中绑定事件后，通过`data-xx`=“xx”的方式传递
@@ -396,12 +403,12 @@ onLoad: function(option){
 
    ```js
    Page({
-       clickMe: function(event) {
-           var testId = event.currentTarget.dataset.testid;
-           wx.navigateTo({
-               url: '../../pages/test/test'
-           })
-       }
+     clickMe: function (event) {
+       var testId = event.currentTarget.dataset.testid
+       wx.navigateTo({
+         url: '../../pages/test/test',
+       })
+     },
    })
    ```
 
@@ -409,7 +416,7 @@ onLoad: function(option){
 
    ```xml
    <view bindtap="clickMe" data-albumlist={{testData.albumList}}">
-       
+
    </view>
    ```
 
@@ -417,14 +424,14 @@ onLoad: function(option){
 
    ```javascript
    在js页面中自定义方法clickMe中接收
-   
+
    Page({
-       clickMe: function(event) {
-           var albumList = event.currentTarget.dataset.albumlist.split(",");
-           wx.navigateTo({
-               url: '../../pages/test/test'
-           })
-       }
+     clickMe: function (event) {
+       var albumList = event.currentTarget.dataset.albumlist.split(',')
+       wx.navigateTo({
+         url: '../../pages/test/test',
+       })
+     },
    })
    ```
 
@@ -433,30 +440,28 @@ onLoad: function(option){
    ```js
    // wx.setStorageSync 存储数据
    try {
-    wx.setStorageSync('key', 'value')
-   } catch (e) {
-   }
+     wx.setStorageSync('key', 'value')
+   } catch (e) {}
    // wx.getStorageSync(key) 读取数据
    try {
-    const value = wx.getStorageSync('key')
-       if (value) {
-           console.log(value)
-       } else {
-       }
-   } catch (e)  {
-   }
+     const value = wx.getStorageSync('key')
+     if (value) {
+       console.log(value)
+     } else {
+     }
+   } catch (e) {}
    // 或者
    wx.getStorage({
-    key: 'key',
-       success: function (res) {
-     console.log(res.data)
-       }
+     key: 'key',
+     success: function (res) {
+       console.log(res.data)
+     },
    })
    ```
 
 ## 7 疑难汇总
 
-- 不能使用window等对象；`zepto/jquery`无法使用
+- 不能使用 window 等对象；`zepto/jquery`无法使用
 
 ```tex
 页面逻辑执行在JsCore中，jsCore是一个没有窗口对象的环境
@@ -471,11 +476,43 @@ background-image：可以使用网络图片，或者 base64，或者使用<image
 - 修改窗口背景色
 
 ```css
-page { 
-  display: block; 
-  min-height: 100%; 
+page {
+  display: block;
+  min-height: 100%;
   background-color: red;
 }
 ```
 
 [小程序组件](https://upload-images.jianshu.io/upload_images/1480597-62a5f00053f5f0d1.png)
+
+## 使用遇到的问题
+
+1. 使用[微信地图组件](https://developers.weixin.qq.com/miniprogram/dev/component/map.html)报错 `getLocation:fail the api need to be declared in the requiredPrivateInfos field in app.json/ext.json`
+
+   使用地理位置相关接口时，需要声明该字段[requiredPrivateInfos](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html#requiredPrivateInfos)
+
+2. `https://xxx.com` 不在以下 request 合法域名列表中，请参考文档：[网络配置](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/network.html)
+
+   每个微信小程序需要事先设置通讯域名，小程序只可以跟指定的域名进行网络通信。
+
+   - 开发环境需要配置
+     ![develop-origin-error](./images/develop-origin-error.png)
+   - 生产环境配置
+     ![production-origin-error](./images/production-origin-error.png)
+
+## 请求
+
+wx.request
+
+## 预览效果
+
+代码包太大，影响预览
+![max-size](./logImages/max-size.png)
+
+预览真机调试区别
+
+预览只能看，真机调试可改代码
+
+## 审核
+
+![alt text](image.png)

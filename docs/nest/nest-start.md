@@ -8,9 +8,9 @@ describe: nest-start
 
 ## 介绍
 
-[Nest](https://nestjs.com/)是 Node 最流行的企业级服务端开发框架，提供了 IOC、AOP、微服务等架构特性。
+[Nest](https://nestjs.com/)是 Node 最流行的企业级服务端开发框架，内置并完全支持 TypeScript，提供了 IOC、AOP、微服务等架构特性。
 
-是前端同学尝试全栈开发的不二之选。
+Nest 底层使用 Express 或 Fastify，并做了一定程度的封。Nest 是前端同学尝试全栈开发的不二之选。
 
 ## Nest 项目初始化
 
@@ -214,6 +214,10 @@ export class AppService {
 
 ![nest-watch-start](./images/nest-watch-start.png)
 
+## Nest 构建 CRUD 项目
+
+通过一个基础的 CRUD 项目来了解 Nest 的核心原理。
+
 ## Nest 实现五种 HTTP 数据传输方式
 
 通过 `generate` 来快速创建 crud 模版代码：
@@ -273,7 +277,6 @@ findOne(@Param('id') id: string) {
 ```js
 async function urlParam() {
   const res = await axios.get('/api/person/1')
-  console.log(res)
 }
 urlParam()
 ```
@@ -311,7 +314,6 @@ async function query() {
       age: 12,
     },
   })
-  console.log(res)
 }
 query()
 ```
@@ -356,7 +358,6 @@ async function formUrlEncoded() {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     }
   )
-  console.log(res)
 }
 formUrlEncoded()
 ```
@@ -377,7 +378,6 @@ Nest 中要使用 `FilesInterceptor` 来处理其中的 binary 字段，用 `@Us
   dest: 'uploads/'
 }))
 body2(@Body() createPersonDto: CreatePersonDto, @UploadedFiles() files: Array<Express.Multer.File>) {
-  console.log(files);
   return `received: ${JSON.stringify(createPersonDto)}`
 }
 ```
@@ -399,7 +399,6 @@ body2(@Body() createPersonDto: CreatePersonDto, @UploadedFiles() files: Array<Ex
     const res = await axios.post('/api/person/file', data, {
       headers: { 'content-type': 'multipart/form-data' },
     })
-    console.log(res)
   }
 
   fileInput.onchange = formData
@@ -435,7 +434,6 @@ async function json() {
     name: 'li',
     age: 12,
   })
-  console.log(res)
 }
 json()
 ```
@@ -445,3 +443,5 @@ json()
 ![json-http](./images/json-http.png)
 
 这 5 种 http 的传输数据的方式覆盖了绝大多数开发场景，如果你想进阶全栈，理解这 5 种接口是首先要做到的。
+
+## Nest 基础

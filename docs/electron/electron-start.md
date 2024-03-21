@@ -367,7 +367,7 @@ Electron 选择了一种主进程到渲染进程单向通信的架构，主要�
 
 接着，在 VS Code 中，点击 Debug -> Start Debugging 即可。
 
-![electron-debug](./electron-debug.png)
+![electron-debug](./images/electron-debug.png)
 
 ## 如何添加 Vue.js devTools 等浏览器插件
 

@@ -511,7 +511,7 @@ wx.request
 ## 预览效果
 
 代码包太大，影响预览
-![max-size](./logImages/max-size.png)
+<!-- ![max-size](./logImages/max-size.png) -->
 
 预览真机调试区别
 
@@ -519,4 +519,4 @@ wx.request
 
 ## 审核
 
-![alt text](image.png)
+<!-- ![alt text](image.png) -->

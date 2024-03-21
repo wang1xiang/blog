@@ -32,7 +32,7 @@ describe:
 pnpm create vite my-vue-app
 ```
 
-![pnpm-create-vite.gif](./images/../../vue/images/pnpm-create-vite.gif)
+<!-- ![pnpm-create-vite.gif](./images/pnpm-create-vite.gif) -->
 
 我们也可以通过指定模板的方式一步到位
 

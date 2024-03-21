@@ -1,7 +1,7 @@
 const path = require('path');
 
 const config = {
-  host: '43.140.252.63', // 服务器地址
+  host: '82.157.207.41', // 服务器地址
   remoteStatic: '/usr/local/tomcat/webapps/ROOT/dist.tar.gz', // 需要上传到服务器的目录
   port: "22", // 端口
   username: "root", // root

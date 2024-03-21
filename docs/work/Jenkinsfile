@@ -1,0 +1,105 @@
+pipeline {
+    agent any
+    triggers {
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'All', secretToken: 'uniops_web01')
+    }
+    stages {
+        stage('拉取代码') {
+          steps {
+            git branch: '$delopyTag', credentialsId: '9fd579c2-7d7a-450d-86d0-f1d51491eb7d', url: 'https://git.qmpoa.com/fe/qmp_pc_ddm_new.git'
+          }
+        }
+        stage('安装依赖') {
+          steps {
+            nodejs('node-v14.19.3') {
+              sh '''
+                #!/bin/bash
+                source /etc/profile
+                echo "下载安装包"
+                yarn config set registry https://registry.npmmirror.com
+                yarn
+              '''
+            }
+            sleep 5
+          }
+        }
+        stage('编译') {
+          steps {
+            sh '''
+              #!/bin/bash
+              source /etc/profile
+              yarn run build
+              sleep 5
+              if [ -d dist ];then
+                cd dist
+                rm -rf *.tar.gz
+
+                tar -zcvf `date +%Y%m%d%H%M%S`.tar.gz *
+              fi
+            '''
+            sleep 5
+          }
+        }
+        stage('解压') {
+          steps {
+            echo '解压'
+            sshPublisher(
+                publishers: [
+                    sshPublisherDesc(
+                        configName: 'server(101.201.181.27)',,
+                        transfers: [
+                            sshTransfer(
+                                cleanRemote: false,
+                                excludes: '',
+                                execCommand: '''#!/bin/bash
+                                  #进入远程服务器的目录
+                                  project_dir=/alidata/www/ddm.qimingpian.cn/qmp_pc_ddm_${DEPLOYPATH}/${DEPLOYPATH}
+                                  if [ ${DEPLOYPATH} == "ddm"  ]; then
+                                    project_dir=/alidata/www/ddm.qimingpian.cn/qmp_pc_ddm/dist
+                                  fi
+                                  cd $project_dir
+                                  echo `pwd`
+                                  # sudo rm -rf $project_dir/*
+
+                                  sudo mv /home/jenkins/ddm.qimingpian.cn/*.tar.gz  $project_dir/
+
+                                  #找到新的压缩包
+                                  new_dist=`ls -ltr *.tar.gz | awk \'{print $NF}\' |tail -1`
+                                  echo $new_dist
+
+                                  #解压缩
+                                  sudo tar -zxvf $new_dist
+
+                                  #删除压缩包
+                                  sudo rm *.tar.gz
+
+                                  #发布完成
+                                  echo "环境发布完成"
+                                ''',
+                                execTimeout: 120000,
+                                flatten: false,
+                                makeEmptyDirs: false,
+                                noDefaultExcludes: false,
+                                patternSeparator: '[, ]+',
+                                remoteDirectory: 'ddm.qimingpian.cn',
+                                remoteDirectorySDF: false,
+                                removePrefix: 'dist/',
+                                sourceFiles: 'dist/*.tar.gz'
+                            )
+                        ],
+                        usePromotionTimestamp: false,
+                        useWorkspaceInPromotion: false,
+                        verbose: false
+                    )
+                ]
+            )
+          }
+        }
+    }
+    post {
+        success  {
+          echo 'success.'
+          deleteDir()
+        }
+    }
+}

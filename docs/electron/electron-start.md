@@ -202,6 +202,17 @@ app.on('quit', () => {
 输出结果如下所示：
 ![electron-life-cycle](./images/electron-life-cycle.png)
 
+#### 自定义菜单
+
+process.platform
+
+#### 自定义右键菜单
+
+#### Dialog 对话框
+
+showOpenDialogSync
+showOpenDialog
+
 #### Native API
 
 为了使 Electron 的功能不仅仅限于对网页内容的封装，主进程也添加了自定义的 API 来与用户的作业系统进行交互。 Electron 有着多种控制原生桌面功能的模块，例如菜单、对话框以及托盘图标。
@@ -229,20 +240,32 @@ contextBridge.exposeInMainWorld('IS_MAC', process.platform === 'darwin')
 
 在渲染进程中，就可以使用`window.IS_MAC`来判断环境。
 
+![electron-render-main](./images/electron-render-main.png)
+
 ### 进程间通信 IPC
 
 主进程和渲染进程各司其职，意味着主进程没法访问 DOM 元素，渲染进程无法访问 Node.js API。
 
-使用进程间通信 IPC 可以解决。Electron 提供 ipcMain（从主进程到渲染进程的异步通信） 模块和 ipcRenderer（从渲染器进程到主进程的异步通信） 模块实现 IPC 以在两种进程之间传输任意信息，例如从 UI 调用原生 API 或从原生菜单触发 Web 内容的更改。
-
-#### 渲染进程到主进程
-
-实现在渲染进程中调用主进程的 API，渲染进程中使用 ipcRenderer.send 发送消息，在主进程中使用 ipcMain.on 接收消息
+使用进程间通信 IPC 可以解决。Electron 提供 `ipcMain`（从主进程到渲染进程的异步通信） 模块和 `ipcRenderer`（从渲染器进程到主进程的异步通信） 模块实现 IPC 以在两种进程之间传输任意信息，例如从 UI 调用原生 API 或从原生菜单触发 Web 内容的更改。
 
 #### 主进程到渲染进程
 
-![electron-render-main
-](./images/electron-render-main.png)
+#### 渲染进程到主进程
+
+异步 send
+同步 sendSync
+
+实现在渲染进程中调用主进程的 API，渲染进程中使用 ipcRenderer.send 发送消息，在主进程中使用 ipcMain.on 监听渲染进程的事件用来接收消息，类似于发布订阅
+
+#### 渲染进程到渲染进程
+
+##### 主进程
+
+##### localStorage
+
+## 两种进程都可以使用的模块
+
+### Shell
 
 ## Electron 环境搭建
 

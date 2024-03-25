@@ -6,6 +6,8 @@ tags:
 describe:
 ---
 
+![jenkins-learn](./images/jenkins-learn.png)
+
 ## 入坑 Jenkins
 
 作为一个前端，想必大家都会有这个想法：“**Jenkins 会用就行了，有啥好学的**”。
@@ -18,26 +20,34 @@ describe:
 
 压力一下就上来了，一点不懂 Jenkins 可咋整？
 
-刚开始的时候还挺轻松，也就是要发版的流程到我这了，我直接在对应项目上点击`开始构建`。可是某一天，突然遇到一个 bug：我们每次 web 端项目发完后，桌面端的 hybrid 包需要我手动改 OSS 上配置文件的版本号，正巧那天忘记更新版本号了，导致桌面端应用本地的 hybrid 没有更新。。。
+然而现实是没有一点儿压力。
+
+刚开始的时候挺轻松，也就是要发版的流程到我这了，我直接在对应项目上点击`开始构建`，so easy！可是某一天，突然遇到一个 bug：我们每次 web 端项目发完后，桌面端的 hybrid 包需要我手动改 OSS 上配置文件的版本号，正巧那天忘记更新版本号了，导致桌面端应用本地的 hybrid 没有更新。。。
 
 领导：你要不就别手动更新了，弄成自动化的
 我：😨 啊！什么，我我我不会，是不可能的
 
-小弟我之前没有接触过 Jenkins，看着那一堆配置着实有点费脑，于是就只能边百度学习边输出，总结成文，希望能帮到大家，毕竟我也是刚接触的！
+小弟我之前没有接触过 Jenkins，看着那一堆配置着实有点费脑，于是就只能边百度学习边输出，从 Jenkins 安装开始到配置不同类型的构建流程，踩过不少坑，最后形成这篇万字长文。如果有能帮到大家的点，我就很开心了，毕竟我也是刚接触的！
 
 ## 说说我经历过的前端部署流程
 
+按照我的经历，我把前端部署流程分为了以下几个阶段：即原始时代 -> 脚本化时代 -> CI/CD 时代。
+
+![jenkins-history](./images/jenkins-history.png)
+
 ### 原始时代
 
-最开始的公司运维是一个小老头，他只负责管理服务器资源，不管各种项目打包之类的，于是我们就自己打包，然手把构建的文件丢到服务器上。
+最开始的公司运维是一个小老头，他只负责管理服务器资源，不管各种项目打包之类的。我们就只能自己打包，再手动把构建的文件丢到服务器上。
 
 整体流程就是：本地合并代码 --> 本地打包 --> 上传服务器；
 
 上传服务器可以分为这几个小步骤：打开 xshell --> 连接服务器 --> 进入 tomcat 目录 --> 通过 ftp 上传本地文件。
 
+可能全套下来需要 5 分钟左右。
+
 ### 脚本化时代
 
-为了简化，于是写了一个 node 脚本，通过`ssh2-sftp-client`将`上传服务器`这一步骤脚本化：
+为了简化，我写了一个 node 脚本，通过`ssh2-sftp-client`将`上传服务器`这一步骤脚本化：
 
 ```js
 const chalk = require('chalk')
@@ -122,15 +132,15 @@ upload(config, {
 
 ![upload-dist](./images/upload-dist.png)
 
-最后只要通过执行`yarn upload`即可实现打包并上传，用了一段时间，队友也都觉得挺好用的，毕竟少了很多手动操作。
+最后只要通过执行`yarn deploy`即可实现打包并上传，用了一段时间，队友也都觉得挺好用的，毕竟少了很多手动操作，效率大大提升。
 
 ### CI/CD 时代
 
-不过用了没多久后，来了个新的运维同事，一上来就整了个 Jenkins ，取代了我们手动打包的过程，只要我们点击部署就可以了，当时就感觉 Jenkins 挺方便的，但又觉得和前端没多大关系，也就没学习。
+不过用了没多久后，来了个新的运维小年轻，一上来就整了个 Jenkins ，取代了我们手动打包的过程，只要我们点击部署就可以了，当时就感觉 Jenkins 挺方便的，但又觉得和前端没多大关系，也就没学习。
 
 不过也挺`烦` Jenkins 的，为啥呢？
 
-> 当时和测试说的最多的就是“我在我这试试.....我这没问题啊，你刷新一下”，趁这个时候，赶紧打包重新部署下。有了 Jenkins 后，打包都有记录了，测试一看就知道我在撒谎了 🙄
+> 当时和测试说的最多的就是“我在我这试试.....我这没问题啊，你刷新一下”，趁这个时候，赶紧打包重新部署下。有了 Jenkins 后，打包都有记录了，测试一看就知道我在哄她了 🙄
 
 ## Jenkins 解决了什么问题
 
@@ -140,13 +150,13 @@ upload(config, {
 
 ![jenkins-vs-old](./images/jenkins-vs-old.png)
 
-只需要点击开始构建即可，如何你觉得还得每次打开 jenkins 页面去点击构建，可以通过设置代码提交或合并代码时触发构建，这样就不用每次手动去点击构建了，省时更省力 🚴🏻‍♂️。
+只需要点击开始构建即可，如何你觉得还得每次打开 jenkins 页面去点击构建，可以通过设置代码提交到 master 或合并代码时触发构建，这样就不用每次手动去点击构建了，省时更省力 🚴🏻‍♂️。
 
 ## Jenkins 部署
 
 [Jenkins 中文帮助文档](https://www.jenkins.io/zh/doc/)
 
-Jenkins 提供了多种方式的[安装](https://www.jenkins.io/zh/download/)，我的服务器是 Centos，按照[官方教程](https://mirrors.jenkins-ci.org/redhat/)进行部署即可。
+Jenkins 提供了多种[安装](https://www.jenkins.io/zh/download/)方式，我的服务器是 Centos，按照[官方教程](https://mirrors.jenkins-ci.org/redhat/)进行部署即可。
 
 官方提供两种方式进行安装：
 
@@ -262,7 +272,7 @@ systemctl restart jenkins
 
 ![jenkins-install-success-ip](./images/jenkins-install-success-ip.png)
 
-此时需要设置管理员密码，通过 `cat /var/lib/jenkins/secrets/initialAdminPassword` 即可获取。
+此时需要填写管理员密码，通过 `cat /var/lib/jenkins/secrets/initialAdminPassword` 即可获取。
 
 ### Jenkins 配置
 
@@ -307,7 +317,7 @@ systemctl restart jenkins
    vim /usr/lib/systemd/system/jenkins.service
    ```
 
-   修改 `Environment="JENKINS_PORT=8090"`
+   修改 `Environment="JENKINS_PORT=8090"`，修改完后执行：
 
    ```bash
    systemctl daemon-reload
@@ -335,7 +345,7 @@ Jenkins 发布版本很频繁，基本为一周一次，参考 [Jenkins 更新](
 
 ## 项目创建
 
-点击 `+ 新建Item`，输入名称，选择类型
+点击 `+ 新建Item`，输入名称，选择类型：
 
 ![jenkins-create-project](./images/jenkins-create-project.png)
 
@@ -347,7 +357,7 @@ Jenkins 发布版本很频繁，基本为一周一次，参考 [Jenkins 更新](
 
 选择这种类型后，就可以通过各种 web 表单（基础信息、源码、构建步骤等），配置完整的构建步骤，对于新手来说，易上手且容易理解，如果第一次接触，创建项目就选择 Freestyle project 即可。
 
-总共有以下几个步骤：
+总共有以下几个环节需要配置：
 
 - General
 - 源码管理
@@ -368,7 +378,7 @@ Jenkins 发布版本很频繁，基本为一周一次，参考 [Jenkins 更新](
 
 ![jenkins-configure-general](./images/jenkins-configure-general.png)
 
-比如描述这里，可以写项目名称、描述、输出环境等等
+比如描述这里，可以写项目名称、描述、输出环境等等。
 
 ##### Discard old builds 丢弃旧的构建
 
@@ -384,7 +394,7 @@ Jenkins 的大多数配置都有 `高级` 选项，在高级选项中可以做�
 
 ##### This project is parameterized
 
-可以理解为**此构建后续过程所需的参数**，可以是手动输入或选项等，如：git 分支、构建环境、特定的配置等等。通过这种方式，项目可以更加灵活和可配置，以适应不同的构建需求和环境。
+可以理解为**此构建后续过程可能用到的参数**，可以是手动输入或选项等，如：git 分支、构建环境、特定的配置等等。通过这种方式，项目可以更加灵活和可配置，以适应不同的构建需求和环境。
 
 默认有 8 种参数类型：
 
@@ -399,7 +409,7 @@ Jenkins 的大多数配置都有 `高级` 选项，在高级选项中可以做�
 
 `Git Parameter` 需要在 `系统管理 -> 插件管理` 搜索 `Git Parameter` 插件进行安装，安装完成后重启才会有这个参数。
 
-通过 `添加参数` 来设置后续会用到的参数，比如设置名称为`delopyTag`的`Git Parameter`参数来指定要构建的分支，设置名称为`DEPLOYPATH`的`Choice Parameter`参数来指定部署环境等等。
+通过 `添加参数` 来设置后续会用到的参数，比如设置名称为 `delopyTag` 的 `Git Parameter` 参数来指定要构建的分支，设置名称为 `DEPLOYPATH` 的 `Choice Parameter` 参数来指定部署环境等等。
 
 ![jenkins-configure-parameter](./images/jenkins-configure-parameter.png)
 
@@ -407,13 +417,13 @@ Jenkins 的大多数配置都有 `高级` 选项，在高级选项中可以做�
 
 ##### Repositories
 
-一般都是从 gitlab 上拉代码，首先设置`Repository URL`，填写 git 仓库地址，比如：`https://gitlab.com/xxx/xxx.git`
+一般公司项目都是从 gitlab 上拉代码，首先设置 `Repository URL`，填写 git 仓库地址，比如：`https://gitlab.com/xxx/xxx.git`
 
 填写完后会报错如下：
 
 ![jenkins-configure-git-error](./images/jenkins-configure-git-error.png)
 
-可以通过添加 Credentials 凭证解决，在 Jenkins 中，Git 的 Credentials 是用于访问 Git 仓库的认证信息，这些凭据可以包括用户名和密码、SSH 密钥或其他认证机制，以确保 Jenkins 能够安全地与 Git 仓库进行交互，即构建过程中**自动拉取代码、执行构建任务等**。
+可以通过添加 Credentials 凭证解决，在 Jenkins 中，Git 的 Credentials 是用于访问 Git 仓库的认证信息，这些凭据可以是用户名和密码、SSH 密钥或其他认证机制，以确保 Jenkins 能够安全的与 Git 仓库进行交互，即构建过程中**自动拉取代码、执行构建任务等**。
 
 ###### 方式一：在当前页面填写帐号、密码
 
@@ -421,7 +431,7 @@ Jenkins 的大多数配置都有 `高级` 选项，在高级选项中可以做�
 
 ![jenkins-configure-git](./images/jenkins-configure-git.png)
 
-这样添加会有一个问题，就是如果有多个项目时，每次都需要手动填写 git 账户和密码信息。
+这样添加会有一个问题，就是如果有多个项目时，每次都需要手动填写 Git 账户和密码信息。
 
 ###### 方式二：Jenkins 全局凭证设置
 
@@ -433,7 +443,7 @@ Jenkins 的大多数配置都有 `高级` 选项，在高级选项中可以做�
 
 ##### Branches to build
 
-这里构建的分支，可以设置为我们上面设置的`delopyTag`参数，即用户自己选择的分支进行构建。
+这里构建的分支，可以设置为我们上面设置的 `delopyTag` 参数，即用户自己选择的分支进行构建。
 
 #### 构建触发器
 
@@ -449,7 +459,7 @@ Jenkins 的大多数配置都有 `高级` 选项，在高级选项中可以做�
 
 默认是没有这一项的，但前端部署需要 Node 环境支持，所以需要在 `系统管理 -> 插件管理` 搜索 `nodejs` 插件进行安装，安装完成后重启才会展示这项配置。
 
-此时还是不能选择的，需要在 `系统管理 -> 全局工具配置` 中先安装 NodeJs，**可同时安装多个 NodeJs 版本**。
+但此时还是不能选择的，需要在 `系统管理 -> 全局工具配置` 中先安装 NodeJs，根据不同环境配置，**可同时安装多个 NodeJs 版本**。
 
 ![jenkins-configure-nodeJs](./images/jenkins-configure-nodeJs.png)
 
@@ -459,9 +469,9 @@ Jenkins 的大多数配置都有 `高级` 选项，在高级选项中可以做�
 
 ##### Create a formatted version number
 
-通过这个配置解决了一开始的问题，也就是把每次打包的结果上传到 OSS 服务器上时生成一个新的版本，在 Electron 项目中通过对比版本号，自动更新对应的 hybrid 包，领导都爱上我了。
+这个就是我用来解决了一开始问题的配置项，也就是把每次打包的结果上传到 OSS 服务器上时生成一个新的版本号，在 Electron 项目中通过对比版本号，自动更新对应的 hybrid 包，领导都爱上我了 😜。
 
-首先需要安装插件 `Version Number Plugin`，直接安装，然后重启 Jenkins 即可
+首先需要安装插件 `Version Number Plugin`，在 `系统管理 -> 插件管理` 中搜索安装，然后重启 Jenkins 即可
 
 ![jenkins-configure-version](./images/jenkins-configure-version.png)
 
@@ -499,13 +509,13 @@ Jenkins 的大多数配置都有 `高级` 选项，在高级选项中可以做�
 
 4. 把这个参数传递到后续的 OSS 上传的 Shell 脚本中即可。
 
-如果想要重置版本号，只要设置`Number of builds since the start of the project`为 0 即可，此时就会从 1.7.0 重新开始。
+如果想要重置版本号，只要设置`Number of builds since the start of the project`为 0 即可，此时就会从 `1.7.0` 重新开始。
 
 ### Build Steps
 
-这是最为重要的模块，主要用于定义整个构建过程的具体任务和操作，包括**执行脚本、编译代码、打包应用**等
+这是最为重要的环节，主要用于定义整个构建过程的具体任务和操作，包括**执行脚本、编译代码、打包应用**等。
 
-我们可以通过 Shell 脚本来完成前端项目常见的操作：安装依赖、打包、上传到 OSS 等。
+我们可以通过 Shell 脚本来完成前端项目常见的操作：安装依赖、打包、压缩、上传到 OSS 等。
 
 点击 `增加构建步骤 -> Execute shell`，在上方输入 shell 脚本，常见的如下：
 
@@ -523,8 +533,6 @@ echo ${WORKSPACE}
 cd ${WORKSPACE}
 
 #下载依赖包
-echo "下载安装包"
-yarn config set registry https://registry.npmmirror.com
 yarn
 #开始打包
 yarn run build
@@ -566,11 +574,11 @@ cd ../
 
    需要填写用户名、密码、服务器地址等信息，完成后点击 `Test Configuration`，如果配置正确，会显示 `Success`，否则会出现报错信息。
 
-   此处的 `Remote Directory` 是远程服务器接收 Jenkins 打包产物的目录，**需要手动创建**，如 `/home/jenkins`。
-
    这里有两种方式连接远程服务器，第一种是**密码方式**，输入服务器账户密码等信息即可；
 
    第二种是**秘钥方式**，在服务器生成密钥文件，并且将私钥**全部拷贝**，记住是全部，要携带**起止标志-----BEGIN RSA PRIVATE KEY-----或-----END RSA PRIVATE KEY----**，粘贴在 `高级 -> key` 即可。
+
+   此处的 `Remote Directory` 是远程服务器接收 Jenkins 打包产物的目录，**必须在对应的服务器手动创建目录**，如 `/home/jenkins`。
 
 3. 项目配置
 
@@ -582,12 +590,12 @@ cd ../
 
 - `Source files`：需要传输的文件，也就是通过上一步 Build Steps 后生成的压缩文件，这个路径是相对于“工作空间”的路径，即只需要输入 `dist/*.tar.gz` 即可
 
-- `Remove prefix`：删除传输文件指定的前缀，如 `Source files` 设置为`dist/*.tar.gz` ，此时设置 `Remove prefix` 为`/dist`，移除前缀，只传输 `*.tar.gz` 文件，否则会传输 `dist/*.tar.gz` 包含了 dist 整个目录，并且会自动在上传后的服务器中创建 `/dist` 这个路径。如果只需要传输压缩包，则移除前缀即可
-- `Remote directory`：文件传输到远程服务器上的具体目录，会与 Publish over SSH 插件系统配置中的 `Remote directory` 进行拼接，如我们之前设置的目录是 `/home/jenkins`，此处在写入 `qmp_pc_ddm`，那么最终上传的路径为 `/home/jenkins/qmp_pc_ddm`，与之前不同的是，如果此路径不存在时会自动创建，这样设置后，Jenkins 服务器构建后的产物会通过 ssh 上传到此目录，供下一步使用
+- `Remove prefix`：删除传输文件指定的前缀，如 `Source files` 设置为`dist/*.tar.gz` ，此时设置 `Remove prefix` 为`/dist`，移除前缀，只传输 `*.tar.gz` 文件；如果不设置酒会传输 `dist/*.tar.gz` 包含了 dist 整个目录，并且会自动在上传后的服务器中创建 `/dist` 这个路径。如果只需要传输压缩包，则移除前缀即可
+- `Remote directory`：文件传输到远程服务器上的具体目录，会与 Publish over SSH 插件系统配置中的 `Remote directory` 进行拼接，如我们之前设置的目录是 `/home/jenkins`，此处在写入 `qmp_pc_ddm`，那么最终上传的路径为 `/home/jenkins/qmp_pc_ddm`，与之前不同的是，如果此路径不存在时会自动创建，这样设置后，Jenkins 服务器构建后的产物会通过 ssh 上传到此目录，供下一步使用。
 
 - `Exec command`
 
-  文件传输完成后执行自定义 shell 脚本，比如移动文件到指定目录、解压文件、启动服务等。
+  文件传输完成后执行自定义 Shell 脚本，比如移动文件到指定目录、解压文件、启动服务等。
 
   ```bash
   #!/bin/bash
@@ -638,7 +646,7 @@ cd ../
 
 ![jenkins-result-ssh](./images/jenkins-result-ssh.png)
 
-最终就会将生成：
+最终需要部署的服务器就有了以下文件：
 
 ![jenkins-remote-directory](./images/jenkins-remote-directory.png)
 
@@ -650,7 +658,7 @@ cd ../
 
 ![jenkins-pipeline-white](./images/jenkins-pipeline-white.png)
 
-开始配置前请阅读[流水线](https://www.jenkins.io/zh/doc/book/pipeline/)章节。
+开始配置前请先阅读下[流水线](https://www.jenkins.io/zh/doc/book/pipeline/)章节。
 
 ### 生成方式
 
@@ -661,7 +669,7 @@ Jenkins 流水线的定义有两种方式：`Pipeline script` 和 `Pipeline scri
 
 #### Pipeline script
 
-Pipeline script 是直接在 Jenkins 的配置中写脚本，**可直接定义和执行**，比较直观。
+Pipeline script 是直接在 Jenkins 页面的配置中写脚本，**可直接定义和执行**，比较直观。
 
 ![jenkins-pipeline-page](./images/jenkins-pipeline-page.png)
 
@@ -669,9 +677,9 @@ Pipeline script 是直接在 Jenkins 的配置中写脚本，**可直接定义�
 
 Pipeline script from SCM 是将脚本文件和项目代码放在一起，即 `Jenkinsfile`，也可自定义名称。
 
-当 Jenkins 执行构建任务时，会从 git 中拉取该仓库到本地，然后读取 `Jenkinsfile` 的内容执行相应步骤，通常**认为在 `Jenkinsfile` 中定义并检查源代码控制是最佳实践**。
-
 ![jenkins-pipeline-code](./images/jenkins-pipeline-code.png)
+
+当 Jenkins 执行构建任务时，会从 git 中拉取该仓库到本地，然后读取 `Jenkinsfile` 的内容执行相应步骤，通常**认为在 `Jenkinsfile` 中定义并检查源代码控制是最佳实践**。
 
 当选择 `Pipeline script from SCM` 后，需要设置 SCM 为 `git`，告诉 Jenkins 从指定的 Git 仓库中拉取包含 Pipeline 脚本的文件。
 
@@ -716,7 +724,7 @@ pipeline {
 
 #### 流水线 pipline
 
-定义了整个的构建过程, 包括：构建、测试和交付应用程序的阶段。
+定义了整个项目的构建过程, 包括：构建、测试和交付应用程序的阶段。
 
 **流水线顶层必须是一个 block，pipeline{}**，作为整个流水线的根节点，如下：
 
@@ -751,9 +759,9 @@ pipeline {
 
 #### 阶段 stage
 
-定义流水线的执行过程，如：Build、Test 和 Deploy，可以在 `pipeline-console/` 中可视化的查看目前的状态/进展。
+定义流水线的执行过程，如：Build、Test 和 Deploy，可以在可视化的查看目前的状态/进展。
 
-注意：**参数可以传入任何内容**。不一定非得 `Build`，也可以传入 `打包`，与红框内的几个阶段名对应。
+注意：**参数可以传入任何内容**。不一定非得 `Build`、`Test`，也可以传入 `打包`、`测试`，与红框内的几个阶段名对应。
 
 ![jenkins-pipeline-console](./images/jenkins-pipeline-console.png)
 
@@ -879,42 +887,53 @@ pipeline {
 
 首先，所有的指令都是包裹在 `pipeline{}` 块中，
 
-- agent：Jenkins 可以在任何可用的代理节点上执行构建任务；
-- [environment](https://www.jenkins.io/zh/doc/book/pipeline/syntax/#environment)：用于定义环境变量，它们会保存为 Groovy 变量和 Shell 环境变量：定义流水线中的所有步骤可用的环境变量 `temPath`，在后续可通过 `$tmpPath` 来使用；
+#### agent
 
-  环境变量可以在全局定义，也可在 stage 里定义，全局定义的在整个生命周期里可以使用；在 stage 里定义的环境变量只能在当前步骤使用。
+enkins 可以在任何可用的代理节点上执行构建任务。
 
-  Jenkins 有一些内置变量也可以通过 env 获取（env 也可以读取用户自己定义的环境变量）。
+#### [environment](https://www.jenkins.io/zh/doc/book/pipeline/syntax/#environment)
 
-  ```js
-  steps {
-      echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
-  }
-  ```
+用于定义环境变量，它们会保存为 Groovy 变量和 Shell 环境变量：定义流水线中的所有步骤可用的环境变量 `temPath`，在后续可通过 `$tmpPath` 来使用；
 
-  这些变量都是 String 类型，常见的内置变量有：
+环境变量可以在全局定义，也可在 stage 里单独定义，全局定义的在整个生命周期里可以使用，在 stage 里定义的环境变量只能在当前步骤使用。
 
-  BUILD_ID：Jenkins 构建需要，比如：12，在 Jenkins 1.597 之后的版本里等同于 BUILD_NUMBER
-  BUILD_NUMBER：Jenkins 构建序号
-  BUILD_TAG：比如 jenkins-${JOB_NAME}-${BUILD_NUMBER}
-  BUILD_URL：Jenkins 某次构建的链接
-  NODE_NAME：当前构建使用的机器
+Jenkins 有一些内置变量也可以通过 env 获取（env 也可以读取用户自己定义的环境变量）。
 
-- [parameters](https://www.jenkins.io/zh/doc/book/pipeline/syntax/#%E5%8F%82%E6%95%B0)：定义流水线中可以接收的参数，如上面脚本中的 gitParameter，只有安装了 Git Parameters 插件后才能使用，name 设置为`delopyTag`，在后续可通过 `${params.delopyTag}` 来使用；
+```js
+steps {
+    echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
+}
+```
 
-  还有以下参数类型可供添加：
+这些变量都是 String 类型，常见的内置变量有：
 
-  ```js
-  parameters {
-    booleanParam(name: 'isOSS', defaultValue: true, description: '是否上传OSS')
-    choice(name: 'select', choices: ['A', 'B', 'C'], description: '选择')
-    string(name: 'temp', defaultValue: '/temp', description: '默认路径')
-    text(name: 'showText', defaultValue: 'Hello\nWorld', description: '')
-    password(name: 'Password', defaultValue: '123', description: '')
-  }
-  ```
+- BUILD_NUMBER：Jenkins 构建序号；
+- BUILD_TAG：比如 jenkins-${JOB_NAME}-${BUILD_NUMBER}；
+- BUILD_URL：Jenkins 某次构建的链接；
+- NODE_NAME：当前构建使用的机器
 
-- [triggers](https://www.jenkins.io/zh/doc/book/pipeline/syntax/#%E8%A7%A6%E5%8F%91%E5%99%A8)：定义了流水线被重新触发的自动化方法，上面的配置是：当 Git 仓库有新的 push 操作时触发构建
+#### [parameters](https://www.jenkins.io/zh/doc/book/pipeline/syntax/#%E5%8F%82%E6%95%B0)
+
+定义流水线中可以接收的参数，如上面脚本中的 gitParameter，只有安装了 Git Parameters 插件后才能使用，name 设置为`delopyTag`，在后续可通过 `${params.delopyTag}` 来使用；
+
+还有以下参数类型可供添加：
+
+```js
+parameters {
+  booleanParam(name: 'isOSS', defaultValue: true, description: '是否上传OSS')
+  choice(name: 'select', choices: ['A', 'B', 'C'], description: '选择')
+  string(name: 'temp', defaultValue: '/temp', description: '默认路径')
+  text(name: 'showText', defaultValue: 'Hello\nWorld', description: '')
+  password(name: 'Password', defaultValue: '123', description: '')
+}
+```
+
+#### [triggers](https://www.jenkins.io/zh/doc/book/pipeline/syntax/#%E8%A7%A6%E5%8F%91%E5%99%A8)
+
+定义了流水线被重新触发的自动化方法，上面的配置是：当 Git 仓库有新的 push 操作时触发构建
+
+#### stages 阶段
+
 - 阶段一：拉取代码
 
   git：拉取代码，参数 `branch` 为分支名，我们使用上面定义的 `${params.delopyTag}`，`credentialsId` 以及 `url`，如果不知道怎么填，可以在 `流水线语法 -> 片段生成器` 中填写对应信息后，自动生成，如下：
@@ -946,9 +965,11 @@ pipeline {
 
   ![jenkins-generate-publish](./images/jenkins-generate-publish.png)
 
-- [post](https://www.jenkins.io/zh/doc/book/pipeline/syntax/#post)：当流水线的完成状态为 `success`，输出 success。
+#### [post](https://www.jenkins.io/zh/doc/book/pipeline/syntax/#post)
 
-  deleteDir() 函数用于删除当前工作目录中的所有文件和子目录。这通常用于清理工作区，确保在下一次构建之前工作区是干净的，以避免由于残留文件或目录引起的潜在问题。
+当流水线的完成状态为 `success`，输出 success。
+
+deleteDir() 函数用于删除当前工作目录中的所有文件和子目录。这通常用于清理工作区，确保在下一次构建之前工作区是干净的，以避免由于残留文件或目录引起的潜在问题。
 
 ### 构建看看效果
 
@@ -960,11 +981,11 @@ pipeline {
 
    ![jenkins-pipeline-result1](./images/jenkins-pipeline-result1.png)
 
-   记录了每个步骤的执行情况、开始时间和耗时等信息，但是没有详细信息，详细信息就要在
+   Pipeline Overview 中记录了每个步骤的执行情况、开始时间和耗时等信息，但是没有详细信息，详细信息就要在 Pipeline Console 中进行查看。
 
 2. 效果二
 
-   需要安装插件 `Blue Ocean`，相当于同时结合了 Pipeline Overview 和 Pipeline Console，可以同时看到每个步骤的执行情况等基本信息，以及构建过程中的详细信息。
+   安装插件 `Blue Ocean`，相当于同时结合了 Pipeline Overview 和 Pipeline Console，可以同时看到每个步骤的执行情况等基本信息，以及构建过程中的详细信息。
 
    ![jenkins-pipeline-result2](./images/jenkins-pipeline-result2.png)
 
@@ -976,7 +997,7 @@ pipeline {
 
    ![jenkins-blue-create1](./images/jenkins-blue-create1.png)
 
-### 本地 Jenkinsfile
+### 通过项目中的 Jenkinsfile 构建
 
 再把对应的 Pipeline script 代码复制到对应代码仓库的 `Jenkinsfile` 文件，设置为 Pipeline script from SCM，填写 git 信息。
 
@@ -992,7 +1013,9 @@ pipeline {
 
 ### 片段生成器
 
-如果你觉得上述代码手写麻烦，那么就可以使用片段代码生成器来帮助我们生成流水线语法。进入任务构建页面，点击 `流水线语法` 进入：
+如果你觉得上述代码手写麻烦，刚开始时又不会写，那么就可以使用片段代码生成器来帮助我们生成流水线语法。
+
+进入任务构建页面，点击 `流水线语法` 进入：
 
 ### 配置构建过程遇到的问题
 
@@ -1014,10 +1037,6 @@ pipeline {
 
 ## 总结
 
-本文只要讲了 Jenkins 的安装部署，FreeStyle project 和 Pipeline 的使用，以及插件安装、配置等。
+本文对 Jenkins 的基本教程就到此为止了，主要讲了 Jenkins 的安装部署，FreeStyle project 和 Pipeline 的使用，以及插件安装、配置等。如果想要学，跟着我这个教程实操一遍，Jenkins 就基本掌握了，基本工作中遇到的问题都能解决，剩下的就只能在实际工作中慢慢摸索了。
 
-本文对 Jenkins 的基本教程就到此为止了，如果想要学，跟着我这个教程实操一遍，Jenkins 就基本掌握了，基本工作中遇到的问题都能解决，剩下的就只能在实际工作中慢慢摸索了，以及如何使用 Jenkinsfile 文件来构建和部署项目。
-
-接触新的东西，然后学习并掌握，拓宽了技术面，虽然是一种压力，也是得到了成长的机会。
-
-在这个前端技术日新月异的时代，前端工程师不仅要熟练掌握 HTML、CSS、JavaScript 等前端技术，还需要具备一定的后端知识和自动化构建能力。
+再说回最初的话题，前端需不需要学习 Jenkins。我认为接触新的东西，然后学习并掌握，拓宽了技术面，虽然是一种压力，也是得到了成长的机会，在这个前端技术日新月异的时代，前端们不仅要熟练掌握前端技术，还需要具备一定的后端知识和自动化构建能力，才能不那么容易被大环境淘汰。

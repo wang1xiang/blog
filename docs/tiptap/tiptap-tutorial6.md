@@ -782,7 +782,7 @@ awareness.setLocalStateField('user', {
 
 如果自定义 Provider 时，则需要了解 [Awareness Protocol API](https://docs.yjs.dev/api/about-awareness#awareness-protocol-api) 为 Provider 添加 Awareness。
 
-##### awarenessProtocol.encodeAwarenessUpdate(awareness: Awareness, clients: Array<number>): Uint8Array
+##### awarenessProtocol.encodeAwarenessUpdate: Uint8Array
 
 将指定客户端的感知状态编码为 Uint8Array 编码的更新。
 
@@ -790,7 +790,7 @@ awareness.setLocalStateField('user', {
 
 将使用 encodeAwarenessUpdate 创建的感知更新应用到感知 CRDT 的实例。
 
-##### awarenessProtocol.removeAwarenessStates(awareness: Awareness, clients: Array<number>, origin: any)
+##### awarenessProtocol.removeAwarenessStates, origin: any)
 
 删除指定客户端的感知状态。这将调用 Awareness CRDT 的更新和更改事件处理程序。
 
@@ -887,7 +887,7 @@ ytext.toString() // => 'abc'
 
 结合以上代码，我们来看下它的 API
 
-#### const undoManager = new Y.UndoManager(scope: Y.AbstractType | Array<Y.AbstractType> [, {captureTimeout: number, trackedOrigins: Set<any>, deleteFilter: function(item):boolean}])
+#### const undoManager = new Y.UndoManager(scope: Y.AbstractType | Array<Y.AbstractType> [, {captureTimeout: number, trackedOrigins deleteFilter: function(item):boolean}])
 
 在 Shared Types 上创建 Y.UndoManager，如果任何指定类型或其任何子类型被修改，UndoManager 将在其堆栈上添加反向操作。
 

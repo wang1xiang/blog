@@ -1,5 +1,5 @@
 const getPages = require("./utils/pages");
-const env = "";
+const env = "/blog";
 
 async function getConfig() {
   let config = {

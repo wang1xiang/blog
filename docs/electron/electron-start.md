@@ -1,8 +1,8 @@
 ---
-date: 2023-8-2
+date: 2023-6-2
 title: Electron基础及常用到的点
 tags:
-  - work
+  - electron
 describe: electron-start
 ---
 

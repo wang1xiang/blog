@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>
+      使用react-grid-layout心得 | 学习笔记
+    </title>
+    <meta name="description" content="A VitePress site">
+    <link rel="stylesheet" href="/blog/_assets/style.a71f0539.css">
+    <link rel="modulepreload" href="/blog/_assets/common-03e46d7f.js">
+    <link rel="modulepreload" href="/blog/_assets/docs_react_react-grid-layout.md.85d31bd3.lean.js">
+    <link rel="modulepreload" href="/blog/_assets/app.1eef6263.js">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta name="keywords" content="翔子Blog">
+    <link rel="icon" href="/blog/favicon.ico">
+    <link rel="stylesheet" href="https://lib.baomitu.com/gitalk/1.7.0/gitalk.min.css">
+    <script src="https://lib.baomitu.com/gitalk/1.7.0/gitalk.min.js"></script>
+    <script src="https://lib.baomitu.com/axios/0.21.1/axios.js"></script>
+    
+  </head>
+  <body>
+    <div id="app"><!--[--><div id="containerColor" class="no-sidebar theme" data-v-afcf09d4><header class="navbar" data-v-afcf09d4><!--[--><a class="title" aria-label="学习笔记, back to home" href="/blog/"><img class="logo" src="/blog/favicon.ico" alt="logo"><span>学习笔记</span></a><div class="flex-grow"></div><nav class="nav-links hide-mobile"><!--[--><!--[--><div class="nav-item"><a class="nav-link" href="/blog/index.html" target="" rel="">🏠 首页 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/blog/more/docs.html" target="" rel="">📅 归档 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/blog/more/tags.html" target="" rel="">📂 分类 <!----></a></div><!--]--><!--]--><div id="docsearch"></div><!----><!----></nav><!--[--><!--]--><!--]--><div class="sidebar-button" data-v-afcf09d4><svg class="icon" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z" class></path></svg></div></header><aside class="" data-v-afcf09d4><!--[--><nav class="nav-links show-mobile"><!--[--><!--[--><div class="nav-item"><a class="nav-link" href="/blog/index.html" target="" rel="">🏠 首页 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/blog/more/docs.html" target="" rel="">📅 归档 <!----></a></div><!--]--><!--[--><div class="nav-item"><a class="nav-link" href="/blog/more/tags.html" target="" rel="">📂 分类 <!----></a></div><!--]--><!--]--><div id="docsearch"></div><!----><!----></nav><!--[--><!--]--><ul class="sidebar"><!--[--><!--]--></ul><!--[--><!--]--><!--]--></aside><!----><!-- TODO: make this button accessible --><div class="sidebar-mask" data-v-afcf09d4></div><main data-v-afcf09d4><!--[--><div class="content"><!--[--><!--]--><div class="md-header"><div class="md-title">使用react-grid-layout心得</div><span id="jinrishici-sentence">正在加载今日诗词....</span><div class="md-date">2022-08-09</div></div><ul class="catalog"><!--[--><li class="catalog-item"><a class="level level-2" href="#前言">前言</a><!----></li><li class="catalog-item"><!----><a class="level level-3" href="#react-grid-layout简介">react-grid-layout简介</a></li><!--]--></ul><div><h2 id="前言"><a class="header-anchor" href="#前言" aria-hidden="true">#</a> 前言</h2><p>由于业务需要，最近使用react-grid-layout来完成一个基于拖拉拽生成的弹窗，所以记录一下自己使用过的API以及遇到的问题。</p><h3 id="react-grid-layout简介"><a class="header-anchor" href="#react-grid-layout简介" aria-hidden="true">#</a> react-grid-layout简介</h3><p>介绍：用于 React 的具有响应断点的可拖动和可调整大小的网格布局。<a href="https://github.com/react-grid-layout/react-grid-layout" target="_blank" rel="noopener noreferrer">github地址</a></p><h5 id="使用"><a class="header-anchor" href="#使用" aria-hidden="true">#</a> 使用</h5><ol><li>安装npm包</li></ol><div class="language-bash"><pre><code><span class="token function">npm</span> <span class="token function">install</span> react-grid-layout -S
+</code></pre></div><ol start="2"><li>引入css</li></ol><p>在index.tsx或者在引用react-grid-layout的地方引入需要的css样式</p><div class="language-js"><pre><code>
+ <span class="token keyword">import</span> <span class="token string">&#39;react-grid-layout/css/styles.css&#39;</span><span class="token punctuation">;</span>
+</code></pre></div><ol start="3"><li>使用</li></ol><div class="language-tsx"><pre><code><span class="token keyword">import</span> GridLayout <span class="token keyword">from</span> <span class="token string">&quot;react-grid-layout&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">class</span> <span class="token class-name">MyFirstGrid</span> <span class="token keyword">extends</span> <span class="token class-name">React</span><span class="token punctuation">.</span>Component <span class="token punctuation">{</span>
+  <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// layout is an array of objects, see the demo for more complete usage</span>
+    <span class="token keyword">const</span> layout <span class="token operator">=</span> <span class="token punctuation">[</span>
+      <span class="token punctuation">{</span> i<span class="token operator">:</span> <span class="token string">&quot;a&quot;</span><span class="token punctuation">,</span> x<span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> y<span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> w<span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span> h<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token keyword">static</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span> i<span class="token operator">:</span> <span class="token string">&quot;b&quot;</span><span class="token punctuation">,</span> x<span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span> y<span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> w<span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span> h<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> minW<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> maxW<span class="token operator">:</span> <span class="token number">4</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span> i<span class="token operator">:</span> <span class="token string">&quot;c&quot;</span><span class="token punctuation">,</span> x<span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span> y<span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span> w<span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span> h<span class="token operator">:</span> <span class="token number">2</span> <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">GridLayout</span></span>
+        <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>layout<span class="token punctuation">&quot;</span></span>
+        <span class="token attr-name">layout</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>layout<span class="token punctuation">}</span></span>
+        <span class="token attr-name">cols</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token number">12</span><span class="token punctuation">}</span></span>
+        <span class="token attr-name">rowHeight</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token number">30</span><span class="token punctuation">}</span></span>
+        <span class="token attr-name">width</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token number">1200</span><span class="token punctuation">}</span></span>
+      <span class="token punctuation">&gt;</span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>a<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">a</span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>b<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">b</span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+        </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">key</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>c<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">c</span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span><span class="token class-name">GridLayout</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h5 id="grid-layout-props"><a class="header-anchor" href="#grid-layout-props" aria-hidden="true">#</a> Grid Layout Props</h5><p><a href="https://github.com/react-grid-layout/react-grid-layout#grid-layout-props" target="_blank" rel="noopener noreferrer">官网地址</a></p><p>下面是个demo</p><div class="language-tsx"><pre><code><span class="token keyword">import</span> <span class="token punctuation">{</span> useState <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">&quot;react&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token constant">RGL</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> WidthProvider <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">&quot;react-grid-layout&quot;</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token string">&#39;./index.css&#39;</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> ReactGridLayout <span class="token operator">=</span> <span class="token function">WidthProvider</span><span class="token punctuation">(</span><span class="token constant">RGL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> root <span class="token operator">=</span> <span class="token punctuation">{</span>
+  width<span class="token operator">:</span> <span class="token number">600</span><span class="token punctuation">,</span>
+  height<span class="token operator">:</span> <span class="token number">480</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">type</span> <span class="token class-name">LayoutType</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  i<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  x<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  y<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  w<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  h<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  minW<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  maxW<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  minH<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  maxH<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">static</span><span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">boolean</span><span class="token punctuation">;</span>
+  isDraggable<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">boolean</span><span class="token punctuation">;</span> <span class="token comment">// 是否可移动</span>
+  isResizable<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">boolean</span><span class="token punctuation">;</span> <span class="token comment">// 是否可改变大小</span>
+  resizeHandles<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">Array</span><span class="token operator">&lt;</span><span class="token string">&quot;s&quot;</span> <span class="token operator">|</span> <span class="token string">&quot;w&quot;</span> <span class="token operator">|</span> <span class="token string">&quot;e&quot;</span> <span class="token operator">|</span> <span class="token string">&quot;n&quot;</span> <span class="token operator">|</span> <span class="token string">&quot;sw&quot;</span> <span class="token operator">|</span> <span class="token string">&quot;nw&quot;</span> <span class="token operator">|</span> <span class="token string">&quot;se&quot;</span> <span class="token operator">|</span> <span class="token string">&quot;ne&quot;</span><span class="token operator">&gt;</span><span class="token punctuation">;</span>
+  isBounded<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">boolean</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> layout<span class="token operator">:</span> LayoutType<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span>
+  <span class="token punctuation">{</span>
+    w<span class="token operator">:</span> <span class="token number">400</span><span class="token punctuation">,</span>
+    h<span class="token operator">:</span> <span class="token number">51</span><span class="token punctuation">,</span>
+    x<span class="token operator">:</span> <span class="token number">145</span><span class="token punctuation">,</span>
+    y<span class="token operator">:</span> <span class="token number">419</span><span class="token punctuation">,</span>
+    i<span class="token operator">:</span> <span class="token string">&quot;1.不可拖拽&quot;</span><span class="token punctuation">,</span>
+    minW<span class="token operator">:</span> <span class="token number">40</span><span class="token punctuation">,</span>
+    minH<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+    isDraggable<span class="token operator">:</span> <span class="token boolean">false</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    w<span class="token operator">:</span> <span class="token number">240</span><span class="token punctuation">,</span>
+    h<span class="token operator">:</span> <span class="token number">53</span><span class="token punctuation">,</span>
+    x<span class="token operator">:</span> <span class="token number">213</span><span class="token punctuation">,</span>
+    y<span class="token operator">:</span> <span class="token number">318</span><span class="token punctuation">,</span>
+    i<span class="token operator">:</span> <span class="token string">&quot;2.不能改变大小&quot;</span><span class="token punctuation">,</span>
+    minW<span class="token operator">:</span> <span class="token number">40</span><span class="token punctuation">,</span>
+    minH<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+    isResizable<span class="token operator">:</span> <span class="token boolean">false</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    w<span class="token operator">:</span> <span class="token number">242</span><span class="token punctuation">,</span>
+    h<span class="token operator">:</span> <span class="token number">57</span><span class="token punctuation">,</span>
+    x<span class="token operator">:</span> <span class="token number">212</span><span class="token punctuation">,</span>
+    y<span class="token operator">:</span> <span class="token number">246</span><span class="token punctuation">,</span>
+    i<span class="token operator">:</span> <span class="token string">&quot;3&quot;</span><span class="token punctuation">,</span>
+    minW<span class="token operator">:</span> <span class="token number">40</span><span class="token punctuation">,</span>
+    minH<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    w<span class="token operator">:</span> <span class="token number">432</span><span class="token punctuation">,</span>
+    h<span class="token operator">:</span> <span class="token number">68</span><span class="token punctuation">,</span>
+    x<span class="token operator">:</span> <span class="token number">116</span><span class="token punctuation">,</span>
+    y<span class="token operator">:</span> <span class="token number">118</span><span class="token punctuation">,</span>
+    i<span class="token operator">:</span> <span class="token string">&quot;4&quot;</span><span class="token punctuation">,</span>
+    minW<span class="token operator">:</span> <span class="token number">40</span><span class="token punctuation">,</span>
+    minH<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    w<span class="token operator">:</span> <span class="token number">652</span><span class="token punctuation">,</span>
+    h<span class="token operator">:</span> <span class="token number">83</span><span class="token punctuation">,</span>
+    x<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+    y<span class="token operator">:</span> <span class="token number">31</span><span class="token punctuation">,</span>
+    i<span class="token operator">:</span> <span class="token string">&quot;5&quot;</span><span class="token punctuation">,</span>
+    minW<span class="token operator">:</span> <span class="token number">40</span><span class="token punctuation">,</span>
+    minH<span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> <span class="token function-variable function">GridLayout</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token function-variable function">onLayoutChange</span> <span class="token operator">=</span> <span class="token punctuation">(</span>layout<span class="token operator">:</span> LayoutType<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token function">setShowVerticalLine</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setShowHorizontal</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>layout<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 展示横纵轴</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>showVerticalLine<span class="token punctuation">,</span> setShowVerticalLine<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">[</span>showHorizontal<span class="token punctuation">,</span> setShowHorizontal<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token function-variable function">onLayoutDrag</span> <span class="token operator">=</span> <span class="token punctuation">(</span>
+    layout<span class="token operator">:</span> LayoutType<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    oldItem<span class="token operator">:</span> LayoutType<span class="token punctuation">,</span>
+    newItem<span class="token operator">:</span> LayoutType
+  <span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 通过移动过程设置中轴线</span>
+    <span class="token keyword">const</span> halfWidth <span class="token operator">=</span> root<span class="token operator">?.</span>width <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> halfHeight <span class="token operator">=</span> root<span class="token operator">?.</span>height <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> <span class="token punctuation">{</span> x<span class="token punctuation">,</span> y<span class="token punctuation">,</span> w<span class="token punctuation">,</span> h <span class="token punctuation">}</span> <span class="token operator">=</span> newItem<span class="token punctuation">;</span>
+    <span class="token function">setShowVerticalLine</span><span class="token punctuation">(</span>
+      x <span class="token operator">+</span> w <span class="token operator">/</span> <span class="token number">2</span> <span class="token operator">&gt;=</span> halfWidth <span class="token operator">-</span> <span class="token number">2</span> <span class="token operator">&amp;&amp;</span> x <span class="token operator">+</span> w <span class="token operator">/</span> <span class="token number">2</span> <span class="token operator">&lt;=</span> halfWidth <span class="token operator">+</span> <span class="token number">2</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">setShowHorizontal</span><span class="token punctuation">(</span>
+      y <span class="token operator">+</span> h <span class="token operator">/</span> <span class="token number">2</span> <span class="token operator">&gt;=</span> halfHeight <span class="token operator">-</span> <span class="token number">2</span> <span class="token operator">&amp;&amp;</span> y <span class="token operator">+</span> h <span class="token operator">/</span> <span class="token number">2</span> <span class="token operator">&lt;=</span> halfHeight <span class="token operator">+</span> <span class="token number">2</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">style</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> width<span class="token operator">:</span> root<span class="token punctuation">.</span>width<span class="token punctuation">,</span> height<span class="token operator">:</span> root<span class="token punctuation">.</span>height <span class="token punctuation">}</span><span class="token punctuation">}</span></span> <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>layout-container<span class="token punctuation">&quot;</span></span> <span class="token punctuation">&gt;</span></span><span class="token plain-text">
+      </span><span class="token punctuation">{</span><span class="token comment">/* 中轴线 */</span><span class="token punctuation">}</span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span>
+        <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>horizontal-line<span class="token punctuation">&quot;</span></span>
+        <span class="token attr-name">style</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> opacity<span class="token operator">:</span> showHorizontal <span class="token operator">?</span> <span class="token number">1</span> <span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">}</span></span>
+      <span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span>
+        <span class="token attr-name">className</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>vertical-line<span class="token punctuation">&quot;</span></span>
+        <span class="token attr-name">style</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span> opacity<span class="token operator">:</span> showVerticalLine <span class="token operator">?</span> <span class="token number">1</span> <span class="token operator">:</span> <span class="token number">0</span> <span class="token punctuation">}</span><span class="token punctuation">}</span></span>
+      <span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">ReactGridLayout</span></span>
+        <span class="token attr-name">layout</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>layout<span class="token punctuation">}</span></span>
+        <span class="token comment">// 需要取消各个边的间距 贴边处理</span>
+        <span class="token attr-name">margin</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">}</span></span>
+        <span class="token attr-name">containerPadding</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">}</span></span>
+        <span class="token attr-name">onLayoutChange</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>onLayoutChange<span class="token punctuation">}</span></span>
+        <span class="token attr-name">onDragStop</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>onLayoutChange<span class="token punctuation">}</span></span>
+        <span class="token attr-name">onDrag</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>onLayoutDrag<span class="token punctuation">}</span></span>
+        <span class="token comment">// layout中的元素可以一个放在另一个上</span>
+        <span class="token attr-name">allowOverlap</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token boolean">true</span><span class="token punctuation">}</span></span>
+        <span class="token comment">// 元素可移动的点 s下 e右 se右下</span>
+        <span class="token attr-name">resizeHandles</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">[</span><span class="token string">&quot;s&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;se&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;e&quot;</span><span class="token punctuation">]</span><span class="token punctuation">}</span></span>
+        <span class="token comment">// 使用容器宽度作为cols</span>
+        <span class="token attr-name">cols</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>root<span class="token punctuation">.</span>width<span class="token punctuation">}</span></span>
+        <span class="token attr-name">rowHeight</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">}</span></span>
+      <span class="token punctuation">&gt;</span></span><span class="token plain-text">
+        </span><span class="token punctuation">{</span>layout<span class="token operator">?.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span>item<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">,</span> index<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+          <span class="token keyword">const</span> <span class="token punctuation">{</span> i<span class="token punctuation">,</span> zIndex <span class="token punctuation">}</span> <span class="token operator">=</span> item<span class="token punctuation">;</span>
+          <span class="token keyword">return</span> <span class="token punctuation">(</span>
+            <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span>
+              <span class="token attr-name">style</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token punctuation">{</span>
+                <span class="token comment">// borderColor: currentId === i ? &quot;#2680eb&quot; : &quot;&quot;,</span>
+                zIndex<span class="token punctuation">,</span>
+              <span class="token punctuation">}</span><span class="token punctuation">}</span></span>
+              <span class="token attr-name">key</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span>i<span class="token punctuation">}</span></span>
+            <span class="token punctuation">&gt;</span></span><span class="token plain-text">
+              </span><span class="token punctuation">{</span>i<span class="token punctuation">}</span><span class="token plain-text">
+            </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+          <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token plain-text">
+      </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span><span class="token class-name">ReactGridLayout</span></span><span class="token punctuation">&gt;</span></span><span class="token plain-text">
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> GridLayout<span class="token punctuation">;</span>
+
+</code></pre></div><div class="language-css"><pre><code><span class="token selector">.layout-container</span> <span class="token punctuation">{</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> 1px solid #d9d9d9<span class="token punctuation">;</span>
+  <span class="token property">position</span><span class="token punctuation">:</span> relative<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.react-grid-layout</span> <span class="token punctuation">{</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> 100% <span class="token important">!important</span><span class="token punctuation">;</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> 100% !<span class="token punctuation">;</span>
+  <span class="token property">transition</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.react-grid-item</span> <span class="token punctuation">{</span>
+  <span class="token property">overflow</span><span class="token punctuation">:</span> hidden<span class="token punctuation">;</span>
+  <span class="token property">border</span><span class="token punctuation">:</span> 1px dashed #d9d9d9<span class="token punctuation">;</span>
+  <span class="token property">cursor</span><span class="token punctuation">:</span> move<span class="token punctuation">;</span>
+  <span class="token property">display</span><span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  <span class="token property">justify-content</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+  <span class="token property">align-items</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.react-grid-item.cssTransforms</span> <span class="token punctuation">{</span>
+  <span class="token property">transition</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.resizing,
+.react-grid-item:hover</span> <span class="token punctuation">{</span>
+  <span class="token property">border-color</span><span class="token punctuation">:</span> <span class="token function">rgb</span><span class="token punctuation">(</span>38<span class="token punctuation">,</span> 128<span class="token punctuation">,</span> 235<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.react-grid-item &gt; .react-resizable-handle-s</span> <span class="token punctuation">{</span>
+  <span class="token property">cursor</span><span class="token punctuation">:</span> row-resize<span class="token punctuation">;</span>
+  <span class="token property">left</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+  <span class="token property">margin-left</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> 8px<span class="token punctuation">;</span>
+  <span class="token property">bottom</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+  <span class="token property">transform</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.react-grid-item &gt; .react-resizable-handle-e</span> <span class="token punctuation">{</span>
+  <span class="token property">cursor</span><span class="token punctuation">:</span> col-resize<span class="token punctuation">;</span>
+  <span class="token property">top</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+  <span class="token property">margin-top</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> 8px<span class="token punctuation">;</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+  <span class="token property">transform</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+  <span class="token property">right</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.react-grid-item &gt; .react-resizable-handle</span> <span class="token punctuation">{</span>
+  <span class="token property">z-index</span><span class="token punctuation">:</span> 998<span class="token punctuation">;</span>
+  <span class="token property">opacity</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+  <span class="token property">position</span><span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.react-grid-item &gt; .react-resizable-handle-se</span> <span class="token punctuation">{</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+  <span class="token property">z-index</span><span class="token punctuation">:</span> 999<span class="token punctuation">;</span>
+  <span class="token property">cursor</span><span class="token punctuation">:</span> se-resize<span class="token punctuation">;</span>
+  <span class="token property">bottom</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+  <span class="token property">right</span><span class="token punctuation">:</span> 0<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">.react-grid-placeholder</span> <span class="token punctuation">{</span>
+  <span class="token property">background</span><span class="token punctuation">:</span> transparent<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.horizontal-line</span> <span class="token punctuation">{</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> 1px<span class="token punctuation">;</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+  <span class="token property">background-color</span><span class="token punctuation">:</span> #ff6600<span class="token punctuation">;</span>
+  <span class="token property">position</span><span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+  <span class="token property">top</span><span class="token punctuation">:</span> 50%<span class="token punctuation">;</span>
+  <span class="token property">z-index</span><span class="token punctuation">:</span> 999999999<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token selector">.vertical-line</span> <span class="token punctuation">{</span>
+  <span class="token property">height</span><span class="token punctuation">:</span> 100%<span class="token punctuation">;</span>
+  <span class="token property">width</span><span class="token punctuation">:</span> 0.8px<span class="token punctuation">;</span>
+  <span class="token property">position</span><span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+  <span class="token property">left</span><span class="token punctuation">:</span> 50%<span class="token punctuation">;</span>
+  <span class="token property">background-color</span><span class="token punctuation">:</span> #ff6600<span class="token punctuation">;</span>
+  <span class="token property">z-index</span><span class="token punctuation">:</span> 999999999<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>效果如下 <img src="https://im.ezgif.com/tmp/ezgif-1-b08a6a7328.gif" alt="gif"></p></div><div class="links-wrapper"><div class="prev-link"><!----></div><div class="next-link"><!----></div></div><div><footer class="page-edit"><!-- <a v-for="(item,index) in data.platform" :key="index" :href="item.href">
+        <img class="imgIcon" :src="item.icon" />
+      </a> --></footer><!-- <p class="platform">
+      以上皆为
+      <a href="javascript:;">纪年</a> 文章发布平台
+    </p> --><p class="platform"><a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022027737号</a><br> Copyright © 2022 - present <a href="https://github.com/wang1xiang">@wangxiang</a></p></div><!--[--><!--]--></div><!-- 只想点击背景才关闭 请使用 .self 修饰符 --><div style="display:none;" class="imgBox"><img src=""></div><!--]--></main><div class="theme-select" data-v-afcf09d4><ul data-v-afcf09d4><li class="active" data-v-afcf09d4>☀️</li><li class="" data-v-afcf09d4>🌑</li></ul></div></div><!----><!--]--></div>
+    <script>__VP_HASH_MAP__ = JSON.parse("{\"README.md\":\"2d699cc5\",\"index.md\":\"7f31e3dd\",\"more_docs.md\":\"bdb760b2\",\"more_index.md\":\"4f110fbf\",\"more_tags.md\":\"e8bdf98a\",\"docs_css_grid.md\":\"8a549bc1\",\"docs_css_placeholder.md\":\"a1a76d2b\",\"docs_docker_docker-start.md\":\"61ca7d49\",\"docs_electron_electron-bug.md\":\"499c9567\",\"docs_electron_electron-check-update.md\":\"9f17178b\",\"docs_electron_electron-diaoyan.md\":\"a011e7eb\",\"docs_electron_electron-object-destroyed.md\":\"c104e7b7\",\"docs_electron_electron-open-other.md\":\"040eb4e9\",\"docs_electron_electron-protocol.md\":\"786aa221\",\"docs_electron_electron-sign.md\":\"3f08d644\",\"docs_electron_electron-start.md\":\"1b41ed5b\",\"docs_electron_electron-update.md\":\"4db00266\",\"docs_electron_electron-webview-zoom.md\":\"6dcb1533\",\"docs_electron_hybrid-electron.md\":\"20d70f2d\",\"docs_electron_sentry-electron.md\":\"492336b2\",\"docs_git_git-autocrlf.md\":\"450864d2\",\"docs_git_git-ignorecase.md\":\"f68c692f\",\"docs_git_git-notes.md\":\"374d0a5f\",\"docs_git_git-rebase.md\":\"2303de8d\",\"docs_git_git-username.md\":\"cf7d6e1f\",\"docs_git_gitflow.md\":\"a93f661f\",\"docs_git_gitlab-ci-start.md\":\"bec1f7dc\",\"docs_http_http.md\":\"4da12aa6\",\"docs_javascript_async-await.md\":\"f6f6ceb5\",\"docs_javascript_createEvent.md\":\"5876e478\",\"docs_javascript_html2docs.md\":\"127bc87b\",\"docs_javascript_http-cache.md\":\"52f6bde5\",\"docs_javascript_image-load.md\":\"c7693d17\",\"docs_javascript_indexDB-dexie.md\":\"e2e98400\",\"docs_javascript_javascript-utils.md\":\"e15a0db8\",\"docs_javascript_memory-leak.md\":\"be40742e\",\"docs_javascript_office-preview-type.md\":\"e77c69b8\",\"docs_javascript_page-alive.md\":\"84d12e09\",\"docs_javascript_preload-prefetch.md\":\"14b865ef\",\"docs_javascript_scrollend.md\":\"ec884184\",\"docs_javascript_storage-change.md\":\"c01511e3\",\"docs_javascript_turborepo-start.md\":\"a4d51d00\",\"docs_javascript_webworker.md\":\"2f82c333\",\"docs_javascript_zero-width-space.md\":\"dbce78be\",\"docs_linux_centos-docker.md\":\"6e8baf6b\",\"docs_linux_linux-no-possword.md\":\"90bd4401\",\"docs_mobile_mobileDebugging.md\":\"75ef033f\",\"docs_nest_nest-start.md\":\"2f7aeac2\",\"docs_node_bff.md\":\"21f453c0\",\"docs_node_deploy-server.md\":\"61ee73a5\",\"docs_node_socketIO-start.md\":\"cce9deaa\",\"docs_photography_nd.md\":\"bce33345\",\"docs_pnpm_pnpm-monorepo.md\":\"aeeffb95\",\"docs_prosemirror_html2docs-pdf.md\":\"35c48a89\",\"docs_react_create-react-app.md\":\"b02dc240\",\"docs_react_dompurify.md\":\"1cea6fe1\",\"docs_react_eslint-react.md\":\"1cd4092d\",\"docs_react_react-classnames.md\":\"8f732c0a\",\"docs_react_react-grid-layout.md\":\"85d31bd3\",\"docs_react_react-intl.md\":\"a6eaf693\",\"docs_react_react-philosophies.md\":\"fd3eae81\",\"docs_react_react-query.md\":\"ef1d57bc\",\"docs_react_react-router-change.md\":\"17e5eb71\",\"docs_react_react-vs-vue3.md\":\"bab04271\",\"docs_react_redux-audition.md\":\"1283e370\",\"docs_react_tomcat-404.md\":\"e4cf535e\",\"docs_reactNative_react-native-errors.md\":\"75516503\",\"docs_taro_taro-get-started.md\":\"887ea68f\",\"docs_taro_taro-start.md\":\"eb580097\",\"docs_tiptap_tiptap-tutorial.md\":\"da7babcc\",\"docs_tiptap_tiptap-tutorial2.md\":\"6e8d90b8\",\"docs_tiptap_tiptap-tutorial3.md\":\"437a7693\",\"docs_tiptap_tiptap-tutorial4.md\":\"2394c182\",\"docs_tiptap_tiptap-tutorial5.md\":\"f616b4c7\",\"docs_tiptap_tiptap-tutorial6.md\":\"b6dd8d82\",\"docs_tiptap_tiptap-tutorial7.md\":\"7b87ad60\",\"docs_tiptap_tiptap-tutorial8.md\":\"5cdf5f06\",\"docs_tiptap_tiptap-tutorial9.md\":\"02914b09\",\"docs_tool_2023-summary.md\":\"49d20dae\",\"docs_tool_blog.md\":\"6e80fa98\",\"docs_tool_chatgpt.md\":\"b33e819b\",\"docs_tool_chrome-extension.md\":\"d0a8bfa4\",\"docs_tool_chrome-override.md\":\"431424dd\",\"docs_tool_debugging.md\":\"09cb3e8e\",\"docs_tool_mac.md\":\"c125c314\",\"docs_tool_mock.md\":\"775e2d35\",\"docs_tool_moment-api.md\":\"f7882f5a\",\"docs_tool_mvp.md\":\"1e63a14a\",\"docs_tool_np.md\":\"c6a2925e\",\"docs_tool_prosemirror-tables.md\":\"4ac7a6bf\",\"docs_tool_vitepress-error.md\":\"da84e5a8\",\"docs_tool_vscode-web-error.md\":\"92c26145\",\"docs_tool_whistle.md\":\"b40b8470\",\"docs_tool_yarn-certificate.md\":\"2acbc5ce\",\"docs_vite_componentLibrary.md\":\"2e2c95fa\",\"docs_vite_create-vite.md\":\"4297b429\",\"docs_vite_vite-env.md\":\"2b5cc67e\",\"docs_vite_vite-react-cli.md\":\"086c81f8\",\"docs_vite_vite-react.md\":\"20324083\",\"docs_vite_vite.md\":\"651c4570\",\"docs_vite_vite3.0.md\":\"62ac84c0\",\"docs_vscode_vscode-markdown.md\":\"fb61981b\",\"docs_vscode_vscode-todo.md\":\"080107db\",\"docs_vue_antd-form.md\":\"1a61b1c0\",\"docs_vue_antd-vue.md\":\"9f1c3b9c\",\"docs_vue_axios-token.md\":\"1e6fe98f\",\"docs_vue_history-mode.md\":\"b1dc8001\",\"docs_vue_keepAlive.md\":\"bd809697\",\"docs_vue_tjTodo.md\":\"aa58dab9\",\"docs_vue_vue3-jsx.md\":\"ccdb1a83\",\"docs_vue_vue3-lint-staged.md\":\"dd04dfb4\",\"docs_vue_vue3-unexpected-token.md\":\"015ee6b2\",\"docs_webrtc_getstarted-webrtc.md\":\"18631818\",\"docs_webrtc_livekit-start.md\":\"abd3a98e\",\"docs_webrtc_webrtc-one.md\":\"b26eb52d\",\"docs_wechat_wechat-app.md\":\"e6efda23\",\"docs_work_360-develop.md\":\"4355f4bb\",\"docs_work_click-event.md\":\"b0bf55cc\",\"docs_work_contentEdit-div-insert.md\":\"68eecef6\",\"docs_work_developer.md\":\"b6c37ba6\",\"docs_work_email-font.md\":\"e5bc0fdf\",\"docs_work_excalidraw-use.md\":\"3361ac43\",\"docs_work_excalidraw.md\":\"7bb9bbba\",\"docs_work_font-loading-speed.md\":\"1efa0702\",\"docs_work_h5-app.md\":\"8d105cc7\",\"docs_work_html2canvas-bug.md\":\"0e7e179d\",\"docs_work_i18n.md\":\"131e3b85\",\"docs_work_image-type.md\":\"06f75a42\",\"docs_work_jenkins-start.md\":\"363d79b1\",\"docs_work_malformed.md\":\"5d3a820e\",\"docs_work_mutationObserver.md\":\"1c441422\",\"docs_work_react-ref.md\":\"544f0388\",\"docs_work_richeditor.md\":\"538fdb14\",\"docs_work_sentry-cli-error.md\":\"398fe30e\",\"docs_work_sentry-error.md\":\"ed6f20d8\",\"docs_work_sentry.md\":\"04547cad\",\"docs_work_text-decoration.md\":\"67f07445\",\"docs_work_white-board.md\":\"508f5f66\",\"docs_work_zero-width-spaces.md\":\"71644dd8\"}")</script>
+    <script type="module" async src="/blog/_assets/app.1eef6263.js"></script>
+  </body>
+</html>

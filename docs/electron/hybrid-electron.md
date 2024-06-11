@@ -64,7 +64,10 @@ releases_dev.json // 测试环境
       {
         "key": "doc",
         "version": "1.0.3",
-        "domainNames": ["https://docdev.qimingpian.cn", "https://dochy.qimingpian.cn"],
+        "domainNames": [
+          "https://docdev.qimingpian.cn",
+          "https://dochy.qimingpian.cn"
+        ],
         "url": "https://qtable.oss-cn-beijing.aliyuncs.com/apps/hy-desktop/doc-dev/0825.zip"
       }
     ]
@@ -99,3 +102,125 @@ releases_dev.json // 测试环境
 1、离线包下载失败；
 2、离线包解压失败；
 3、本地缓存未命中；
+
+## Quickin 接入离线包方案
+
+1. 注册文件协议 registerFileProtocol需要在app.ready中触发
+2. 将离线包映射文件和地址进行替换
+3. 
+
+### 桌面端工程
+
+#### 1、404 兜底文件：目录 hybrid-packages , 放入 404.html
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn.png)
+
+#### 离线包地址：src/main/env.ts 　
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn1.png)
+
+#### 注册文件协议：src/main/protocol-manager.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn2.png)
+
+#### 离线包映射文件和地址替换方法等：/src/main/hybrid-manager/env-hy.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn3.png)
+
+#### 注册混合包协议：/src/main/hybrid-manager/index.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn4.png)
+
+#### 类型文件：/src/main/hybrid-manager/ipc-hybird.d.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn5.png)
+
+#### 预加载混合文件：/src/main/hybrid-manager/preload-hy.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn6.png)
+
+#### 检查&下载&解压&更新：/src/main/hybrid-manager/update.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn7.png)
+
+#### 新开窗口加载标签页的地址判断：/src/main/ipc-manager/browser-and-dialog.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn8.png)
+
+#### 加一个通信方法的类型：/src/main/ipc-manager/ipc.d.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn9.png)
+
+#### 桥接处增加方法定义：/src/main/ipc-manager/preload.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn10.png)
+
+#### 文件读写和压缩：/src/main/utils/fs.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn11.png)
+
+#### 通信 helper 文件：/src/main/utils/ipc-helper.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn12.png)
+
+#### 去掉 web 环境弹窗 & 本地开发使用 3000 端口服务：/src/main/utils/read-qtable-branch.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn13.png)
+
+#### 主窗口非本地环境下两个时机检测离线包：/src/main/window-manager/main-window.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn14.png)
+
+#### 使用新增的 R2M2R 通信方法进行标签域名替换判断：/src/render/views/muti-tabs/useViews.ts
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn15.png)
+
+#### 桌面端环境：按照原本的 6 个环境使用
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn16.png)
+
+打包流程：与原本一致
+上线流程：与原本一致（注意版本控制即可）
+
+### 网页端工程
+
+#### 打包指令修改，输出包不使用 viteEnv：package.json
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn17.png)
+
+#### 用到 import.meta.env 的地方，替换为从桌面端获取环境
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn18.png)
+
+#### 新增配置文件，用于合理映射和线上环境兜底
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn19.png)
+
+#### 单独调用了 vite 的 mode 或者 NODE_ENV 的地方，换成来自桌面端的环境名称判断，也是 ViteEnv 允许兜底使用
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn20.png)
+
+#### 重定向自动登录流程 改为 非阻塞自动登录流程，token 和 im_id 直接传过去，然后异步自动登录，目标页面优先执行
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn21.png)
+
+#### 路由前置守卫需要取下来关键参数(token、im_id)，并存起来，然后再去 next()，这样可以保证页面接口正常请求，配合第五步实现非阻塞流程
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn22.png)
+
+页面端环境：主要跟随桌面端环境走，名称和内容也要对应上，这样才可以保证登录状态已经服务端鉴权有效
+
+![electron-hybrid-quickIn](./images/electron-hybrid-quickIn23.png)
+
+### 打包流程
+
+- OSS 离线包方案：
+
+  - 命令：npm run build
+  - 压缩：dist 压缩为+0.0.1 版本包（例：v1.8.2.zip）
+  - 上传：手动拖入 OSS 对应环境的目录（别拖错位置了）
+  - 配置文件：修改 OSS 上对应环境的 version 版本和 url 的版本
+
+- 网页端兜底方案：
+  - 打包：Jenkins 运行任务（注意 jenkins 命令修改）
+  - 描述：只有一个 build，不区分环境，环境跟随调用方

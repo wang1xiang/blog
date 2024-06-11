@@ -14,7 +14,7 @@ describe:
 
 ![electron-webview-zoom1](./images/electron-webview-zoom1.png)
 
-如果需求是对 Native webview 缩放，则不能使用 <webview>.setZoomFactor、<webview>.getZoomFactor，需要自己实现缩放功能和管理缩放状态
+如果需求是对 Native webview 缩放，则不能使用 `<webview>.setZoomFactor、<webview>.getZoomFactor`，需要自己实现缩放功能和管理缩放状态
 
 实现参考
 

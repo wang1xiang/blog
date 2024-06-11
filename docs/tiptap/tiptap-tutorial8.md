@@ -1,6 +1,6 @@
 ---
 date: 2024-4-1
-title: tiptap-tutorial8
+title: Yjs 使用报错
 tags:
   - tiptap
 describe: tiptap-tutorial8

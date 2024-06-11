@@ -20,7 +20,9 @@ module.exports = (plop) => {
         message: '选择创建文件到下面哪个文件夹',
         choices: [
           'css',
+          'docker',
           'electron',
+          'flutter',
           'git',
           'javascript',
           'linux',

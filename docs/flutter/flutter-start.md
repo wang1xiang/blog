@@ -1,5 +1,5 @@
 ---
-date: 2024-5-6
+date: 2024-5-1
 title: flutter环境搭建
 tags:
   - flutter
@@ -185,6 +185,11 @@ source ~/.zshrc
 rbenv install -l
 rbenv install 3.3.2
 rbenv global 3.3.2
+
+# 查看所有ruby版本
+rbenv versions
+# 卸载某个版本
+rbenv uninstall 3.3.2
 # 验证安装是否成功
 ruby -b
 ```
@@ -281,7 +286,7 @@ open -a Simulator
 - pubspec.yaml：Flutter 项目的配置文件，包含项目的名称、描述、依赖项、开发依赖项等，类似于 package.json
   - name: 项目的名称。
   - description: 项目的简短描述。
-  - publist_to：防止我们使用 flutter pub publish 命令将其发布到 pub.dev 上
+  - publist_to：防止我们使用 flutter pub publish 命令将其发布到 pub.dev 上，https://pub.dev/ 相当于 https://www.npmjs.com/
   - dependencies: 项目的依赖项。
   - dev_dependencies: 开发过程中使用的依赖项。
   - flutter: Flutter 特定的配置，包括资源文件（assets）、字体（fonts）等。
@@ -298,6 +303,7 @@ open -a Simulator
 4. 使用以下命令来检查和修复依赖项
 
    ```bash
+   # 相当于npm i
    flutter pub get
    ```
 

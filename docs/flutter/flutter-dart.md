@@ -1,5 +1,5 @@
 ---
-date: 2024-5-6
+date: 2024-5-2
 title: Dart语言及Flutter项目
 tags:
   - flutter
@@ -13,6 +13,15 @@ Flutter 开发使用的 Dart 语言，所以学习 Dart 是 Flutter 开发的必
 Dart 语言在设计上同时借鉴 Java 和 JavaScript 语言，同时引入一些现代编程语言的特性，例如空安全，除此之外还有一些独创的语法，比如级联操作符。
 
 特点：**强类型语言**，**静态语法方面类似 Java**，如类新定义、函数定义和泛型等，**动态特性方面类似 JavaScript**，如函数式特性、异步支持等。
+
+Flutter 的基本数据类型如下：
+
+- Numbers（数值）→ int、double
+- Booleans（布尔）→ bool，只有两个值 true 或 false
+- Strings（字符串）→ String、Runes(UTF-32 编码的字符串，可以通过文字转换成表情或代表特定文字)，可以用单引号(')或双引号(")来包裹字符串
+- Lists（列表）→ Dart 中的数组等于列表，var list = [] 和 List list = new List() 可以简单看做一样
+- Sets（集）→ 无序，元素唯一的集合
+- Maps（字典）→ 键值对的形式表示一组值
 
 ### 变量声明
 
@@ -747,3 +756,5 @@ import 'package:flutter/material.dart';
 ```
 
 Material 应用程序以 MaterialApp 组件开始，该组件在应用程序的根部创建了一些必要的组件，比如 Theme 组件，它用于配置应用的主题。
+
+如 Scaffold 骨架组件，参数 appBar、body

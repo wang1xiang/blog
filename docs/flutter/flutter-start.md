@@ -240,6 +240,8 @@ open -a Simulator
 
 ## 第一个 flutter 应用
 
+阅读[给 Web 开发者的 Flutter 指南](https://docs.flutter.cn/get-started/flutter-for/web-devs)
+
 使用 Flutter 应用模板创建第一个 flutter 应用
 
 1. `cmd + shift + p` 输入 `flutter` 选择 `Flutter: New Project` 创建一个项目`，首次需要设置 flutter SDK 位置

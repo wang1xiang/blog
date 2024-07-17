@@ -59,16 +59,16 @@ releases_dev.json // 测试环境
         "key": "test",
         "version": "1.0.0",
         "domainNames": ["http://www.baidu.com"],
-        "url": "https://qtable.oss-cn-beijing.aliyuncs.com/apps/hy-desktop/test/test.zip"
+        "url": "https://xxx.aliyuncs.com/apps/hy-desktop/test/test.zip"
       },
       {
         "key": "doc",
         "version": "1.0.3",
         "domainNames": [
-          "https://docdev.qimingpian.cn",
-          "https://dochy.qimingpian.cn"
+          "https://xxx",
+          "https://xxx"
         ],
-        "url": "https://qtable.oss-cn-beijing.aliyuncs.com/apps/hy-desktop/doc-dev/0825.zip"
+        "url": "https://xxx.aliyuncs.com/apps/hy-desktop/doc-dev/0825.zip"
       }
     ]
   }
@@ -163,7 +163,7 @@ releases_dev.json // 测试环境
 
 ![electron-hybrid-quickIn](./images/electron-hybrid-quickIn12.png)
 
-#### 去掉 web 环境弹窗 & 本地开发使用 3000 端口服务：/src/main/utils/read-qtable-branch.ts
+#### 去掉 web 环境弹窗 & 本地开发使用 3000 端口服务：/src/main/utils/branch.ts
 
 ![electron-hybrid-quickIn](./images/electron-hybrid-quickIn13.png)
 

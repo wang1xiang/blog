@@ -20,7 +20,7 @@ describe: tiptap-tutorial10
          default: ''
        },
        snapshot: { // 默认快照
-         default: 'https://faworkfile.qimingpian.cn/userUpload/docs/rjU0JlwXSfvtcdjiGExIQgQIczZUExReBjOcqzTI.svg'
+         default: 'https://faworkfile.xxx.cn/userUpload/docs/rjU0JlwXSfvtcdjiGExIQgQIczZUExReBjOcqzTI.svg'
        }
      }
    },

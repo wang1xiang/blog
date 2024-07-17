@@ -165,6 +165,7 @@ gitlab-runner register
 5. 选择 Runner-Executor，建议 `docker`
 6. 选择 Runner-Executor-Version，建议 `docker:latest`
 
+   `node:16.19-slim`，小版本，能省很多内存
    根据提示填写 docker 执行器版本，后续作业以哪个镜像版本来运行 job（可在.gitlab-ci.yml 中修改需要的 image）
 
 所有步骤执行完会生成一个 Runner 的配置文件，默认位置是 `/etc/gitlab-runner/config.toml`，由于我们创建 Runner 容器时挂载了目录，该文件会同步出现在我们创建的本地挂载目录 `/home/gitlab-runner/config/config.toml` 中。

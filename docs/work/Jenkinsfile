@@ -53,15 +53,15 @@ pipeline {
                                 excludes: '',
                                 execCommand: '''#!/bin/bash
                                   #进入远程服务器的目录
-                                  project_dir=/alidata/www/ddm.qimingpian.cn/qmp_pc_ddm_${DEPLOYPATH}/${DEPLOYPATH}
+                                  project_dir=/alidata/www/xxx.cn/qmp_pc_ddm_${DEPLOYPATH}/${DEPLOYPATH}
                                   if [ ${DEPLOYPATH} == "ddm"  ]; then
-                                    project_dir=/alidata/www/ddm.qimingpian.cn/qmp_pc_ddm/dist
+                                    project_dir=/alidata/www/xxx.cn/qmp_pc_ddm/dist
                                   fi
                                   cd $project_dir
                                   echo `pwd`
                                   # sudo rm -rf $project_dir/*
 
-                                  sudo mv /home/jenkins/ddm.qimingpian.cn/*.tar.gz  $project_dir/
+                                  sudo mv /home/jenkins/xxx.cn/*.tar.gz  $project_dir/
 
                                   #找到新的压缩包
                                   new_dist=`ls -ltr *.tar.gz | awk \'{print $NF}\' |tail -1`
@@ -81,7 +81,7 @@ pipeline {
                                 makeEmptyDirs: false,
                                 noDefaultExcludes: false,
                                 patternSeparator: '[, ]+',
-                                remoteDirectory: 'ddm.qimingpian.cn',
+                                remoteDirectory: 'xxx.cn',
                                 remoteDirectorySDF: false,
                                 removePrefix: 'dist/',
                                 sourceFiles: 'dist/*.tar.gz'

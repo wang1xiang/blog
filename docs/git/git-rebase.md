@@ -246,7 +246,7 @@ git br | grep 'fix' | xargs git br -d
 git br | xargs git br -d feat-table
 ```
 
-接着，你先用`git stash pop`把`feat-table`分支上储藏的代码先弹出来，接着一顿操作，完了推送代码到远程，当你执行 git push 的时候，发现远程仓库有修改，git 会提示你先执行 git pull 拉代码时，只要有冲突提示你修改，然后改完之后，git 会帮你自动合并生成一次提交，类似这样`Merge branch "fix-table' of https://git.qmpoa.com/fe/qtable_docs into fix-table`，提交很丑，那你怎么规避它呢？
+接着，你先用`git stash pop`把`feat-table`分支上储藏的代码先弹出来，接着一顿操作，完了推送代码到远程，当你执行 git push 的时候，发现远程仓库有修改，git 会提示你先执行 git pull 拉代码时，只要有冲突提示你修改，然后改完之后，git 会帮你自动合并生成一次提交，类似这样`Merge branch "fix-table' of https://git.qmpoa.com/fe/xxx into fix-table`，提交很丑，那你怎么规避它呢？
 
 这时候就轮到**第九个操作 rebase**登场：
 

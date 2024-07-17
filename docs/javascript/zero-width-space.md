@@ -202,7 +202,7 @@ describe: zero-width-space
 <div contenteditable="true">
   <span>&#xFEFF;</span>
   <img
-    src="https://faworkfile.qimingpian.cn/userUpload/docs/sedW5IEUtEhikAZUmiW4j3LxwvI1hB6E8tkqfJKa.png"
+    src="https://faworkfile.xxx.cn/userUpload/docs/sedW5IEUtEhikAZUmiW4j3LxwvI1hB6E8tkqfJKa.png"
   />
   <span>&#xFEFF;</span>
 </div>

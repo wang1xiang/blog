@@ -94,4 +94,4 @@ export function execPromise(
 
 #### 相关链接
 
-第三方流程 pdf 文件地址：[https://qtable.oss-cn-beijing.aliyuncs.com/im/2024/01/08/35a61c865ab3552ea0e5108e314a9c57/d172ca47\_云版代码签名手册.pdf](https://qtable.oss-cn-beijing.aliyuncs.com/im/2024/01/08/35a61c865ab3552ea0e5108e314a9c57/d172ca47_%E4%BA%91%E7%89%88%E4%BB%A3%E7%A0%81%E7%AD%BE%E5%90%8D%E6%89%8B%E5%86%8C.pdf)
+第三方流程 pdf 文件地址：[https://xxx.aliyuncs.com/im/2024/01/08/35a61c865ab3552ea0e5108e314a9c57/d172ca47\_云版代码签名手册.pdf](https://qtable.oss-cn-beijing.aliyuncs.com/im/2024/01/08/35a61c865ab3552ea0e5108e314a9c57/d172ca47_%E4%BA%91%E7%89%88%E4%BB%A3%E7%A0%81%E7%AD%BE%E5%90%8D%E6%89%8B%E5%86%8C.pdf)

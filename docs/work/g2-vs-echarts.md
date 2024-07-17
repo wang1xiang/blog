@@ -1,5 +1,5 @@
 ---
-date: 2024-6-13
+date: 2024-7-8
 title: 图表库选型——G2 vs ECharts 🔥
 tags:
   - work

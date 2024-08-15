@@ -125,6 +125,23 @@ const RELEASE_APP_DIR = path.join(__dirname, `./out/${APP_NAME}-${process.platfo
 
 将证书存入钥匙串参考此文 [“代码签名”部分 1、2](https://www.jianshu.com/p/0d89a18308b2)
 
+证书位于项目deploy-config/oneapps.p12，双击即可安装，证书密码是 OneAppsForMacFromQMP，钥匙串：一定要选 登录
+
+![electron-sing-oneapps](./images/electron-sing-oneapps.png)
+
+将env文件放在项目根目录
+
+```bash
+# 打测试包需要
+CERT_NAME=Developer ID Application: Qi MingPian (2D8777PG4E)
+# 打分发包需要
+NOTARY_APP_ID=***
+NOTARY_TEAM_ID=***
+NOTARY_PASSWORD=***
+
+# process.env.NOTARY_APP_ID、process.env.NOTARY_TEAM_ID、process.env.NOTARY_PASSWORD（找王翔要）
+```
+
 ```js
 const NEED_SIGN_FW: string[] = [
   'Contents/Frameworks/Electron" "Framework.framework/Versions/A/Libraries/libEGL.dylib',
@@ -194,6 +211,12 @@ function execPromise(
 ```
 
 ### 公证
+
+测试包不需要公证
+
+打包过程中，如果反复弹窗提示输入【登录钥匙串】密码，可以开启【允许所有应用程序访问此项目】
+
+![electron-make-oneapps](./images/electron-make-oneapps.png)
 
 ```js
 export function makeMacProfile() {
@@ -289,3 +312,4 @@ winAutoUpdater.on('update-downloaded', () => {
 winAutoUpdater.setFeedURL('https://XX.oss.aliyuncs.com/apps')
 winAutoUpdater.checkForUpdates()
 ```
+

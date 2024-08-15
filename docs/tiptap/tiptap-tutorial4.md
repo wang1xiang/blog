@@ -77,7 +77,7 @@ onUpdate({ editor }) {
 
 ### getAttributes()
 
-获取当前选中的节点或标记的属性，如获取当前链接的href属性：
+获取当前选中的节点或标记的属性，如获取当前链接的 href 属性：
 
 ```js
 editor.getAttributes('link').href
@@ -438,6 +438,111 @@ Tiptap 有很可使用多命令，包括对文档、节点/标记和选中区域
   // 选中文本区域
   editor.commands.setTextSelection({ from: 6, to: 8 })
   ```
+
+## 自定义 Tiptap 扩展
+
+```js
+import { Extension } from '@tiptap/core'
+import type { CommandProps } from '@tiptap/core'
+export const FormatPainter = Extension.create<void>({
+  name: 'formatPainter',
+  addCommands() {
+    return {
+      goingDoSomething: options => (props: CommandProps) => {
+        // options 为 goingDoSomething 方法参数
+        // props 为 tiptap 指令公共参数们 = {
+        //   editor: Editor;
+        //   tr: Transaction;
+        //   commands: SingleCommands;
+        //   can: () => CanCommands;
+        //   chain: () => ChainedCommands;
+        //   state: EditorState;
+        //   view: EditorView;
+        //   dispatch: ((args?: any) => any) | undefined;
+        // }
+        // ...
+      },
+    }
+  }
+})
+```
+
+## 自定义 Tiptap 组件
+
+```js
+import { mergeAttributes, Node, nodeInputRule } from '@tiptap/core'
+import { VueNodeViewRenderer } from '@tiptap/vue-3'
+export const inputRegex =
+  /(?:^|\s)(!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\))$/
+export const ImageWithTools = Node.create({
+  name: 'image',
+  draggable: true,
+  // 可配置参数
+  addOptions() {
+    return {
+      allowBase64: false,
+    }
+  },
+  // 组件是否为行内组件
+  inline() {
+    return this.options.inline
+  },
+  group() {
+    return this.options.inline ? 'inline' : 'block'
+  },
+  // 组件属性
+  addAttributes() {
+    return {
+      src: {
+        default: null,
+      },
+    }
+  },
+  // tiptap 执行 getHTML 时组件的返回值
+  parseHTML() {
+    return [
+      {
+        tag: this.options.allowBase64
+          ? 'img[src]'
+          : 'img[src]:not([src^="data:"])',
+      },
+    ]
+  },
+  // tiptap 渲染时组件的返回值
+  renderHTML({ HTMLAttributes }) {
+    return ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)]
+  },
+  // tiptap 渲染时挂载的VUE文件
+  addNodeView() {
+    return VueNodeViewRenderer(vueComponent)
+  },
+  // 操作组件的指令
+  addCommands() {
+    return {
+      // prettier-ignore
+      setImage: options => ({ commands }) => {
+        return commands.insertContent([{
+          type: this.name,
+          attrs: options,
+        }])
+      },
+    }
+  },
+  // html 转为 tiptap 内容时过滤组件可用属性
+  addInputRules() {
+    return [
+      nodeInputRule({
+        find: inputRegex,
+        type: this.type,
+        getAttributes: (match) => {
+          const [, , src] = match
+          return { src }
+        },
+      }),
+    ]
+  },
+})
+```
 
 ## 总结
 

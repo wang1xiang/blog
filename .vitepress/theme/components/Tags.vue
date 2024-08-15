@@ -5,6 +5,7 @@
     v-for="(article, el) in data[selectTag]"
     :href="base + article.regularPath || ''"
     :key="el"
+    target="_blank"
     class="article"
   >
     <div class="title">

@@ -6,6 +6,8 @@ tags:
 describe: Windows 代码签名流程
 ---
 
+## 过程
+
 **⚠️ 注意事项：**
 
 如果屏幕右下角图标栏的这个图标是红色 X，需要先登录，否则后面的步骤进行不了，如果是蓝色可忽略此条注意事项。
@@ -24,7 +26,7 @@ describe: Windows 代码签名流程
 
 ![electron-sing-windows1](./images/electron-sing-windows1.png)
 
-#### 新增文件：win-sign.ts\*\*
+### 新增文件：win-sign.ts
 
 ```js
 import path from 'path'
@@ -53,7 +55,7 @@ export function signWin(appPath: string, APP_NAME: string) {
 }
 ```
 
-#### 修改文件：forge.config.ts\*\*
+### 修改文件：forge.config.ts
 
 第一处：
 
@@ -95,3 +97,24 @@ export function execPromise(
 #### 相关链接
 
 第三方流程 pdf 文件地址：[https://xxx.aliyuncs.com/im/2024/01/08/35a61c865ab3552ea0e5108e314a9c57/d172ca47\_云版代码签名手册.pdf](https://qtable.oss-cn-beijing.aliyuncs.com/im/2024/01/08/35a61c865ab3552ea0e5108e314a9c57/d172ca47_%E4%BA%91%E7%89%88%E4%BB%A3%E7%A0%81%E7%AD%BE%E5%90%8D%E6%89%8B%E5%86%8C.pdf)
+
+## windows 代码签名不信任问题
+
+**原因**：发布的 exe 是将生成的 exe 包装形成的，生成的 exe 签名，包装完成的 exe 没有签名导致不信任问题
+
+![electron-sing-windows5](./images/electron-sing-windows5.png)
+
+**解决**：在生成的exe签名完成并包装后，对于包装形成的exe再次签名
+**代码**：forge.config.ts新增
+
+![electron-sing-windows6](./images/electron-sing-windows6.png)
+
+```js
+const RELEASE_OUT_EXE_DIR = path.join(__dirname, `./out/make/nsis/${ARCH}/${APP_NAME} Setup ${packageJson.version}.exe`)
+```
+
+![electron-sing-windows7](./images/electron-sing-windows7.png)
+
+```js
+await signWin(RELEASE_OUT_EXE_DIR, APP_NAME)
+```

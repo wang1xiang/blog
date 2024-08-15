@@ -9,6 +9,7 @@
       v-for="(article, index) in dynamicPage.currentData"
       :key="index"
       :href="base + article.regularPath || ''"
+      target="_blank"
       class="article"
     >
       <div class="article-header">

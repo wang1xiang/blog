@@ -9,6 +9,7 @@
         v-for="(article, el) in year"
         :href="base + article.regularPath || ''"
         :key="el"
+        target="_blank"
         class="article"
       >
         <div class="title">

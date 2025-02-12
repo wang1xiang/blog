@@ -248,6 +248,10 @@ dependency_overrides:
 └── main.dart
 ```
 
+### 组件库 common-lib
+
+flutter 提供的组件较为简单，需要自己封装项目组件库使用
+
 ### WidgetsFlutterBinding.ensureInitialized()
 
 WidgetsFlutterBinding.ensureInitialized() 方法用于确保 Flutter 框架在执行任何需要依赖 Flutter 框架的操作之前已经初始化好。它在需要进行异步初始化操作或在应用启动早期需要保证 Flutter 框架正确初始化时非常有用。

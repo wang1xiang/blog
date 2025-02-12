@@ -107,7 +107,6 @@ releases_dev.json // 测试环境
 
 1. 注册文件协议 registerFileProtocol需要在app.ready中触发
 2. 将离线包映射文件和地址进行替换
-3. 
 
 ### 桌面端工程
 

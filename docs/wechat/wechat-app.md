@@ -20,6 +20,27 @@ describe: 微信小程序学习笔记
 
 ## 1 代码组成
 
+```js
+├── app.js               // 小程序项目入口文件
+├── app.json             // 小程序全局配置文件
+├── app.wxss             // 小程序全局样式文件
+├── components           // 小程序组件
+│   └── navigation-bar
+│       ├── navigation-bar.js
+│       ├── navigation-bar.json
+│       ├── navigation-bar.wxml
+│       └── navigation-bar.wxss
+├── pages                // 所有的小程序页面
+│   └── index
+│       ├── index.js    // 当前页面逻辑
+│       ├── index.json  // 当前页面配置
+│       ├── index.wxml  // 当前页面模板结构
+│       └── index.wxss  // 当前页面样式
+├── project.config.json  // 项目配置文件
+├── project.private.config.json
+└── sitemap.json         // 配置小程序及其页面是否允许被微信索引
+```
+
 1. 页面需手动在`app.json`注册，否则不能访问
 2. `pages`数组第一项代表小程序初始页面，减少需删除对应文件夹
 3. 直接修改`this.data`无效，无法改变页面状态，需要使用`this.setData({})`
@@ -87,7 +108,14 @@ describe: 微信小程序学习笔记
 
 公共代码抽取的`js`文件，作为模块使用，通过`module.export`对外暴露，使用`const utils = require('../../utils/util.js')`阴用
 
+#### 1.4 project.config.json
+
 ## 2 视图层 WXML
+
+### wxml 对比 html
+
+html：div、span、img、a
+wxml：view、text、image、navigator
 
 ### 2.1 数据绑定
 
@@ -511,6 +539,7 @@ wx.request
 ## 预览效果
 
 代码包太大，影响预览
+
 <!-- ![max-size](./logImages/max-size.png) -->
 
 预览真机调试区别

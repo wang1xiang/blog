@@ -1,6 +1,6 @@
 ---
-date: 2024-8-29
-title: 链表整体学习 & 常见题目
+date: 2025-2-14
+title: 跟着卡哥学算法Day 3：链表整体学习 & 常见题目
 tags:
   - leetcode
 describe: 链表整体学习 & 常见题目
@@ -22,6 +22,10 @@ describe: 链表整体学习 & 常见题目
 
 链表首尾相连，尾节点的指针域指向头节点。
 
+## 存储方式
+
+在内存中不连续分布，散乱分布，通过指针域的指针链接在内存中的各个节点
+
 ## 链表定义
 
 通过 js 定义链表：
@@ -38,7 +42,16 @@ class LinkedList {
 
 ## 特点
 
-增删快、查找慢
+增删快 O(1)、查找慢 O(n)
+
+- 删除节点：将上个节点的 next 指针指向下一个节点即可
+- 添加节点：将当前节点的 next 指针指向新节点，新节点的 next 指针指向下一个节点
+
+## 与数组区别
+
+- 存储方式：数组连续、链表乱序
+- 增删：数组 O(n)，所有后续节点都需要移动；链表 O(1)，只需要移动指针
+- 查找：数组 O(1)，通过下标即可查找对应节点；链表 O(n)，需要从头节点开始查找
 
 接下来都通过 🌟 来代表题目难度：
 
@@ -48,16 +61,45 @@ class LinkedList {
 
 ## 经典题目
 
+**重点：做题前画个链表**
+
 ### 203.移除链表元素 🌟
 
 [力扣链接](https://leetcode.cn/problems/remove-linked-list-elements/)
 
 #### 思路
 
-- 创建新的虚拟头节点
+两种方法解决
+
+##### 直接在原链表删除
+
+- 头指针等于要删除的元素
+
+  ```js
+  // 将头指针指向下一个节点
+  while (head !== null && head.val === val) {
+    head = head.next
+  }
+  ```
+
+- 头指针不等于要删除的元素
+
+  ```js
+  // 按照顺序删除即可
+  if (cur.next?.val === val) {
+    cur.next = cur.next.next
+  }
+  ```
+
+##### 创建新的虚拟头节点
+
+```js
+const head = new ListNode(0, head)
+```
+
 - 从原始头节点开始判断
-  - 值相等则移动 next 指针到下一个节点的 next 指针
-  - 不等则移动当前节点
+- 值相等则移动 next 指针到下一个节点的 next 指针
+- 不等则移动当前节点
 
 #### 代码
 
@@ -94,6 +136,38 @@ function removeElements(head: ListNode | null, val: number): ListNode | null {
 ### 707. 设计链表 🌟🌟
 
 [力扣链接](https://leetcode.cn/problems/design-linked-list/description/)
+
+#### 思路
+
+**重点**
+
+- **n 从 0 开始**
+- **统一使用虚拟头节点，方便链表操作**
+
+##### 获取第 n 个节点值
+
+- 对 n 范围判断 0 < n < size - 1
+- 创建虚拟头节点
+- 定义 curNode 临时指针指向头节点来遍历链表，**原因：不能改变头节点**
+
+##### 头部插入节点
+
+- 定义新节点
+- 顺序：**新节点指向头节点，虚拟头节点指向新节点**
+
+##### 尾部插入节点
+
+- `curNode.next = null`指向尾部
+- 指向新节点
+
+##### 第 n 个节点插入
+
+- 遍历指针，找到第 n 个节点
+- 第 n 个节点一定是 curNode.next，才能在 curNode.next 前插入节点
+
+##### 删除第 n 个节点
+
+- 删除同插入，必须知道前一个节点，即第 n 个节点一定是 curNode.next
 
 #### 代码
 
@@ -213,12 +287,17 @@ class MyLinkedList {
 
 #### 思路
 
-- 双指针
+##### 双指针法
+
 - 利用 temp 节点来暂存当前节点的 next 节点
 - 当前节点的 next 指向前一个节点
 - 前一个节点替换为当前节点
 - 当前节点替换为暂存节点
-- 循环结束后，preNode 就是反转后的头节点
+- 循环结束后 **（遍历终止条件：curNode 指向 null）**，preNode 就是反转后的头节点
+
+##### 递归法
+
+- 终止条件一致
 
 #### 代码
 
@@ -252,3 +331,22 @@ function reverseList(head: ListNode | null): ListNode | null {
   return preNode
 }
 ```
+
+```js
+function reverse(pre, cur) {
+  if (!cur) return pre
+  const temp = cur.next
+  cur.next = pre
+  pre = cur
+  cur = temp
+  return reverse(pre, cur)
+}
+function reverseList(head) {
+  return reverse(null, head)
+}
+```
+
+## 总结
+
+对于链表的题目，**统一都用虚拟头结点**。
+一般涉及到**增删改操作**，用虚拟头结点都会方便很多，如果只能查的话，用不用虚拟头结点都差不多。

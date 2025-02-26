@@ -4,3 +4,4 @@ const env = process.env.APP_ENVKEY === "server" || process.env.NODE_ENV === "dev
 export default defineConfig({
   base: env,
 });
+

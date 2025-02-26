@@ -1,6 +1,6 @@
 ---
 date: 2025-2-12
-title: 数组整体学习 & 常见题目
+title: 跟着卡哥学算法Day 1：数组整体学习 & 常见题目
 tags:
   - leetcode
 describe: 数组整体学习 & 常见题目
@@ -18,13 +18,13 @@ describe: 数组整体学习 & 常见题目
 
 ### 704. 二分查找 🌟
 
+[力扣链接](https://leetcode.cn/problems/binary-search/description/)
+
 #### 前提
 
 **有序排列**
 
 **无重复值**
-
-[力扣链接](https://leetcode.cn/problems/binary-search/description/)
 
 #### 题目描述
 
@@ -54,6 +54,8 @@ describe: 数组整体学习 & 常见题目
 
 #### 解题思路
 
+**重点：定好区间**
+
 开闭：包含这个元素
 
 左闭右闭：`[left, right]`
@@ -79,23 +81,22 @@ describe: 数组整体学习 & 常见题目
 
 ```ts
 function search(nums: number[], target: number): number {
-  let left = 0
+  let left = 1
   let right = nums.length - 1
   while (left <= right) {
-    let middle = left + ((right - left) >> 1)
-    if (nums[middle] < target) {
-      left = middle + 1
-    } else if (nums[middle] > target) {
+    const middle = left + ((right - left) >> 1)
+    if (nums[middle] === target) return middle
+    if (nums[middle] > target) {
       right = middle - 1
     } else {
-      return middle
+      left = middle + 1
     }
   }
   return -1
 }
 ```
 
-### 相似题目
+#### 相似题目
 
 [35. 搜索插入位置](https://leetcode.cn/problems/search-insert-position/description/) 🌟
 
@@ -212,9 +213,9 @@ function isPerfectSquare(num: number): boolean {
 }
 ```
 
-### 删除数组元素
+### 27. 移除元素 🌟
 
-[27. 移除元素](https://leetcode.cn/problems/remove-element/description/) 🌟
+[力扣链接](https://leetcode.cn/problems/remove-element/description/) 🌟
 
 #### 题目描述
 
@@ -231,7 +232,7 @@ function isPerfectSquare(num: number): boolean {
   - slow：填充进新数组的 value（只有 `nums[fast] !== val` 才填充进新数组）
   - fast：代表新数组的 index
 
-“一个萝卜一个坑”
+**“一个萝卜一个坑”**
 
 #### 代码
 
@@ -248,7 +249,7 @@ function removeElement(nums: number[], val: number): number {
 }
 ```
 
-### 相似题目
+#### 相似题目
 
 [26. 删除有序数组中的重复项](https://leetcode.cn/problems/remove-duplicates-from-sorted-array/description/) 🌟
 
@@ -323,7 +324,9 @@ function getResult(s) {
 }
 ```
 
-[977. 有序数组的平方](https://leetcode.cn/problems/squares-of-a-sorted-array/description/) 🌟
+### 977. 有序数组的平方 🌟
+
+[力扣链接](https://leetcode.cn/problems/squares-of-a-sorted-array/description/) 🌟
 
 思路：
 

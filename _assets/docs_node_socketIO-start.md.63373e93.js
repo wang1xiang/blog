@@ -1,0 +1,1 @@
+import{f as t,g as e}from"./common-03e46d7f.js";const o='{"title":"5分钟了解socketIO入门","frontmatter":{"date":"2023-04-25","title":"5分钟了解socketIO入门","tags":["node"],"describe":"socketIO-start"},"relativePath":"docs/node/socketIO-start.md","lastUpdated":1742290670546.4673}';var s={};s.render=function(o,s,a,r,d,c){return t(),e("div")};export{o as __pageData,s as default};

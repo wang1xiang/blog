@@ -451,7 +451,7 @@ function canPartition(nums) {
 
   const target = sum / 2
   const len = nums.length
-  const dp = new Array(target + 1).fill().map(() => new Array(len).fill(false))
+  const dp = new Array(len).fill().map(() => new Array(target + 1).fill(false))
 
   // 初始化第一列为true 不选择任何元素时和为0总是成立的
   for (let i = 0; i < len; i++) {

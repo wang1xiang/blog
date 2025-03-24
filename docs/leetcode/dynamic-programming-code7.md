@@ -187,6 +187,35 @@ var rob = function (nums) {
 
 ### 解题思路
 
+#### 递归
+
+```js
+const memo = new WeakMap(); // 使用 WeakMap 防止内存泄漏
+function rob(root) {
+  if (root === null) return 0
+  if (memo.has(root)) return memo.get(root);
+
+  if (root.left === null && root.right === null) return root.val
+
+  // 偷当前节点的情况
+  let stealCurrent = root.val
+  if (root.left) {
+    stealCurrent += rob(root.left.left) + rob(root.left.right)
+  }
+  if (root.right) {
+    stealCurrent += rob(root.right.left) + rob(root.right.right)
+  }
+
+  // 不偷当前节点的情况
+  const skipCurrent = rob(root.left) + rob(root.right)
+  const maxVal = Math.max(stealCurrent, skipCurrent)
+  memo.set(root, maxVal);
+  return maxVal
+}
+```
+
+#### 动态规划
+
 树形结构偷钱，**树形结构状态转移**
 
 **本题一定是要后序遍历，因为通过递归函数的返回值来做下一步计算**

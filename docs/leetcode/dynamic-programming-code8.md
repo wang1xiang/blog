@@ -292,38 +292,92 @@ var maxProfit = function (prices) {
 
 1. 确定 dp 数组及下标的含义
 
-   `dp[i][j]` 中 i 表示第 i 天，j 表示五种状态`[0-4]`，`dp[i][j]`表示第 i 天状态 j 所剩最大金额
+   `dp[i][j]` 中 i 表示第 i 天，j 表示五种状态`[0-4]`，所以 `dp[i][j]`表示第 i 天状态 j 下所剩最大金额
 
-   如：dp[i][0] 表示第 i 天买入股票的状态
+   如：`dp[i][1]` 表示第 i 天持有股票的状态，并不是第 i 天一定买入，有可能第 i-1 天就买入了
 
 2. 确定递归公式
+
+   达到 `dp[i][1]` 状态有两种情况：
+
+   1. 第 i 天买入股票，那么 `dp[i][1] = dp[i-1][0] - prices[i]`
+   2. 第 i 天保持现状，沿用前一天买入股票的状态，即：`dp[i][1] = dp[i-1][1]`
+
+   两者选择最大的：
+
+   ```js
+   dp[i][1] = Math.max(dp[i - 1][0] - prices[i], dp[i - 1][1])
+   ```
+
+   同理，达到 `dp[i][2]` 状态有两种情况：
+
+   1. 第 i 天卖出股票，那么 `dp[i][2] = dp[1 - 1][1] + prices[i]`
+   2. 第 i 天保持现状，沿用前一天卖出股票的状态，即：`dp[i][2] = dp[i-1][2]`
+
+   ```js
+   dp[i][2] = Math.max(dp[i - 1][2], dp[i - 1][1] + prices[i])
+   ```
+
+   同理，达到 `dp[i][3]` 和 `dp[i][4]` 也分别有两种情况：
+
+   1. 第 i 天买入/卖出
+   2. 第 i 天保持现状，沿用前一天状态
+
+   ```js
+   dp[i][3] = Math.max(dp[i - 1][3], dp[i - 1][2] - prices[i])
+   dp[i][4] = Math.max(dp[i - 1][4], dp[i - 1][3] + prices[i])
+   ```
+
 3. dp 数组初始化
+
+   - `dp[0][0] = 0`，第 0 天不做操作，金额为 0
+   - `dp[0][1] = -prices[0]`，第 0 天第一次买入股票，金额为 -prices[0]
+   - `dp[0][2] = 0`，第 0 天第一次卖出股票，即**当天买入当天卖出**，金额为 0
+   - `dp[0][3] = -prices[0]`，第 0 天第二次买入股票，即**第一次买入又卖出又重新买入**，金额为 -prices[0]
+   - `dp[0][4] = 0`，第 0 天第二次卖出股票，即**第一次买入又卖出又重新卖出**，金额为 0
+
 4. 确定遍历顺序
+
+   从前往后
+
 5. 举例推导 dp 数组
+
+   以 prices = [1,2,3,4,5] 为例，得到的 dp 数组为：
+
+   ```js
+   dp = [
+     [0, -1, 0, -1, 0],
+     [0, -1, 1, -1, 1],
+     [0, -1, 2, -1, 2],
+     [0, -1, 3, -1, 3],
+     [0, -1, 4, -1, 4],
+   ]
+   ```
 
 ### 代码
 
 ```js
-var rob = function (root) {
-  const postOrder = (root) => {
-    // 空节点 返回dp数组为 偷与不偷的金额[0, 0]
-    if (!root) return [0, 0]
+var maxProfit = function (prices) {
+  const n = prices.length
+  const dp = new Array(n).fill().map(() => new Array(5).fill(0))
 
-    // 遍历左右子树 得到偷与不偷的最大金额
-    const left = postOrder(root.left)
-    const right = postOrder(root.right)
+  dp[0][1] = -prices[0]
+  dp[0][3] = -prices[0]
 
-    // dp[0]不偷 dp[1] 偷
-    // 不偷当前 左右节点取偷与不偷的最大值
-    const val1 = Math.max(left[0], left[1]) + Math.max(right[0], right[1])
-    // 偷当前节点 那么不偷左右节点
-    const val2 = left[0] + right[0] + root.val
-
-    // [不偷, 偷]
-    return [val1, val2]
+  // j
+  // 1 第一次持有
+  // 2 第一次卖出
+  // 3 第二次持有
+  // 4 第二次卖出
+  for (let i = 1; i < n; i++) {
+    const price = prices[i]
+    dp[i][0] = dp[i - 1][0]
+    dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][0] - price)
+    dp[i][2] = Math.max(dp[i - 1][2], dp[i - 1][1] + price)
+    dp[i][3] = Math.max(dp[i - 1][3], dp[i - 1][2] - price)
+    dp[i][4] = Math.max(dp[i - 1][4], dp[i - 1][3] + price)
   }
-  const res = postOrder(root)
-
-  return Math.max(...res)
+  console.log(dp)
+  return dp[n - 1][4]
 }
 ```

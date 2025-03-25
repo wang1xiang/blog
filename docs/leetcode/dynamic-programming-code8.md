@@ -1,6 +1,6 @@
 ---
 date: 2025-3-24
-title: 跟着卡哥学算法Day 40：动态规划part8
+title: 跟着卡哥学算法Day 41：动态规划part8
 tags:
   - leetcode
 describe: 动态规划part8

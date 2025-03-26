@@ -1,0 +1,1 @@
+import{f as t,g as e}from"./common-03e46d7f.js";const r='{"title":"flutter状态管理","frontmatter":{"date":"2024-05-03","title":"flutter状态管理","tags":["flutter"],"describe":"flutter状态管理"},"relativePath":"docs/flutter/flutter-state-manage.md","lastUpdated":1742973716830.3682}';var a={};a.render=function(r,a,f,l,d,s){return t(),e("div")};export{r as __pageData,a as default};

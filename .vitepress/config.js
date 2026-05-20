@@ -1,5 +1,5 @@
 const getPages = require("./utils/pages");
-const env = "/blog";
+const env = "/";
 
 async function getConfig() {
   let config = {
@@ -13,7 +13,7 @@ async function getConfig() {
         },
       ],
       ["meta", { name: "keywords", content: "翔子Blog" }],
-      ["link", { rel: "icon", href: `${env}/favicon.ico`  }],
+      ["link", { rel: "icon", href: `${env}/favicon.ico` }],
       // 引入 Gitalk
       [
         "link",

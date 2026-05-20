@@ -8,7 +8,7 @@ image: api
 draft: false
 ---
 
-![git](./git.jpg)
+<!-- image deleted -->
 先来一张 git 常用命令速查表。
 
 相信大家在使用 git 的使用过程中，都会遇到一些小问题阻碍你继续下一步，我先说几个，看看你有没有遇到过：

@@ -542,7 +542,7 @@ wx.request
 
 代码包太大，影响预览
 
-<!-- ![max-size](./logImages/max-size.png) -->
+<!-- <!-- logImages/max-size.png 原图已丢失 --> -->
 
 预览真机调试区别
 
@@ -550,4 +550,4 @@ wx.request
 
 ## 审核
 
-<!-- ![alt text](image.png) -->
+<!-- <!-- image.png 原图已丢失 --> -->

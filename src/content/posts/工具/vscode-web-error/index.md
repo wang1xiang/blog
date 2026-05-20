@@ -1,6 +1,6 @@
 ---
 title: "vscode加载web视图错误"
-published: Tue Oct 25 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-10-25
 description: "Could not register service workers..."
 tags: ["tool"]
 category: "工具"

@@ -1,6 +1,6 @@
 ---
 title: "http缓存学习"
-published: Mon Oct 31 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-10-31
 description: "http缓存学习笔记"
 tags: ["javascript"]
 category: "语言基础"

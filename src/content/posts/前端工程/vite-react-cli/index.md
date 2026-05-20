@@ -738,7 +738,7 @@ if (isRedux) {
 
 接下来，跟着我的流程看一下，你就会发现 react query 太香了。
 
-![zhenxiang.jpg](./zhenxiang.jpg)
+<!-- zhenxiang.jpg 原图已丢失 -->
 
 ### react query 使用教程
 

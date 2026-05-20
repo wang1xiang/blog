@@ -1,6 +1,6 @@
 ---
 title: "利用 Chrome Overrides 提高前端开发效率"
-published: Fri Nov 10 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-11-10
 description: "本文介绍了 Chrome 浏览器的 Overrides 功能"
 tags: ["tool"]
 category: "工具"

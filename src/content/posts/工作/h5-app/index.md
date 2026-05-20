@@ -1,6 +1,6 @@
 ---
 title: "H5/APP交互、JsBridge"
-published: Tue Dec 26 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-12-26
 description: "h5-app"
 tags: ["work"]
 category: "工作"

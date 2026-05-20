@@ -28,13 +28,13 @@ amend 原意就是"修正"的意思，工作中常用到以下几种
 
 - 只修正文件，不修正提交信息，如提交的时候发现有文件忘记提交，先添加到暂存区，在使用下面的命令进行修正，之后就可以看到提交中已经有了忘记提交的文件
   `git commit --amend --no-edit`
-  ![famend](./famend.jpg)
+  <!-- famend.jpg 原图已丢失 -->
   如果多提交了文件，也可以先通过`git rm --cached <文件名>`，再通过以上命令修正
-  ![rm](./rm.jpg)
+  <!-- rm.jpg 原图已丢失 -->
 
 - 只修正提交信息，如提交时发现写的提交信息不太正确时，可通过以下命令修改
   `git commit --amend -m "feat: ceshi"`
-  ![amend](./amend.jpg)
+  <!-- amend.jpg 原图已丢失 -->
 
 - 修改提交信息和文件
   `git commit --amend`
@@ -209,11 +209,11 @@ Fork 别人的项目后，如何再同步更新别人的提交
 
 1. 添加远程仓库
 
-   ![origin](./origin.jpg)
+   <!-- origin.jpg 原图已丢失 -->
 
 2. 拉取远程分支代码
 
-   ![pull](./pull.jpg)
+   <!-- pull.jpg 原图已丢失 -->
 
 3. 合并本地代码
 
@@ -229,4 +229,4 @@ Fork 别人的项目后，如何再同步更新别人的提交
 
 附一张 git 常用指令图
 
-![git](./git.jpg)
+<!-- image deleted -->

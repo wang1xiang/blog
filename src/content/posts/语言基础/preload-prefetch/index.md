@@ -71,4 +71,4 @@ draft: false
 ```
 
 通过控制台可以看到preload比prefetch加载优先级高
-![preload&preftcg.jpg](./preload&preftcg.jpg)
+<!-- preload&preftcg.jpg 原图已丢失 -->

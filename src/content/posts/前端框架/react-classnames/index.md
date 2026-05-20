@@ -96,6 +96,6 @@ yarn add classnames
 
   **注意**
   - styles方式：如果`index.module.less`中配置了对应的样式，那么会使用CSS Module方式，如果未配置则会显示undefined
-    ![styles.jpg](./styles.jpg)
+    <!-- styles.jpg 原图已丢失 -->
   - classnames/bind方式：如果`index.module.less`中配置了对应的样式，那么会使用CSS Module方式，如果未配置则会走全局样式
-    ![classnamesbind.jpg](./classnamesbind.jpg)
+    <!-- classnamesbind.jpg 原图已丢失 -->

@@ -1,6 +1,6 @@
 ---
 title: "我的mac使用之路"
-published: Thu Dec 29 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-12-29
 description: ""
 tags: ["tool"]
 category: "工具"
@@ -446,7 +446,7 @@ j xxx
 
 安装 BetterTouchTool
 
-![betterTouchTool.jpg](./betterTouchTool.jpg)
+<!-- image deleted -->
 
 添加触发器：
 

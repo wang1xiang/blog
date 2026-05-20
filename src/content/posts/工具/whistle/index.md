@@ -32,13 +32,13 @@ draft: false
 3. 浏览器设置代理
 
    google浏览器安装[SwitchyOmega](https://github.com/FelisCatus/SwitchyOmega/releases)插件，安装完成后需要配置proxy，将浏览器代理到8899端口（whistle的端口），如下图
-   ![whistleConfig.jpg](./whistleConfig.jpg)
+   <!-- whistleConfig.jpg 原图已丢失 -->
 
    设置好后一定要点击`应用选项`，否则不会生效<br />
    点击whistle插件，选择刚刚设置的proxy<br />
-   ![whistleCrx.jpg](./whistleCrx.jpg)<br />
+   <!-- whistleCrx.jpg 原图已丢失 --><br />
    打开<http://127.0.0.1:8899/#network>，看到以下页面，就说明成功了
-   ![whistle.jpg](./whistlePage.jpg)
+   <!-- whistlePage.jpg 原图已丢失 -->
 
 3. [开启捕获HTTPS请求](https://wproxy.org/whistle/webui/https.html)，一定得开，不然https请求不会正常被捕获
 
@@ -79,7 +79,7 @@ draft: false
    当访问baidu.com时就会跳到vite项目<br />
 
    可以在Network中查看这条请求的详情
-   ![baidu-proxy.jpg](./baidu-proxy.jpg)
+   <!-- baidu-proxy.jpg 原图已丢失 -->
    开发中就可以使用这种方式，将测试环境的域名代理到本地的 localhost，这样就能够在本地请求到测试环境的接口，类似于webpack和vite的proxy设置
   
 2. 替换html文件
@@ -108,7 +108,7 @@ draft: false
    ```
 
    如果线上环境遇到bug时，可以将本地的静态资源通过代理取代线上环境的资源进行调试
-   ![jsresource.jpg](./jsresource.jpg)
+   <!-- jsresource.jpg 原图已丢失 -->
 4. 模拟接口报错
 
    ```bash
@@ -214,7 +214,7 @@ https://app-test.quickcep.com jsPrepend://{reload.js}
    ```
 
    重新打开百度，在 Network 的 Tools 下面的 Console 选项下面看到控制台打印的所有 log 信息
-   ![log.jpg](./log.jpg)
+   <!-- log.jpg 原图已丢失 -->
 4. 手机代理原理：
    1. 在 PC 启动一个服务，监听一个端口例如8899
    2. 手机连接统一局域网，配置网络代理，指向 PC 端的 IP 地址和 8899 端口
@@ -223,7 +223,7 @@ https://app-test.quickcep.com jsPrepend://{reload.js}
 
    - 手机电脑同一个wifi环境
    - 点击whistle的online，查看ip地址<br />
-     ![whistleOnline.jpg](./whistleOnline.jpg)
+     <!-- whistleOnline.jpg 原图已丢失 -->
    - 手机进入wifi设置，代理设为手动，主机名为ip地址，端口填8899，保存（调试完记得改回去，避免手机上网异常）
    - 配置rules
 

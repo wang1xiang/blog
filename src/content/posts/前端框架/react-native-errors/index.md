@@ -104,7 +104,7 @@ source 'https://mirrors.tuna.tsinghua.edu.cn/git/CocoaPods/Specs.git'
 
 ## pod install 报错解决
 
-![podinstallerror.png](./iamges/../podinstallerror.png)
+![podinstallerror.png](./podinstallerror.png)
 
 将 https://github.com/facebook/flipper.git 替换为 gitee 仓库
 

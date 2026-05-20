@@ -1,6 +1,6 @@
 ---
 title: "常见图片格式的png、jpg、jpeg区别"
-published: Wed Dec 14 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-12-14
 description: "理解常用图片格式的区别"
 tags: ["work"]
 category: "工作"

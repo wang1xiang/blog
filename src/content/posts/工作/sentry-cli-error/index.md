@@ -1,6 +1,6 @@
 ---
 title: "sentry-cli报错修复"
-published: Wed Oct 19 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-10-19
 description: "Unable to download sentry-cli binary from https://downloads.sentry-cdn.com/"
 tags: ["work"]
 category: "工作"

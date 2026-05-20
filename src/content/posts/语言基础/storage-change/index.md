@@ -1,6 +1,6 @@
 ---
 title: "storage-change"
-published: Tue Nov 28 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-11-28
 description: "storage-change"
 tags: ["javascript"]
 category: "语言基础"

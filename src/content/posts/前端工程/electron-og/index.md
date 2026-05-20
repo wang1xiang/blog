@@ -1,6 +1,6 @@
 ---
 title: "Electron获取对方URL中的OG标签"
-published: Mon Dec 18 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-12-18
 description: "Electron获取对方URL中的OG标签"
 tags: ["electron"]
 category: "前端工程"

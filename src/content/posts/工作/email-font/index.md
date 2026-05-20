@@ -85,7 +85,7 @@ draft: false
 
 - 打开[google fonts](https://fonts.google.com/),选择需要的字体
 - 点击View all styles
-  ![googlefonts.jpg](./googlefonts.jpg)
+  <!-- googlefonts.jpg 原图已丢失 -->
 - 即可获取到字体的链接
 
 参考文章

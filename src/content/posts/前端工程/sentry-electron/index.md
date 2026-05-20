@@ -1,6 +1,6 @@
 ---
 title: "Sentry监控 electron应用方案"
-published: Thu Oct 12 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-10-12
 description: "Sentry监控 electron应用方案"
 tags: ["electron"]
 category: "前端工程"

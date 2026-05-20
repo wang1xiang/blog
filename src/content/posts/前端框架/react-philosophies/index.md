@@ -1,6 +1,6 @@
 ---
 title: "react-philosophies"
-published: Fri Jun 10 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-06-10
 description: "react-philosophies即react哲学，按照英文文档翻译"
 tags: ["react"]
 category: "前端框架"

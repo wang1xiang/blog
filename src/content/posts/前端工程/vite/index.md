@@ -280,7 +280,7 @@ vite基于rollup打包，不知道进度
     console.log(import.meta.url);
     ```
 
-    ![截图](./importmeta.png)
+    <!-- importmeta.png 原图已丢失 -->
 
     与URL构造器组合使用可以通过相对路径得到一个被完整解析的静态资源URL
 
@@ -288,7 +288,7 @@ vite基于rollup打包，不知道进度
     console.log(new URL('./sample.json', import.meta.url));
     ```
 
-    ![截图](./importurl.png)
+    <!-- importurl.png 原图已丢失 -->
 
 11. vite配置[Emotion](https://emotion.sh/docs/introduction)
 

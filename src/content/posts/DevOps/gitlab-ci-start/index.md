@@ -97,7 +97,7 @@ deploy-job: # 此作业在部署阶段运行。
 
 Gitlab Runner 可以部署在任何的服务器上，类似于 Jenkins master 是以容器方式运行，而 agent 是可以直接跑在宿主机上的。
 
-![jenkins-agent-master](../work/./jenkins-agent-master.png)
+![jenkins-agent-master](./jenkins-agent-master.png)
 
 #### 安装 Gitlab Runner
 

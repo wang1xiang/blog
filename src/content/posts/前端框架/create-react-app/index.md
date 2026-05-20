@@ -1,6 +1,6 @@
 ---
 title: "使用create-react-app脚手架搭建React项目"
-published: Mon Oct 17 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-10-17
 description: "使用create-react-app脚手架搭建React项目"
 tags: ["react"]
 category: "前端框架"
@@ -20,7 +20,7 @@ react脚手架工具，简称cra[中文文档](https://create-react-app.bootcss.
   npx create-react-app my-app --template typescript
   ```
 
-  ![create-react-app.jpg](./create-react-appp.jpg)
+  <!-- create-react-appp.jpg 原图已丢失 -->
   可以看到会同事下载react、react-dom、react-scripts这三个依赖包
 
 - 易于维护
@@ -38,7 +38,7 @@ react脚手架工具，简称cra[中文文档](https://create-react-app.bootcss.
   
 cra创建的项目不会有webpack配置，统一封装在react-scripts中，使用`npm run eject`可以将封装在react-scripts中webpack配置全部反编译到当前项目，下面这张图就是使用执行eject，可以看到多了很多配置文件，但是一个单项操作，eject后就无法恢复，所以做一些简单的配置，eject是没有必要的
 
-![eject.jpg](./eject.jpg)
+<!-- eject.jpg 原图已丢失 -->
 
 ### 使用react-app-rewired
 

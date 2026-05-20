@@ -31,7 +31,7 @@ draft: false
   npx eslint --init
   ```
 
-  ![eslint-config.jpg](./eslint-config.jpg)
+  <!-- eslint-config.jpg 原图已丢失 -->
   会自动安装eslint-plugin-react等相关依赖<br/>
   完成后项目中会多出一个`.eslint.js`文件，eslint的配置文件
 
@@ -169,7 +169,7 @@ draft: false
   ```
 
   添加.prettier.json后需要重启vscode，否则不会生效，另外需要在prettier的配置中使用`Use Editor Config`配置
-  ![prettier-config.jpg](./prettier-config.jpg)
+  <!-- prettier-config.jpg 原图已丢失 -->
 
 - 配置package.json的scripts脚本
 
@@ -420,4 +420,4 @@ workflow：工作流相关文件修改。
   ```
 
 - 配置完成后，commit提交测试如下
-  ![commitlint.jpg](./commitlint.jpg)
+  <!-- commitlint.jpg 原图已丢失 -->

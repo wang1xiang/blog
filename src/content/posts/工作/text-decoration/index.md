@@ -1,6 +1,6 @@
 ---
 title: "为元素添加下划线"
-published: Fri Jun 10 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-06-10
 description: "为元素添加下划线的两种方法"
 tags: ["work", "react"]
 category: "工作"

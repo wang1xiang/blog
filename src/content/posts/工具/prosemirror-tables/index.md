@@ -24,7 +24,7 @@ draft: false
 
 用于表示`ProseMirror`的整个文档，使用`editor.view.state.doc`引用，`ProseMirror`定义自己的数据结构来存储`document`内容，通过输出可以看到`document`是一个`Node`类型，包含`content`元素，是一个[fragment](https://prosemirror.xheldon.com/docs/ref/#model.Fragment)对象，而每个`fragment`又包含 0 个或多个字节点，组成了`document`解构，类似于`DOM`树
 
-.![doc-node.jpg](./doc-node.jpg)
+.<!-- image deleted -->
 
 ### [Schema](https://prosemirror.net/docs/guide/#schema)
 
@@ -52,7 +52,7 @@ findChildren(tr.doc, (node) => node.type.name === 'table')
 
 `Prosemirror` 的数据结构对象，相当于是 `react` 的 `state`，有 `view` 的 `state` 和 `plugin` 的局部 `state` 之分。 如上面的 `schema` 就定义在其上： `state.schema`。`ProseMirror` 使用一个单独的大对象来保持对编辑器所有 `state` 的引用（基本上来说，需要创建一个与当前编辑器相同的编辑器）
 
-![prosemirror-state](./prosemirror-state.jpg)
+<!-- image deleted -->
 
 ### [Transaction](https://prosemirror.net/docs/guide/)
 
@@ -219,7 +219,7 @@ findParentNode(
 
 - selectedRect：获取表格中的选区，并返回选区信息、表格起始偏移量、表格信息（`TableMap.get(table)`的值）和当前表格，这个方法很有用，能拿到当前表格中的所有信息
 
-  ![table-info.jpg](./table-info.jpg)
+  <!-- table-info.jpg 原图已丢失 -->
 
 - 剩下的方法都是需要用到的功能函数，像`addColumn`、`addRow`等
 

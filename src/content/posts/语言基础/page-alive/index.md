@@ -1,6 +1,6 @@
 ---
 title: "js监听当前页面是否活跃/失活"
-published: Thu Oct 12 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-10-12
 description: "js监听当前页面是否活跃/失活"
 tags: ["javascript"]
 category: "语言基础"

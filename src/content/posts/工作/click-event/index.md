@@ -18,5 +18,5 @@ const handleKeyDown = (e) => {
 window.addEventListener('keydown', handleKeyDown)
 ```
 
-![click-event.jpg](./click-event.jpg)
+<!-- click-event.jpg 原图已丢失 -->
 mac上的全选和windows上的全选不同，mac上需要判断`e.metaKey`

@@ -17,9 +17,9 @@ draft: false
   2. 连接电脑
   3. 打开edge浏览器，输入`edge://inspect/#devices`
   4. 等待手机和edge响应，选择是否允许USB调试，会出现一下界面，则说明链接成功
-  ![inspect](./insper.jpg)
+  <!-- insper.jpg 原图已丢失 -->
   5. 点击`inspect`，会出现这个界面，就可以像pc端一样调试了
-  ![result](./result.jpg)
+  <!-- result.jpg 原图已丢失 -->
 edge是真的强大，不用翻墙所有chrome浏览器的功能基本都能实现
 
 - 有翻墙环境：使用chrome

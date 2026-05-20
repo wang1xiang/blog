@@ -14,7 +14,7 @@ draft: false
 
 [vite3.0](https://cn.vitejs.dev/)简约大气上档次
 
-![截图](./vite3.0image.jpg)
+<!-- vite3.0image.jpg 原图已丢失 -->
 
 ### 开发阶段变动
 

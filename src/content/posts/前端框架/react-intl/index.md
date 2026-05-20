@@ -1,6 +1,6 @@
 ---
 title: "react-intl国际化使用方案"
-published: Tue Nov 15 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-11-15
 description: "react-intl国际化使用方案"
 tags: ["react"]
 category: "前端框架"

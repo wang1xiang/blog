@@ -231,11 +231,11 @@ module.exports = {
 - configFile: 用来替代第二步的.sentryclirc文件 需要有对应的文件 默认不配置即可
 
 在sentry上就会有对应项目的 Source Map 文件；（在settings -> projects -> xxx -> Source Maps）
-![sentry.jpg](./sentry.jpg)
+<!-- sentry.jpg 原图已丢失 -->
 
 4. 测试
   
-![sentryerror.jpg](./sentryerror.jpg)
+<!-- sentryerror.jpg 原图已丢失 -->
 
 - @sentry/webpack-plugin原理 [源码](https://github.com/getsentry/sentry-webpack-plugin)
 

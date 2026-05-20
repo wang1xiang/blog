@@ -1,6 +1,6 @@
 ---
 title: "URI malformed"
-published: Fri Jun 10 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-06-10
 description: "解决URI malformed"
 tags: ["work"]
 category: "工作"

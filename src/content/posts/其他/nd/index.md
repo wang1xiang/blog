@@ -1,6 +1,6 @@
 ---
 title: "拍摄影片时为什么需要 ND 镜"
-published: Sun Nov 12 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-11-12
 description: "nd"
 tags: ["photography"]
 category: "其他"

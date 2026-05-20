@@ -133,7 +133,7 @@ Mock.js 是一款模拟数据生成器，旨在帮助前端攻城师独立于后
    ```
 
 4. 浏览器访问<http://localhost:8080/mockJS/api/testApi/demo>
-   ![mockJs](./mockjs.jpg)
+   <!-- mockjs.jpg 原图已丢失 -->
 5. 配置webpack或vite的proxy，添加mock配置
 
    ```js
@@ -159,7 +159,7 @@ Mock.js 是一款模拟数据生成器，旨在帮助前端攻城师独立于后
 1. 安装
    [chrome扩展]((ttps://chrome.google.com/webstore/detail/ajax-interceptor/nhpjggchkhnlbgdfcbgpdpkifemomkpg?hl=zh-CN)
 2. 使用
-   ![interceptor](./interceptor.jpg)
+   <!-- interceptor.jpg 原图已丢失 -->
 
 
 ## whistle

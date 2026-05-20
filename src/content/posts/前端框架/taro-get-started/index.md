@@ -1,6 +1,6 @@
 ---
 title: "Taro入门——快速上手"
-published: Thu Nov 16 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-11-16
 description: "taro-get-started"
 tags: ["taro"]
 category: "前端框架"

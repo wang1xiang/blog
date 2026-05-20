@@ -25,6 +25,6 @@ draft: false
 }
 ```
 
-![placeholder](./placeholder.jpg)
+<!-- placeholder.jpg 原图已丢失 -->
 
 [演示地址](https://codesandbox.io/s/late-fast-l20yqn?file=/src/App.js:65-113)

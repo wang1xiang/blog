@@ -42,11 +42,19 @@ const CATEGORY_MAP = {
   photography: "其他",
 };
 
-function normalizeDate(dateStr) {
-  if (!dateStr) return new Date().toISOString().split("T")[0];
-  const parts = String(dateStr).split("-");
-  if (parts.length !== 3) return String(dateStr);
-  return parts.map((p) => p.padStart(2, "0")).join("-");
+function normalizeDate(dateVal) {
+  if (!dateVal) return new Date().toISOString().split("T")[0];
+  if (dateVal instanceof Date) {
+    return dateVal.toISOString().split("T")[0];
+  }
+  const str = String(dateVal);
+  // Already YYYY-MM-DD format
+  const parts = str.split("-");
+  if (parts.length === 3) {
+    return parts.map((p) => p.padStart(2, "0")).join("-");
+  }
+  // Fallback: parse as Date
+  return new Date(str).toISOString().split("T")[0];
 }
 
 function collectMdFiles(dir) {

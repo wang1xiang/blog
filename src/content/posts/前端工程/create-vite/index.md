@@ -34,7 +34,7 @@ draft: false
 pnpm create vite my-vue-app
 ```
 
-<!-- ![pnpm-create-vite.gif](./pnpm-create-vite.gif) -->
+<!-- <!-- pnpm-create-vite.gif 原图已丢失 --> -->
 
 我们也可以通过指定模板的方式一步到位
 
@@ -406,7 +406,7 @@ if (isReactSwc) {
 大概流程为：
 
 1. 通过最终模板 `template` 确认模板对应的目录，也就是这些文件夹；
-   ![viteTemplateList.png](./iamges/../viteTemplateList.png)
+   ![viteTemplateList.png](./viteTemplateList.png)
 
    此处[import.meta](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/import.meta)可以获取这个模块的元数据信息，`import.meta.url`相当于`file:///Users/xxx/create-vite-analysis/src/index.ts`
 

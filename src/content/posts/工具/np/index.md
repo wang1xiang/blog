@@ -1,6 +1,6 @@
 ---
 title: "npm发布工具np使用"
-published: Tue Oct 25 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-10-25
 description: "使用np代替npm publish发布"
 tags: ["tool"]
 category: "工具"
@@ -21,7 +21,7 @@ npm install np -g
 np --help
 ```
 
-![np--help.jpg](./np--help.jpg)
+<!-- np--help.jpg 原图已丢失 -->
 
 ## 使用步骤
 
@@ -33,11 +33,11 @@ np --help
    ```
 
    此时会出现选择版本号的界面，根据改变选择合适的版本
-   ![np-version.jpg](./np-version.jpg)
+   <!-- np-version.jpg 原图已丢失 -->
 
 3. 接下来会进行以下步骤
 
-   ![np-publish.jpg](./np-publish.jpg)
+   <!-- np-publish.jpg 原图已丢失 -->
 
    1. prerequisite check：先决条件检查，会依次检查node环境是否正常、检查npm源仓库登陆情况、检查git远程仓库是否存在等
    2. Git：检查当前分支是否master或main（如果不是需要添加--any-branch)、检查本地仓库是否干净

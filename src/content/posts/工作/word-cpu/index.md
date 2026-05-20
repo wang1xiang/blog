@@ -24,7 +24,7 @@ draft: false
 
 观察服务器状态，发现有一个子进程的 cpu 占有率明显高于其它，内存区别不大
 
-![](https://qtable.oss-cn-beijing.aliyuncs.com/docs/2025/2/28/default_user/11a72aba10fb3bb81ac5780e4ecbf1e4.jpg)
+<!-- image deleted -->
 
 之前的子进程分配是按照内存占有率来的，因为 cpu 的占有率无法计算。新连接分配给内存占有最小的子进程，子进程接管之后把自己的内存状态通知给主进程，主进程对进程池重新做排序。
 

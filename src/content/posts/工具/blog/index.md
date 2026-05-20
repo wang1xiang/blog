@@ -1,6 +1,6 @@
 ---
 title: "搭建博客记录"
-published: Fri Jun 10 2022 08:00:00 GMT+0800 (中国标准时间)
+published: 2022-06-10
 description: "使用vitepress搭建博客，通过github pages生成在线访问地址"
 tags: ["tool"]
 category: "工具"

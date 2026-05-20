@@ -1,6 +1,6 @@
 ---
 title: "2024年终总结：多事之秋"
-published: Wed Dec 11 2024 08:00:00 GMT+0800 (中国标准时间)
+published: 2024-12-11
 description: ""
 tags: ["tool"]
 category: "工具"

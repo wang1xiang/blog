@@ -1,6 +1,6 @@
 ---
 title: "Babel是什么?"
-published: Wed Dec 20 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-12-20
 description: "Babel是什么?"
 tags: ["work"]
 category: "工作"

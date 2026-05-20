@@ -1,6 +1,6 @@
 ---
 title: "年度述职报告"
-published: Mon Dec 18 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-12-18
 description: "年度述职报告"
 tags: ["work"]
 category: "工作"

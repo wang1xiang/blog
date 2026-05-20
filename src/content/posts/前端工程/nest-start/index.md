@@ -1,6 +1,6 @@
 ---
 title: "nest入门笔记"
-published: Mon Dec 11 2023 08:00:00 GMT+0800 (中国标准时间)
+published: 2023-12-11
 description: "nest-start"
 tags: ["next"]
 category: "前端工程"

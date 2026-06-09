@@ -1,0 +1,172 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+
+interface PostForArchive {
+	id: string;
+	data: CollectionEntry<"posts">["data"];
+}
+
+interface Props {
+	posts: PostForArchive[];
+	totalWords: number;
+}
+
+const { posts, totalWords } = Astro.props;
+
+// 按年份分组
+interface YearGroup {
+	year: number;
+	posts: PostForArchive[];
+}
+
+const grouped: YearGroup[] = (() => {
+	const map = new Map<number, PostForArchive[]>();
+	for (const p of posts) {
+		const year = new Date(p.data.published).getFullYear();
+		if (!map.has(year)) map.set(year, []);
+		map.get(year)!.push(p);
+	}
+	const years = Array.from(map.keys()).sort((a, b) => b - a);
+	return years.map((year) => ({ year, posts: map.get(year)! }));
+})();
+
+function formatMD(date: Date | string): string {
+	const d = new Date(date);
+	const mm = String(d.getMonth() + 1).padStart(2, "0");
+	const dd = String(d.getDate()).padStart(2, "0");
+	return `${mm}-${dd}`;
+}
+
+function formatNumber(num: number): string {
+	return num.toLocaleString();
+}
+
+const startYear = grouped.length > 0 ? grouped[grouped.length - 1].year : 2021;
+const endYear = grouped.length > 0 ? grouped[0].year : new Date().getFullYear();
+const yearRange = startYear === endYear ? `${endYear}` : `${startYear} – ${endYear}`;
+---
+
+<header class="archive-header">
+	<div class="archive-breadcrumb">
+		<a href={url("/")}>首页</a> / <span id="archive-breadcrumb-suffix">归档</span>
+	</div>
+	<h1 class="archive-title">所有文章</h1>
+	<p class="archive-subtitle">按时间排序的完整文章列表。从零开始记录前端与工程化路上的每一步。</p>
+	<div class="archive-stats">
+		<div class="archive-stat-item">
+			<strong id="archive-visible-count">{posts.length}</strong> 篇文章
+		</div>
+		<div class="archive-stat-item">
+			<strong>{formatNumber(totalWords)}</strong> 总字数
+		</div>
+		<div class="archive-stat-item">
+			<strong>{startYear}</strong> – {endYear}
+		</div>
+		<div class="archive-filter-pill hidden" id="archive-filter-pill">
+			<span class="filter-label" id="archive-filter-label"></span>
+			<button type="button" class="filter-clear" aria-label="清除过滤" id="archive-filter-clear">×</button>
+		</div>
+	</div>
+</header>
+
+<main class="archive-list">
+	{grouped.map(({ year, posts: yearPosts }) => (
+		<section class="year-group" id={`year-${year}`} data-year={year}>
+			<div class="year-header">
+				<h2 class="year-title">{year}</h2>
+				<span class="year-count" data-year-count={year}>{yearPosts.length} 篇</span>
+			</div>
+			<div class="archive-articles">
+				{yearPosts.map((post) => (
+					<a
+						class="archive-article"
+						href={getPostUrlBySlug(post.id)}
+						data-category={post.data.category ?? ""}
+						data-tags={(post.data.tags ?? []).join(",")}
+					>
+						<span class="archive-article-date">{formatMD(post.data.published)}</span>
+						<span class="archive-article-title">{post.data.title}</span>
+						{post.data.category && (
+							<span class="archive-article-category">{post.data.category}</span>
+						)}
+					</a>
+				))}
+			</div>
+		</section>
+	))}
+	<div class="archive-empty hidden" id="archive-empty">没有符合条件的文章。</div>
+</main>
+
+<script is:inline>
+	// 归档页过滤：读取 URL ?category=xxx / ?tag=xxx，客户端隐藏不匹配项
+	(function initArchiveFilter() {
+		function applyFilter() {
+			const params = new URLSearchParams(window.location.search);
+			const cat = params.get("category");
+			const tag = params.get("tag");
+
+			const articles = document.querySelectorAll(".archive-article");
+			let visible = 0;
+			const visibleByYear = new Map();
+
+			articles.forEach(function (el) {
+				const elCat = el.getAttribute("data-category") || "";
+				const elTags = (el.getAttribute("data-tags") || "").split(",").filter(Boolean);
+				const matchCat = !cat || elCat === cat;
+				const matchTag = !tag || elTags.indexOf(tag) >= 0;
+				const show = matchCat && matchTag;
+				el.classList.toggle("filtered-out", !show);
+				if (show) {
+					visible++;
+					const yearSection = el.closest(".year-group");
+					if (yearSection) {
+						const y = yearSection.getAttribute("data-year");
+						visibleByYear.set(y, (visibleByYear.get(y) || 0) + 1);
+					}
+				}
+			});
+
+			// 整年隐藏 + 更新年份计数
+			document.querySelectorAll(".year-group").forEach(function (sec) {
+				const y = sec.getAttribute("data-year");
+				const count = visibleByYear.get(y) || 0;
+				sec.classList.toggle("filtered-out", count === 0);
+				const countEl = sec.querySelector("[data-year-count]");
+				if (countEl) countEl.textContent = count + " 篇";
+			});
+
+			// 顶部统计 + 过滤 pill
+			const countEl = document.getElementById("archive-visible-count");
+			if (countEl) countEl.textContent = String(visible);
+
+			const pill = document.getElementById("archive-filter-pill");
+			const label = document.getElementById("archive-filter-label");
+			const suffix = document.getElementById("archive-breadcrumb-suffix");
+			if (cat || tag) {
+				const text = cat ? "分类：" + cat : "标签：#" + tag;
+				if (label) label.textContent = text;
+				if (pill) pill.classList.remove("hidden");
+				if (suffix) suffix.textContent = "归档 · " + text;
+			} else {
+				if (pill) pill.classList.add("hidden");
+				if (suffix) suffix.textContent = "归档";
+			}
+
+			// 空状态
+			const empty = document.getElementById("archive-empty");
+			if (empty) empty.classList.toggle("hidden", visible > 0);
+		}
+
+		applyFilter();
+
+		// 清除按钮
+		const clearBtn = document.getElementById("archive-filter-clear");
+		if (clearBtn) {
+			clearBtn.addEventListener("click", function () {
+				window.history.replaceState(null, "", window.location.pathname);
+				applyFilter();
+			});
+		}
+	})();
+</script>

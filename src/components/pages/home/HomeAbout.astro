@@ -1,0 +1,327 @@
+---
+import { profileConfig } from "@/config";
+import { url } from "@/utils/url-utils";
+
+// ============ 全部文案硬编码在此，按需修改 ============
+
+const hero = {
+	name: "翔子 · Xiang Wang",
+	tagline:
+		"前端工程师，兼写一点 Node.js。把任何重复 3 遍的事 AI 化或自动化，是这两年最值得复用的工作哲学。",
+	chips: [
+		{ kind: "status" as const, text: "正在接受合作邀约" },
+		{ kind: "plain" as const, text: "📍 上海" },
+		{ kind: "plain" as const, text: "⌘ 前端 · Node · AI 工作流" },
+	],
+};
+
+const bio = {
+	aside: "写于 2026 春",
+	paragraphs: [
+		"这是一个安静的角落，用来记录我在写代码时的思考、踩过的坑和偶尔的灵感。我喜欢 <strong>把复杂的事情拆开</strong>，让每一层都尽量简单——这个原则同时影响着我写代码和写文章的方式。",
+		"白天主要做 Vue 3 + TypeScript 的前端工程，业余时间在 Node.js、AI 工具链、Vite 插件之间游走。这两年特别关注 <strong>AI 辅助开发</strong>——不是为了赶时髦，是因为它确实让我每天能少做几件重复的事。",
+		'如果你对里面任何一篇文章有想法，欢迎通过 <a href="mailto:756638369@qq.com">邮件</a> 或 <a href="https://github.com/wang1xiang">GitHub</a> 找我聊。我回得不快，但每条都会认真看。',
+	],
+};
+
+const now = {
+	items: [
+		"在用 <strong>Claude Code + Cursor</strong> 重写过去的项目脚手架",
+		"业余在写一些 <strong>Vite / Astro 插件</strong>，让重复工作零配置",
+		"读《Designing Data-Intensive Applications》",
+		"练吉他指弹",
+	],
+};
+
+interface SkillGroup {
+	name: string;
+	level: string;
+	icon: "frontend" | "backend" | "ai" | "design";
+	skills: Array<{ name: string; primary?: boolean }>;
+}
+
+const skillGroups: SkillGroup[] = [
+	{
+		name: "前端工程",
+		level: "日常",
+		icon: "frontend",
+		skills: [
+			{ name: "Vue 3", primary: true },
+			{ name: "TypeScript", primary: true },
+			{ name: "React", primary: true },
+			{ name: "Vite" },
+			{ name: "Pinia" },
+			{ name: "Tailwind" },
+			{ name: "Element Plus" },
+		],
+	},
+	{
+		name: "后端 & 工程化",
+		level: "常用",
+		icon: "backend",
+		skills: [
+			{ name: "Node.js", primary: true },
+			{ name: "Express" },
+			{ name: "Koa" },
+			{ name: "PostgreSQL" },
+			{ name: "Redis" },
+			{ name: "Docker" },
+			{ name: "GitHub Actions" },
+		],
+	},
+	{
+		name: "AI & 自动化",
+		level: "最爱",
+		icon: "ai",
+		skills: [
+			{ name: "Claude Code", primary: true },
+			{ name: "Cursor", primary: true },
+			{ name: "OpenAI API" },
+			{ name: "LangChain" },
+			{ name: "n8n" },
+			{ name: "Shell" },
+		],
+	},
+	{
+		name: "设计 & UX",
+		level: "基础",
+		icon: "design",
+		skills: [
+			{ name: "Figma" },
+			{ name: "Framer" },
+			{ name: "CSS Grid" },
+			{ name: "Motion" },
+			{ name: "SVG" },
+		],
+	},
+];
+
+interface TimelineItem {
+	year: string;
+	title: string;
+	desc: string;
+}
+
+const timeline: TimelineItem[] = [
+	{
+		year: "2025 · 至今",
+		title: "资深前端工程师",
+		desc: "主导 AI 工作流落地与团队工程化体系，把 90% 的样板工作交给 LLM 代理。",
+	},
+	{
+		year: "2022 — 2024",
+		title: "全栈开发，Vue 3 大规模落地",
+		desc: "从 Vue 2 迁移到 Vue 3，重构上百个组件，沉淀出公司内部的组件库与脚手架。",
+	},
+	{
+		year: "2020 — 2022",
+		title: "前端工程师 · 切入 Node.js",
+		desc: "从纯前端扩展到中台 BFF 层，第一次发现“做工具能省时间”的快乐。",
+	},
+	{
+		year: "2018",
+		title: "博客上线",
+		desc: "第一篇文章发布，那时还是 Hexo 主题。",
+	},
+];
+
+interface ConnectItem {
+	label: string;
+	value: string;
+	href: string;
+	icon: "email" | "github" | "twitter" | "rss";
+}
+
+const githubLink = profileConfig.links.find((l) => l.name === "GitHub")?.url;
+const connect: ConnectItem[] = [
+	{
+		label: "Email",
+		value: "756638369@qq.com",
+		href: "mailto:756638369@qq.com",
+		icon: "email",
+	},
+	githubLink && {
+		label: "GitHub",
+		value: "@wang1xiang",
+		href: githubLink,
+		icon: "github" as const,
+	},
+	{
+		label: "RSS",
+		value: "/rss.xml",
+		href: url("/rss.xml"),
+		icon: "rss",
+	},
+].filter(Boolean) as ConnectItem[];
+
+const avatarChar = profileConfig.name.charAt(0);
+---
+
+<article class="about">
+	<header class="about-header">
+		<div class="about-breadcrumb">
+			<a href={url("/")}>首页</a> / 关于
+		</div>
+	</header>
+
+	{/* ============ Hero ============ */}
+	<section class="about-hero">
+		<div class="about-avatar">{avatarChar}</div>
+		<div class="about-hero-body">
+			<h1 class="about-hero-name">{hero.name}</h1>
+			<p class="about-hero-tagline">{hero.tagline}</p>
+			<div class="about-hero-meta">
+				{hero.chips.map((chip) => (
+					<span class="about-chip">
+						{chip.kind === "status" && <span class="about-chip-dot"></span>}
+						{chip.text}
+					</span>
+				))}
+			</div>
+		</div>
+	</section>
+
+	{/* ============ Bio ============ */}
+	<section class="about-section">
+		<div class="about-section-head">
+			<div>
+				<div class="about-section-eyebrow">About</div>
+				<h2 class="about-section-title">关于我</h2>
+			</div>
+			<span class="about-section-aside">{bio.aside}</span>
+		</div>
+		<div class="about-bio">
+			{bio.paragraphs.map((p) => (
+				<p set:html={p} />
+			))}
+		</div>
+	</section>
+
+	{/* ============ Now ============ */}
+	<section class="about-section">
+		<div class="about-now-card">
+			<div class="about-now-label">Now · 现在</div>
+			<div class="about-now-items">
+				{now.items.map((item) => (
+					<div class="about-now-item" set:html={item} />
+				))}
+			</div>
+		</div>
+	</section>
+
+	{/* ============ Skills ============ */}
+	<section class="about-section">
+		<div class="about-section-head">
+			<div>
+				<div class="about-section-eyebrow">Stack</div>
+				<h2 class="about-section-title">在用的技术栈</h2>
+			</div>
+			<span class="about-section-aside">按使用熟练度分组</span>
+		</div>
+		<div class="about-skills-grid">
+			{skillGroups.map((g) => (
+				<div class="about-skill-group">
+					<div class="about-skill-group-head">
+						<div class="about-skill-icon">
+							{g.icon === "frontend" && (
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+									<polyline points="4 17 10 11 4 5"></polyline>
+									<line x1="12" y1="19" x2="20" y2="19"></line>
+								</svg>
+							)}
+							{g.icon === "backend" && (
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+									<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+								</svg>
+							)}
+							{g.icon === "ai" && (
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+									<circle cx="12" cy="12" r="10"></circle>
+									<path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+								</svg>
+							)}
+							{g.icon === "design" && (
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+									<rect x="3" y="3" width="18" height="18" rx="2"></rect>
+									<circle cx="8.5" cy="8.5" r="1.5"></circle>
+									<polyline points="21 15 16 10 5 21"></polyline>
+								</svg>
+							)}
+						</div>
+						<div class="about-skill-group-name">{g.name}</div>
+						<span class="about-skill-group-meta">{g.level}</span>
+					</div>
+					<div class="about-skill-list">
+						{g.skills.map((s) => (
+							<span class={`about-skill-tag${s.primary ? " primary" : ""}`}>{s.name}</span>
+						))}
+					</div>
+				</div>
+			))}
+		</div>
+	</section>
+
+	{/* ============ Timeline ============ */}
+	<section class="about-section">
+		<div class="about-section-head">
+			<div>
+				<div class="about-section-eyebrow">Journey</div>
+				<h2 class="about-section-title">时间线</h2>
+			</div>
+		</div>
+		<div class="about-timeline">
+			{timeline.map((item) => (
+				<div class="about-timeline-item">
+					<div class="about-timeline-year">{item.year}</div>
+					<div class="about-timeline-title">{item.title}</div>
+					<div class="about-timeline-desc">{item.desc}</div>
+				</div>
+			))}
+		</div>
+	</section>
+
+	{/* ============ Connect ============ */}
+	<section class="about-section">
+		<div class="about-section-head">
+			<div>
+				<div class="about-section-eyebrow">Connect</div>
+				<h2 class="about-section-title">找到我</h2>
+			</div>
+			<span class="about-section-aside">回复较慢，请见谅</span>
+		</div>
+		<div class="about-connect-grid">
+			{connect.map((c) => (
+				<a href={c.href} class="about-connect-card" target={c.icon === "email" || c.icon === "rss" ? undefined : "_blank"} rel="noopener noreferrer">
+					<div class="about-connect-icon">
+						{c.icon === "email" && (
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+								<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+								<polyline points="22,6 12,13 2,6"></polyline>
+							</svg>
+						)}
+						{c.icon === "github" && (
+							<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+								<path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path>
+							</svg>
+						)}
+						{c.icon === "twitter" && (
+							<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+								<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+							</svg>
+						)}
+						{c.icon === "rss" && (
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+								<path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path>
+								<circle cx="5" cy="19" r="1"></circle>
+							</svg>
+						)}
+					</div>
+					<div class="about-connect-text">
+						<span class="about-connect-label">{c.label}</span>
+						<span class="about-connect-value">{c.value}</span>
+					</div>
+				</a>
+			))}
+		</div>
+	</section>
+</article>

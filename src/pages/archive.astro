@@ -1,13 +1,32 @@
 ---
-import ArchivePanel from "@components/controls/ArchivePanel.svelte";
-import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
-import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getCollection } from "astro:content";
+import HomeArchive from "@/components/pages/home/HomeArchive.astro";
+import { siteConfig } from "@/config";
+import HomeLayout from "@/layouts/HomeLayout.astro";
 import { getSortedPostsList } from "@/utils/content-utils";
 
 const sortedPostsList = await getSortedPostsList();
+
+// 复用 SiteStats 的字数算法：去掉代码块/内联代码后计数中文字符 + 英文字符
+// 注意 getSortedPostsList 已剥离 body，所以这里需要重新加载完整 posts
+const fullPosts = await getCollection("posts", ({ data }) => {
+	return import.meta.env.PROD ? data.draft !== true : true;
+});
+let totalWords = 0;
+for (const post of fullPosts) {
+	if (post.body) {
+		const text = post.body
+			.replace(/```[\s\S]*?```/g, "")
+			.replace(/`[^`]*`/g, "")
+			.replace(/\s+/g, " ")
+			.trim();
+		const chineseChars = text.match(/[一-龥]/g) || [];
+		const englishChars = text.match(/[a-zA-Z]/g) || [];
+		totalWords += chineseChars.length + englishChars.length;
+	}
+}
 ---
 
-<MainGridLayout title={i18n(I18nKey.archive)}>
-  <ArchivePanel sortedPosts={sortedPostsList} client:only="svelte" />
-</MainGridLayout>
+<HomeLayout title="归档" description={siteConfig.subtitle}>
+	<HomeArchive posts={sortedPostsList} totalWords={totalWords} />
+</HomeLayout>

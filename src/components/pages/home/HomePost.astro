@@ -1,0 +1,148 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { render } from "astro:content";
+import Comment from "@/components/comment/index.astro";
+import Markdown from "@/components/common/Markdown.astro";
+import EncryptedPost from "@/components/features/EncryptedPost.astro";
+import KatexManager from "@/components/features/KatexManager.astro";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+
+interface Props {
+	entry: CollectionEntry<"posts">;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { remarkPluginFrontmatter } = await render(entry);
+
+const published = new Date(entry.data.published);
+const publishedStr = `${published.getFullYear()}-${String(published.getMonth() + 1).padStart(2, "0")}-${String(published.getDate()).padStart(2, "0")}`;
+const updated = entry.data.updated ? new Date(entry.data.updated) : null;
+const updatedStr = updated
+	? `${updated.getFullYear()}-${String(updated.getMonth() + 1).padStart(2, "0")}-${String(updated.getDate()).padStart(2, "0")}`
+	: null;
+const showUpdated = updated && updated.getTime() !== published.getTime();
+
+const words = remarkPluginFrontmatter.words as number | undefined;
+const minutes = remarkPluginFrontmatter.minutes as number | undefined;
+const isEncrypted = !!entry.data.password;
+---
+
+<KatexManager slot="head" />
+
+<article class="post">
+	<header class="post-header">
+		<div class="post-breadcrumb">
+			<a href={url("/")}>首页</a> /
+			{entry.data.category ? (
+				<>
+					<a href={`${url("/archive/")}?category=${encodeURIComponent(entry.data.category)}`}>{entry.data.category}</a> /
+				</>
+			) : (
+				<>
+					<a href={url("/archive/")}>归档</a> /
+				</>
+			)}
+			<span class="post-breadcrumb-current">文章</span>
+		</div>
+
+		<h1 class="post-title">{entry.data.title}</h1>
+
+		{entry.data.description && (
+			<p class="post-subtitle">{entry.data.description}</p>
+		)}
+
+		<div class="post-meta">
+			<span class="post-meta-item">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+					<rect x="3" y="4" width="18" height="18" rx="2"></rect>
+					<path d="M16 2v4M8 2v4M3 10h18"></path>
+				</svg>
+				{publishedStr}
+			</span>
+			{showUpdated && updatedStr && (
+				<span class="post-meta-item">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<path d="M21 12a9 9 0 1 1-3-6.7"></path>
+						<polyline points="21 4 21 11 14 11"></polyline>
+					</svg>
+					更新于 {updatedStr}
+				</span>
+			)}
+			{typeof words === "number" && words > 0 && (
+				<span class="post-meta-item">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<path d="M3 6h18M3 12h18M3 18h12"></path>
+					</svg>
+					{words.toLocaleString()} 字
+				</span>
+			)}
+			{typeof minutes === "number" && minutes > 0 && (
+				<span class="post-meta-item">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<circle cx="12" cy="12" r="10"></circle>
+						<polyline points="12 6 12 12 16 14"></polyline>
+					</svg>
+					{minutes} min read
+				</span>
+			)}
+			{isEncrypted && (
+				<span class="post-meta-item post-meta-locked">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+						<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+					</svg>
+					加密文章
+				</span>
+			)}
+		</div>
+
+		{(entry.data.tags ?? []).length > 0 && (
+			<div class="post-tags">
+				{(entry.data.tags ?? []).map((t) => (
+					<span class="post-tag">#{t}</span>
+				))}
+			</div>
+		)}
+	</header>
+
+	<div class="post-body">
+		{isEncrypted ? (
+			<EncryptedPost
+				password={entry.data.password}
+				passwordHint={entry.data.passwordHint}
+			>
+				<Markdown class="markdown-content onload-animation">
+					<Content />
+				</Markdown>
+			</EncryptedPost>
+		) : (
+			<Markdown class="markdown-content onload-animation">
+				<Content />
+			</Markdown>
+		)}
+	</div>
+
+	<nav class="post-nav" aria-label="文章导航">
+		<a
+			class={`post-nav-link post-nav-prev ${entry.data.nextSlug ? "" : "disabled"}`}
+			href={entry.data.nextSlug ? getPostUrlBySlug(entry.data.nextSlug) : url("/")}
+		>
+			<span class="post-nav-direction">← 上一篇（较新）</span>
+			<span class="post-nav-title">{entry.data.nextTitle || "返回首页"}</span>
+		</a>
+		<a
+			class={`post-nav-link post-nav-next ${entry.data.prevSlug ? "" : "disabled"}`}
+			href={entry.data.prevSlug ? getPostUrlBySlug(entry.data.prevSlug) : url("/")}
+		>
+			<span class="post-nav-direction">下一篇（较旧）→</span>
+			<span class="post-nav-title">{entry.data.prevTitle || "返回首页"}</span>
+		</a>
+	</nav>
+
+	{entry.data.comment && !entry.data.password && (
+		<section class="post-comments">
+			<Comment post={entry} />
+		</section>
+	)}
+</article>

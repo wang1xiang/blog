@@ -15,7 +15,6 @@ const githubLink = profileConfig.links.find((l) => l.name === "GitHub")?.url;
 	<div class="foot-mono">© {yearRange} · {profileConfig.name}</div>
 	<div class="foot-links">
 		<a href={url("/rss.xml")}>RSS</a>
-		<a href={url("/sitemap-index.xml")}>Sitemap</a>
 		{githubLink && <a href={githubLink} target="_blank" rel="noopener noreferrer">GitHub</a>}
 		<a href={url("/about/")}>关于</a>
 	</div>

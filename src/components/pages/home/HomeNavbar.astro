@@ -1,5 +1,4 @@
 ---
-import LightDarkSwitch from "@/components/controls/LightDarkSwitch.svelte";
 import { profileConfig, siteConfig } from "@/config";
 import { url } from "@/utils/url-utils";
 
@@ -17,17 +16,17 @@ const brandInitial = siteConfig.title.charAt(0);
 
 <header class="nav">
 	<div class="nav-inner">
-		<a class="brand" href={url("/")}>
+		<a class="brand" href={url("/")} data-no-swup>
 			<span class="brand-mark">{brandInitial}</span>
 			<span>{siteConfig.title}</span>
 		</a>
 		<nav class="nav-links">
-			<a class={`nav-link ${isActive("/") ? "active" : ""}`} href={url("/")}>文章</a>
-			<a class={`nav-link ${isActive("/archive") ? "active" : ""}`} href={url("/archive/")}>归档</a>
-			<a class={`nav-link ${isActive("/about") ? "active" : ""}`} href={url("/about/")}>关于</a>
+			<a class={`nav-link ${isActive("/") ? "active" : ""}`} href={url("/")} data-no-swup>文章</a>
+			<a class={`nav-link ${isActive("/archive") ? "active" : ""}`} href={url("/archive/")} data-no-swup>归档</a>
+			<a class={`nav-link ${isActive("/about") ? "active" : ""}`} href={url("/about/")} data-no-swup>关于</a>
 		</nav>
 		<div class="nav-right">
-			<a class="search-trigger" href={url("/search/")} aria-label="搜索文章">
+			<a class="search-trigger" href={url("/search/")} aria-label="搜索文章" data-no-swup>
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 					<circle cx="11" cy="11" r="7"></circle>
 					<path d="m21 21-4.3-4.3"></path>
@@ -35,9 +34,15 @@ const brandInitial = siteConfig.title.charAt(0);
 				<span>搜索文章…</span>
 				<span class="kbd">⌘K</span>
 			</a>
-			<div class="home-theme-toggle">
-				<LightDarkSwitch client:only="svelte" />
-			</div>
+			<button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题">
+				<svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+					<circle cx="12" cy="12" r="4"></circle>
+					<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+				</svg>
+				<svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+					<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+				</svg>
+			</button>
 			<a class="icon-btn" href={url("/rss.xml")} aria-label="RSS">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
 					<path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path>
@@ -56,6 +61,7 @@ const brandInitial = siteConfig.title.charAt(0);
 </header>
 
 <script is:inline data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
 	(function bindSearchHotkey() {
 		if (window.__homeNavSearchBound) return;
 		window.__homeNavSearchBound = true;
@@ -67,26 +73,67 @@ const brandInitial = siteConfig.title.charAt(0);
 			}
 		});
 	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
 </script>
 
 <style is:global>
+	/* 主题切换按钮：两个图标叠层放置，用 opacity 切换显示 */
+	/* 默认（无 data-theme，等 JS 应用前）显示太阳，避免任何状态都看到两个图标 */
 	.home-page .home-theme-toggle {
-		display: inline-flex;
-		align-items: center;
+		position: relative;
 	}
-	.home-page .home-theme-toggle :global(button) {
-		width: 34px;
-		height: 34px;
-		border-radius: 8px;
-		display: grid;
-		place-items: center;
-		color: var(--muted);
-		background: transparent;
-		border: none;
-		transition: background 0.15s, color 0.15s;
+	.home-page .home-theme-toggle .theme-icon-sun,
+	.home-page .home-theme-toggle .theme-icon-moon {
+		width: 16px;
+		height: 16px;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		transition: opacity 0.15s ease;
 	}
-	.home-page .home-theme-toggle :global(button:hover) {
-		background: var(--surface-soft);
-		color: var(--fg-strong);
+	.home-page .home-theme-toggle .theme-icon-moon {
+		opacity: 0;
+	}
+	.home-page .home-theme-toggle[data-theme="dark"] .theme-icon-sun {
+		opacity: 0;
+	}
+	.home-page .home-theme-toggle[data-theme="dark"] .theme-icon-moon {
+		opacity: 1;
 	}
 </style>

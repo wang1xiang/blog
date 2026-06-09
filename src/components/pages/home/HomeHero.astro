@@ -1,5 +1,7 @@
 ---
+import { siteConfig } from "@/config";
 import { profileConfig } from "@/config";
+import { getCategoryList, getSortedPosts } from "@/utils/content-utils";
 
 const eyebrow = "FRONTEND · ENGINEERING NOTES";
 const headlinePrefix = "写代码，";
@@ -10,6 +12,36 @@ const subtitle =
 	"翔子的个人博客。前端 / Node.js / 工程化 / 工具，以及把重复 3 次的事 AI 化的尝试。";
 const authorLocation = "前端开发工程师 · 上海";
 const avatarChar = profileConfig.name.charAt(0);
+
+// 统计数据
+const posts = await getSortedPosts();
+const categories = await getCategoryList();
+
+// 计算总字数（参考 SiteStats 逻辑）
+let totalWords = 0;
+for (const post of posts) {
+	if (post.body) {
+		let text = post.body
+			.replace(/```[\s\S]*?```/g, "")
+			.replace(/`[^`]*`/g, "")
+			.replace(/\s+/g, " ")
+			.trim();
+		const chineseChars = text.match(/[一-龥]/g) || [];
+		const englishChars = text.match(/[a-zA-Z]/g) || [];
+		totalWords += chineseChars.length + englishChars.length;
+	}
+}
+
+function formatNumber(num: number): string {
+	return num.toLocaleString();
+}
+
+const siteStartDate = siteConfig.siteStartDate || "2025-01-01";
+const startDate = new Date(siteStartDate);
+const today = new Date();
+const runningDays = Math.ceil(
+	Math.abs(today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+);
 ---
 
 <section class="hero">
@@ -25,6 +57,18 @@ const avatarChar = profileConfig.name.charAt(0);
 				<strong>{profileConfig.name}</strong>
 				<span>{authorLocation}</span>
 			</div>
+		</div>
+		<div class="hero-stat">
+			<strong>{posts.length}</strong>
+			<span>篇文章</span>
+		</div>
+		<div class="hero-stat">
+			<strong>{formatNumber(totalWords)}</strong>
+			<span>字</span>
+		</div>
+		<div class="hero-stat">
+			<strong>{categories.length}</strong>
+			<span>分类</span>
 		</div>
 	</div>
 </section>

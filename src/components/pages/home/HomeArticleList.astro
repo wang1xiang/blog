@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import { render } from "astro:content";
 import { getPostUrlBySlug, url } from "@/utils/url-utils";
 
 interface Props {
@@ -17,6 +18,27 @@ function formatDateParts(date: Date | string) {
 	const yyyy = d.getFullYear();
 	return { md: `${mm}-${dd}`, year: yyyy };
 }
+
+// 预计算每篇文章的阅读时间（仅当前页，约 10 篇，性能可接受）
+// 复用 remark-reading-time plugin 的输出（已集成在 siteConfig.markdown.remarkPlugins）
+interface PostWithReadTime {
+	post: CollectionEntry<"posts">;
+	minutes: number;
+}
+
+const postsWithMeta: PostWithReadTime[] = [];
+for (const p of posts) {
+	try {
+		const { remarkPluginFrontmatter } = await render(p);
+		postsWithMeta.push({
+			post: p,
+			minutes: remarkPluginFrontmatter.minutes ?? 0,
+		});
+	} catch (_) {
+		// render 失败时降级为 0 min
+		postsWithMeta.push({ post: p, minutes: 0 });
+	}
+}
 ---
 
 <section class="section" id="articles">
@@ -31,7 +53,7 @@ function formatDateParts(date: Date | string) {
 	</div>
 
 	<div class="article-list">
-		{posts.map((post) => {
+		{postsWithMeta.map(({ post, minutes }) => {
 			const { md, year } = formatDateParts(post.data.published);
 			const tagsToShow = (post.data.tags ?? []).slice(0, 2);
 			const excerpt = post.data.description ?? "";
@@ -43,11 +65,10 @@ function formatDateParts(date: Date | string) {
 					<div class="article-body">
 						<h3 class="article-title">{post.data.title}</h3>
 						{excerpt && <p class="article-excerpt">{excerpt}</p>}
-						{tagsToShow.length > 0 && (
+						{(tagsToShow.length > 0 || minutes > 0) && (
 							<div class="article-meta">
-								{tagsToShow.map((t) => (
-									<span class="tag-pill">#{t}</span>
-								))}
+								{minutes > 0 && <span class="article-minutes">{minutes} min</span>}
+								{tagsToShow.map((t) => <span class="tag-pill">#{t}</span>)}
 							</div>
 						)}
 					</div>

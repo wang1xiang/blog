@@ -1,0 +1,30 @@
+---
+import { profileConfig } from "@/config";
+
+const eyebrow = "FRONTEND · ENGINEERING NOTES";
+const headlinePrefix = "写代码，";
+const headlineEm = "记问题";
+const headlineSuffix = "，";
+const headlineLine2 = "偶尔聊点工程之外。";
+const subtitle =
+	"翔子的个人博客。前端 / Node.js / 工程化 / 工具，以及把重复 3 次的事 AI 化的尝试。";
+const authorLocation = "前端开发工程师 · 上海";
+const avatarChar = profileConfig.name.charAt(0);
+---
+
+<section class="hero">
+	<div class="hero-eyebrow">{eyebrow}</div>
+	<h1 class="hero-headline">
+		{headlinePrefix}<em>{headlineEm}</em>{headlineSuffix}<br />{headlineLine2}
+	</h1>
+	<p class="hero-sub">{subtitle}</p>
+	<div class="hero-meta">
+		<div class="hero-author">
+			<div class="hero-avatar">{avatarChar}</div>
+			<div class="hero-author-info">
+				<strong>{profileConfig.name}</strong>
+				<span>{authorLocation}</span>
+			</div>
+		</div>
+	</div>
+</section>

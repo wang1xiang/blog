@@ -1,0 +1,20 @@
+---
+import { footerConfig, profileConfig, siteConfig } from "@/config";
+import { url } from "@/utils/url-utils";
+
+const currentYear = new Date().getFullYear();
+const startYear = footerConfig.startYear ?? 2021;
+const yearRange = startYear === currentYear ? `${currentYear}` : `${startYear} — ${currentYear}`;
+const githubLink = profileConfig.links.find((l) => l.name === "GitHub")?.url;
+---
+
+<footer class="foot">
+	<div class="foot-mono">© {yearRange} · {profileConfig.name}</div>
+	<div class="foot-links">
+		<a href={url("/rss.xml")}>RSS</a>
+		<a href={url("/sitemap-index.xml")}>Sitemap</a>
+		{githubLink && <a href={githubLink} target="_blank" rel="noopener noreferrer">GitHub</a>}
+		<a href={url("/about/")}>关于</a>
+	</div>
+	<div class="foot-mono">Astro · Firefly · {siteConfig.title}</div>
+</footer>

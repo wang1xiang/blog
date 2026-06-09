@@ -34,22 +34,22 @@
 
 ## 2. 关键决策汇总
 
-| 决策点                                | 选择                                                             | 备注                                       |
-| ------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------ |
-| 范围策略                              | 路径 2：在 Firefly 内新建独立 `HomeLayout`                       | 不回退 VitePress，不动其他页面             |
-| 顶栏 / Footer                         | 设计稿自带的极简版本                                             | 不复用 Firefly 的 Navbar / Footer 组件     |
-| ⌘K 搜索                               | 去掉命令面板，搜索按钮跳转 `/search`                             | 复用现有 pagefind 搜索页                   |
-| 置顶卡                                | 取最新 `pinned: true` 的文章                                     | 项目已有该 frontmatter 字段                |
-| Hero 文案                             | 标题/副标题/作者**硬编码**在组件中                               | 不引入新配置文件                           |
-| Hero 统计数字                         | **去掉**统计部分                                                 | 简化                                       |
-| 文章列表分页                          | 保留分页器                                                       | 复用现有 `Pagination.astro`                |
-| 分类区 / 标签云                       | **仅保留分类网格，去掉标签云**                                   | 简化                                       |
-| 文章列表样式                          | 不带封面图（时间线风格）                                         | 贴设计稿                                   |
-| 色彩体系                              | 首页用设计稿独立 oklch 变量（CSS 作用域隔离）                    | 不污染其他页面                             |
-| 暗色模式                              | 复用 Firefly 现有钩子（`html.dark` + `html[data-theme="dark"]`） | 主题切换状态全站一致                       |
-| Live2D / Spine / CategoryBar / Banner | 首页全部禁用                                                     | 进入其他页面后仍可用                       |
-| Swup 软切换                           | 保留，HomeLayout 提供 5 个隐藏占位容器                           | 避免回退到整页刷新                         |
-| Footer 字段                           | 从 `siteConfig` / `profileConfig` / `footerConfig` 读取          | 需在 `footerConfig.ts` 加 `startYear` 字段 |
+| 决策点                                | 选择                                                             | 备注                                                  |
+| ------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------- |
+| 范围策略                              | 路径 2：在 Firefly 内新建独立 `HomeLayout`                       | 不回退 VitePress，不动其他页面                        |
+| 顶栏 / Footer                         | 设计稿自带的极简版本                                             | 不复用 Firefly 的 Navbar / Footer 组件                |
+| ⌘K 搜索                               | 去掉命令面板，搜索按钮跳转 `/search`                             | 复用现有 pagefind 搜索页                              |
+| 置顶卡                                | 优先取最新 `pinned: true` 的文章，无 pinned 时回退到最新一篇     | 利用 `getSortedPosts()` 的排序，取 `[0]` 即可同时满足 |
+| Hero 文案                             | 标题/副标题/作者**硬编码**在组件中                               | 不引入新配置文件                                      |
+| Hero 统计数字                         | **去掉**统计部分                                                 | 简化                                                  |
+| 文章列表分页                          | 保留分页器                                                       | 复用现有 `Pagination.astro`                           |
+| 分类区 / 标签云                       | **仅保留分类网格，去掉标签云**                                   | 简化                                                  |
+| 文章列表样式                          | 不带封面图（时间线风格）                                         | 贴设计稿                                              |
+| 色彩体系                              | 首页用设计稿独立 oklch 变量（CSS 作用域隔离）                    | 不污染其他页面                                        |
+| 暗色模式                              | 复用 Firefly 现有钩子（`html.dark` + `html[data-theme="dark"]`） | 主题切换状态全站一致                                  |
+| Live2D / Spine / CategoryBar / Banner | 首页全部禁用                                                     | 进入其他页面后仍可用                                  |
+| Swup 软切换                           | 保留，HomeLayout 提供 5 个隐藏占位容器                           | 避免回退到整页刷新                                    |
+| Footer 字段                           | 从 `siteConfig` / `profileConfig` / `footerConfig` 读取          | 需在 `footerConfig.ts` 加 `startYear` 字段            |
 
 ---
 
@@ -197,9 +197,10 @@ const categories = await getCategoryList();
 ### 5.2 `src/utils/home-utils.ts`
 
 ```ts
-// getFeaturedPost(): 取最新 pinned=true 的文章
-//   - 调用 getSortedPosts()，因 pinned 已纳入排序，取第一个 pinned 即可
-//   - 无 pinned 文章时返回 undefined
+// getFeaturedPost(): 取首页 Featured 卡片要展示的文章
+//   - 优先级：最新 pinned 文章 > 最新一篇文章
+//   - getSortedPosts() 已把 pinned 排在最前、其余按时间倒序，所以 sorted[0] 同时满足两种情况
+//   - 只有当站点没有任何文章时才返回 undefined
 //   - 返回 CollectionEntry<"posts"> | undefined
 
 // getFeaturedPostMeta(post): 调用 astro:content render() 获取 reading time

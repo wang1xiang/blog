@@ -1,148 +1,253 @@
 # 📦 Components 组件目录
 
-Firefly 项目中所有可复用组件的集中管理。组件按照功能和职责进行分类，提供清晰的架构和易于维护的代码组织。
+当前项目已经从 Firefly 默认三栏首页，迁移为一套独立的极简 `HomeLayout` 视觉体系。
 
-## 📁 目录结构
+组件目录现在分成两类：
 
-### 🏗️ layout/ - 页面布局组件
+1. **新版页面体系**：`src/components/pages/home/` + `src/layouts/HomeLayout.astro`
+2. **Firefly 旧布局体系**：`MainGridLayout`、侧边栏、widget、旧 Navbar/Footer 等，仍被部分未迁移页面使用
 
-负责整体页面框架和布局结构的组件。
+不要因为某个旧组件不再被首页 / archive / posts / about / search 使用，就直接删除整个旧布局系统；`friends`、`bangumi`、`gallery`、`guestbook`、`sponsor`、`rss`、`404` 等页面仍然依赖它。
 
-- `CategoryBar.astro` - 分类栏组件
-- `ConfigCarrier.astro` - 配置载体组件
-- `DropdownMenu.astro` - 下拉菜单组件
-- `Footer.astro` - 页脚组件
-- `Navbar.astro` - 导航栏组件
-- `NavMenuPanel.astro` - 导航菜单面板
-- `PostCard.astro` - 文章卡片组件
-- `PostMeta.astro` - 文章元数据组件
-- `PostPage.astro` - 文章页面布局组件
-- `SideBar.astro` - 侧边栏组件
+---
 
-### 🎮 controls/ - 导航和交互控件
+## ✅ 新版页面体系
 
-页面导航和用户交互功能组件。
+### `pages/home/` - 新版极简页面组件
 
-**导航控件**
+这些组件服务于当前新版主视觉，全部依赖 `.home-page` 作用域样式。
+
+- `HomeNavbar.astro` - 新版顶部导航；使用 `data-no-swup` 避免 Swup 局部切换导致样式丢失
+- `HomeFooter.astro` - 新版页脚；可见链接只保留 RSS / GitHub / 关于
+- `HomeHero.astro` - 首页 Hero + 站点统计
+- `HomeFeatured.astro` - 首页 Featured 文章卡片；优先 pinned，无 pinned 时取最新文章
+- `HomeArticleList.astro` - 首页文章时间线列表，含标签与阅读时间
+- `HomeCategoryGrid.astro` - 首页分类网格，跳转到 `/archive/?category=...`
+- `HomeArchive.astro` - 新版归档页；按年份分组，支持 `?category=` / `?tag=` 客户端过滤
+- `HomePost.astro` - 新版文章详情页；保留正文、加密文章、上一篇/下一篇、评论
+- `HomeAbout.astro` - 新版关于页；内容目前硬编码在组件内
+- `HomeSearch.svelte` - 新版搜索页；生产环境接 Pagefind，开发环境使用模拟结果
+- `home.css` - 新版页面样式总入口；由 `Layout.astro` 全局引入，但所有规则都以 `.home-page` 作用域隔离
+
+### `layouts/HomeLayout.astro`
+
+新版页面统一使用的布局壳。
+
+已使用该布局的页面：
+
+- `/`
+- `/archive/`
+- `/posts/[slug]/`
+- `/about/`
+- `/search/`
+
+注意：`HomeLayout` 仍包裹全局 `Layout.astro`，以复用 SEO、主题初始化、分析脚本、字体管理等基础能力。
+
+---
+
+## 🏗️ layout/ - Firefly 旧布局组件
+
+这些组件属于旧 Firefly 三栏体系。
+
+仍然保留，因为部分页面还没有迁移到新版布局。
+
+- `CategoryBar.astro` - 旧布局分类栏
+- `ConfigCarrier.astro` - 全局配置载体
+- `DropdownMenu.astro` - 旧 Navbar 下拉菜单
+- `Footer.astro` - 旧布局页脚
+- `Navbar.astro` - 旧布局导航栏
+- `NavMenuPanel.astro` - 旧导航菜单面板
+- `SideBar.astro` - 旧布局侧边栏
+
+### 旧文章列表组件（待清理候选）
+
+以下组件已经不再被新版首页 / 文章详情使用，但删除前仍需全局引用检查和 build 验证：
+
+- `PostPage.astro` - 旧首页文章列表布局
+- `PostCard.astro` - 旧文章卡片
+- `PostMeta.astro` - 旧文章元信息
+
+---
+
+## 🎮 controls/ - 导航和交互控件
+
+### 仍在旧布局中使用
+
 - `BackToHome.astro` - 返回主页按钮
 - `BackToTop.astro` - 返回顶部按钮
-- `FloatingControls.astro` - 右下角悬浮控件容器
-- `FloatingTOC.astro` - 浮动目录组件
+- `FloatingControls.astro` - 旧布局右下角悬浮控件容器
+- `FloatingTOC.astro` - 旧布局浮动目录组件
+- `DisplaySettings.svelte` - 显示设置
+- `DisplaySettingsIntegrated.svelte` - 集成显示设置
+- `LightDarkSwitch.svelte` - 旧布局主题切换
+- `Search.svelte` - 旧布局搜索入口
+- `WallpaperSwitch.svelte` - 壁纸模式切换
 
-**交互组件**
-- `ArchivePanel.svelte` - 归档面板组件
-- `DisplaySettings.svelte` - 显示设置组件
-- `DisplaySettingsIntegrated.svelte` - 集成显示设置组件
-- `LayoutSwitchButton.svelte` - 布局切换按钮
-- `LightDarkSwitch.svelte` - 主题切换组件
-- `Search.svelte` - 搜索功能组件
-- `WallpaperSwitch.svelte` - 壁纸模式切换组件
+### 待清理候选
 
-### 🔧 common/ - 公共可复用组件
+- `ArchivePanel.svelte` - 旧归档面板；新版 `/archive/` 已改用 `HomeArchive.astro`
+- `LayoutSwitchButton.svelte` - 旧文章页布局切换按钮；新版文章页不再使用
 
-通用的 UI 组件和工具组件，支持跨项目复用。
+---
 
-**基础 UI 组件**
+## 🔧 common/ - 公共可复用组件
+
+通用组件，仍被新版或旧版页面使用。
+
 - `ButtonLink.astro` - 链接按钮
 - `ButtonTag.astro` - 标签按钮
-- `DropdownItem.astro`/`.svelte` - 下拉选项
-- `DropdownPanel.astro`/`.svelte` - 下拉面板容器
+- `DropdownItem.astro` / `DropdownItem.svelte` - 下拉选项
+- `DropdownPanel.astro` / `DropdownPanel.svelte` - 下拉面板容器
 - `FloatingButton.astro` - 悬浮按钮基础组件
-- `Icon.svelte` - 图标组件（带加载状态和错误处理）
-- `WidgetLayout.astro` - 小部件布局容器
+- `Icon.svelte` - 图标组件
+- `ImageWrapper.astro` - 图片包装器
+- `Markdown.astro` - Markdown 内容样式包装器；新版文章页仍使用
+- `Pagination.astro` - 静态路由分页；新版首页仍使用
+- `ClientPagination.astro` - 客户端分页
+- `PioMessageBox.astro` - Live2D / Spine 消息框
+- `WidgetLayout.astro` - 旧 widget 容器；仍被旧侧边栏 widget 使用
+- `CoverImage.astro` - 旧文章卡片/旧封面逻辑使用；删除前需确认旧 PostCard 是否删除
 
-**内容和展示组件**
-- `CoverImage.astro` - 封面图组件（支持本地图片和随机图API）
-- `ImageWrapper.astro` - 图片包装器（支持本地和远程图片）
-- `Markdown.astro` - Markdown 内容样式包装器
-- `PioMessageBox.astro` - 消息框组件（Live2D/Spine 消息显示）
+---
 
-**分页组件**
-- `ClientPagination.astro` - 客户端分页（JavaScript 控制）
-- `Pagination.astro` - 静态路由分页（Astro 原生）
+## 🧩 widget/ - 旧侧边栏小部件
 
-### 🧩 widget/ - 小部件
+这些组件仍服务于 `MainGridLayout`，不要单独删除。
 
-侧边栏中使用的各种功能小部件。
+- `Advertisement.astro`
+- `Announcement.astro`
+- `Calendar.astro`
+- `Categories.astro`
+- `Music.astro`
+- `Profile.astro`
+- `SidebarTOC.astro`
+- `SiteStats.astro`
+- `SpineModel.astro`
+- `Tags.astro`
 
-- `Advertisement.astro` - 广告组件
-- `Announcement.astro` - 公告组件
-- `Calendar.astro` - 日历组件
-- `Categories.astro` - 分类组件
-- `Live2DWidget.astro` - Live2D 看板娘组件
-- `Music.astro` - 音乐播放器小部件
-- `Profile.astro` - 个人信息/社交链接小部件
-- `SidebarTOC.astro` - 侧边栏目录组件
-- `SiteStats.astro` - 站点统计组件
-- `SpineModel.astro` - Spine 看板娘组件
-- `Tags.astro` - 标签组件
+如果未来所有页面都迁移到 `HomeLayout`，再统一评估删除整个 widget 系统。
 
-### ✨ features/ - 全局功能特效组件
+---
 
-全局加载的功能增强和特效组件。
+## ✨ features/ - 全局功能特效组件
 
-**管理器（初始化和管理功能）**
-- `FancyboxManager.astro` - Fancybox 图片查看器管理
+这些组件多由 `Layout.astro` 或旧布局使用。
+
+- `EncryptedContent.astro` - 加密内容基础能力
+- `EncryptedPost.astro` - 加密文章；新版 `HomePost.astro` 仍使用
+- `FancyboxManager.astro` - 图片查看器管理
 - `FontManager.astro` - 字体加载和管理
-- `KatexManager.astro` - Katex 数学公式渲染管理
-- `MusicManager.astro` - 全局音乐播放管理器（单例，管理唯一 audio 元素和播放状态，通过 CustomEvent 同步所有 MusicPlayer 视图实例）
+- `KatexManager.astro` - 数学公式渲染；新版文章页仍使用
+- `Live2DWidget.astro` - 旧看板娘能力
+- `MusicManager.astro` - 全局音乐播放管理器
+- `MusicPlayer.astro` - 音乐播放器 UI
+- `SakuraEffect.astro` - 樱花特效
+- `SpineModel.astro` - Spine 看板娘
+- `TypewriterText.astro` - 旧 Banner 打字机文本
 
-**功能组件**
-- `Live2DWidget.astro` - Live2D 看板娘组件
-- `MusicPlayer.astro` - 音乐播放器 UI 视图控制器（纯 UI，委托 MusicManager 进行播放控制）
-- `SakuraEffect.astro` - 樱花飘落特效
-- `SpineModel.astro` - Spine 看板娘组件
-- `TypewriterText.astro` - 打字机动画效果
+---
 
-### 📃 pages/ - 页面特定组件
+## 📃 pages/ - 其它页面特定组件
 
-特定页面使用的组件，不用于其他页面。
+### `pages/bangumi/`
 
-- `AdvancedSearch.svelte` - 高级搜索组件
+仍被 `/bangumi/` 使用。
 
-**pages/bangumi/** - 番组计划页面组件
-- `BangumiSection.astro` - 番组分类展示组件
-- `Card.astro` - 番组卡片组件
-- `FilterControls.astro` - 筛选控制组件
-- `TabNav.astro` - 标签导航组件
+- `BangumiSection.astro`
+- `Card.astro`
+- `FilterControls.astro`
+- `TabNav.astro`
 
-### 💬 comment/ - 评论系统组件
+### `pages/gallery/`
 
-第三方评论系统集成组件。
+仍被 `/gallery/` 使用。
+
+- `AlbumCard.astro`
+- `PhotoCard.astro`
+
+### 待清理候选
+
+- `AdvancedSearch.svelte` - 旧搜索组件；新版 `/search/` 已改用 `HomeSearch.svelte`
+
+---
+
+## 💬 comment/ - 评论系统组件
+
+新版文章页仍通过 `HomePost.astro` 使用评论系统。
 
 - `index.astro` - 评论主组件
-- `Artalk.astro` - Artalk 评论集成
-- `Disqus.astro` - Disqus 评论集成
-- `Giscus.astro` - Giscus 评论集成（GitHub 讨论）
-- `Twikoo.astro` - Twikoo 评论集成
-- `Waline.astro` - Waline 评论集成
+- `Artalk.astro`
+- `Disqus.astro`
+- `Giscus.astro`
+- `Twikoo.astro`
+- `Waline.astro`
 
-### 📊 analytics/ - 数据统计组件
+---
 
-网站分析和统计集成组件。
+## 📊 analytics/ - 数据统计组件
 
-- `GoogleAnalytics.astro` - Google Analytics
-- `MicrosoftClarity.astro` - Microsoft Clarity
+由全局布局使用。
 
-### 🔧 misc/ - 杂项工具组件
+- `GoogleAnalytics.astro`
+- `La51Analytics.astro`
+- `MicrosoftClarity.astro`
+- `UmamiAnalytics.astro`
 
-其他辅助和工具类组件。
+---
 
-- `License.astro` - 许可证信息显示
-- `SharePoster.svelte` - 分享海报生成
+## 🔧 misc/ - 杂项工具组件
+
+### 待清理候选
+
+新版文章页暂时不使用以下旧功能：
+
+- `License.astro` - 旧文章版权区
+- `RecommendedPost.astro` - 旧相关文章推荐
+- `SharePoster.svelte` - 旧分享海报
+
+删除前必须确认：
+
+1. `rg "License|RecommendedPost|SharePoster" src` 无有效引用
+2. `pnpm build` 通过
+
+---
+
+## 🧹 清理原则
+
+删除旧代码前必须同时满足：
+
+1. `rg` 确认没有实际代码引用（README 命中不算）
+2. 不属于仍被 `MainGridLayout` 使用的旧布局系统
+3. 不影响尚未迁移的页面：`friends`、`bangumi`、`gallery`、`guestbook`、`sponsor`、`rss`、`404`
+4. 删除后使用 Node 24 跑 `pnpm build` 通过
+5. 删除操作单独提交，便于回滚
+
+推荐的第一批删除候选：
+
+```txt
+src/components/controls/ArchivePanel.svelte
+src/components/pages/AdvancedSearch.svelte
+src/components/layout/PostPage.astro
+src/components/layout/PostCard.astro
+src/components/layout/PostMeta.astro
+src/components/misc/RecommendedPost.astro
+src/components/misc/SharePoster.svelte
+src/components/misc/License.astro
+```
 
 ---
 
 ## 🗂️ 分类原则
 
-| 分类 | 用途 | 特点 |
-|------|------|------|
-| **layout/** | 页面布局和结构 | 决定整体页面框架 |
-| **controls/** | 导航和交互 | 用户交互功能 |
-| **common/** | 通用可复用组件 | 跨多个页面/组件使用 |
-| **widget/** | 侧边栏小部件 | 侧边栏特定组件 |
-| **features/** | 全局功能特效 | 全局加载的增强功能 |
-| **pages/** | 页面特定组件 | 仅在特定页面使用 |
-| **comment/** | 评论系统 | 第三方服务集成 |
-| **analytics/** | 数据统计 | 分析和统计服务 |
-| **misc/** | 工具和辅助 | 其他杂项功能 |
+| 分类          | 用途                | 特点                                 |
+| ------------- | ------------------- | ------------------------------------ |
+| `pages/home/` | 新版页面体系        | 首页 / 归档 / 文章 / 关于 / 搜索共用 |
+| `layout/`     | 旧 Firefly 页面框架 | 仍服务未迁移页面                     |
+| `controls/`   | 导航和交互          | 部分仍属于旧布局系统                 |
+| `common/`     | 通用可复用组件      | 新旧页面都可能使用                   |
+| `widget/`     | 旧侧边栏小部件      | 依赖 `MainGridLayout`                |
+| `features/`   | 全局功能增强        | 由 Layout 或文章页使用               |
+| `pages/`      | 其它页面特定组件    | bangumi / gallery 等                 |
+| `comment/`    | 评论系统            | 新版文章页仍使用                     |
+| `analytics/`  | 统计服务            | 全局使用                             |
+| `misc/`       | 杂项辅助            | 多数旧文章功能待评估                 |

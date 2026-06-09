@@ -147,7 +147,7 @@ nest g resource userCount
           host: '114.116.234.221',
           port: 3309,
           username: 'test_server_see',
-          password: 'qmp20240126#dshk',
+          password: '<REDACTED>',
           database: 'passport',
           synchronize: false,
           logging: true,

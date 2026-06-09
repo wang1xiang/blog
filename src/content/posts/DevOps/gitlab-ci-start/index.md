@@ -406,7 +406,7 @@ docker build -t doc-socket-excel:0.0.3 .
 
 ## .gitlab-ci.yml 文件编写
 
-[语法](https://git.qmpoa.com/help/ci/yaml/index)
+[语法](企业内部 GitLab/help/ci/yaml/index)
 
 ```yml
 variables: # 定义全局变量 

@@ -34,7 +34,7 @@ draft: false
 import path from 'path'
 import { buildLogger } from './logger'
 import { execPromise } from './mac-sign'
-const CERT_NAME = '北京企名片科技有限公司'
+const CERT_NAME = '公司'
 const SIGNTOOL_DIR = 'D:\\QMP\\sign-tool\\signtool'
 /** 签名 windows */
 export function signWin(appPath: string, APP_NAME: string) {

@@ -27,7 +27,7 @@ draft: false
 
 ### 引用 git+https:// 的项目
 
-参考 [https://git.qmpoa.com/fe/y-websocket-excel/-/merge_requests/8/diffs](https://git.qmpoa.com/fe/y-websocket-excel/-/merge_requests/8/diffs)
+参考 [企业内部 GitLab/fe/y-websocket-excel/-/merge_requests/8/diffs](企业内部 GitLab/fe/y-websocket-excel/-/merge_requests/8/diffs)
 
 ![node16-docker-replace2](./node16-docker-replace2.png)
 ![node16-docker-replace3](./node16-docker-replace3.png)
@@ -35,7 +35,7 @@ draft: false
 node:16.19-slim 不认
 
 ```
-"y-luckysheet": "git+https://git.qmpoa.com/fe_common_lib/y-luckysheet.git#v1.0.1",
+"y-luckysheet": "git+企业内部 GitLab/fe_common_lib/y-luckysheet.git#v1.0.1",
 ```
 
 这种语法，需要在 CI 流程中将这类依赖处理好，在 Dockerfile 中拷贝进 node_modules 下
@@ -48,7 +48,7 @@ node:16.19-slim 不认
     - mkdir nm
     - cd nm
 　 # 将咱们自己的依赖以clone的方式放在一个临时目录下
-    - git clone 'https://git.qmpoa.com/fe_common_lib/y-luckysheet.git'
+    - git clone '企业内部 GitLab/fe_common_lib/y-luckysheet.git'
     - cd ../
 # Dockerfile
 RUN npm install --registry=https://registry.npmmirror.com --ignore-scripts --production

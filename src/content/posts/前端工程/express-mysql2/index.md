@@ -35,8 +35,8 @@ export const insertDB = (body, headers) => {}
 
 ```js
 const _body = {
-  database: database.qmp_data_sso.name,
-  table: database.qmp_data_sso.table.qmp_user_info,
+  database: database.某数据库.name,
+  table: database.某数据库.table.某数据表,
   column: [],
   where: {
     wheres: [{ column: 'display_flag', opt: '=', value: '1' }],

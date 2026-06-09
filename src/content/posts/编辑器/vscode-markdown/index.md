@@ -218,7 +218,7 @@ window.addEventListener('keydown', (e) => console.log(e))
   },
   "image图片": {
     "prefix": "/img",
-    "body": ["![$2]($1)$3"]
+    "body": ["<!-- $2 (原图已丢失) -->$3"]
   },
   "inline code行内代码": {
     "prefix": "/cl",

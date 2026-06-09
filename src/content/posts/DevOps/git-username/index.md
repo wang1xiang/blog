@@ -54,10 +54,10 @@ git commit --amend --author="{username} <{email}>" --no-edit
 
 ![git-commit-amend.png](./git-commit-amend.png)
 
-这时候就可以用上述命令来修改，比如修改为名称：`王翔`、邮箱：`wangxiang@qimingpian.com`：
+这时候就可以用上述命令来修改，比如修改为名称：`王翔`、邮箱：`wangxiang@公司域名`：
 
 ```bash
-git commit --amend --author="王翔 <wangxiang@qimingpian.com>" --no-edit
+git commit --amend --author="王翔 <wangxiang@公司域名>" --no-edit
 ```
 
 ![git-commit-amend1.png](./git-commit-amend1.png)
@@ -95,7 +95,7 @@ git commit --amend --reset-author --no-edit
    ```bash
      # changeCommit.sh
      git filter-branch --commit-filter '
-       if [ "$GIT_AUTHOR_EMAIL" = "wangxiang@qimingpian.com" ];
+       if [ "$GIT_AUTHOR_EMAIL" = "wangxiang@公司域名" ];
        then
                GIT_AUTHOR_NAME="wang1xiang";
                GIT_AUTHOR_EMAIL="756638369@qq.com";
@@ -105,7 +105,7 @@ git commit --amend --reset-author --no-edit
        fi' HEAD
    ```
 
-   这个脚本很简单，只要符合`"$GIT_AUTHOR_EMAIL" = "wangxiang@qimingpian.com"`的提交，就把`GIT_AUTHOR_NAME`改为`wang1xiang`，`GIT_AUTHOR_EMAIL`改为`756638369@qq.com`。
+   这个脚本很简单，只要符合`"$GIT_AUTHOR_EMAIL" = "wangxiang@公司域名"`的提交，就把`GIT_AUTHOR_NAME`改为`wang1xiang`，`GIT_AUTHOR_EMAIL`改为`756638369@qq.com`。
 
 2. 执行此脚本，过程略微有点慢
 

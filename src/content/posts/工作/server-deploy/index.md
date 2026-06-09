@@ -10,7 +10,7 @@ draft: false
 
 ## 1. 项目中
 
-https://git.qmpoa.com/ops/qmp_ops_dnmp/-/commits/master
+企业内部 GitLab/ops/运维项目/-/commits/master
 /services/nginx/conf.d 添加前端 nginx 域名和 bff nginx 接口
 /services/nginx/prodconf.d 添加前端 nginx 域名和 bff nginx 接口
 
@@ -33,7 +33,7 @@ docker exec nginx122_c nginx -s reload
 gitlab-runner 配置
 
 ```bash
-gitlab-runner register --url https://git.qmpoa.com/ --registration-token 令牌 --executor docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --docker-privileged
+gitlab-runner register --url 企业内部 GitLab/ --registration-token 令牌 --executor docker --docker-volumes /var/run/docker.sock:/var/run/docker.sock --docker-privileged
 ```
 
 ```bash
@@ -44,7 +44,7 @@ gitlab-runner status
 vim /etc/gitlab-runner/config.toml
 ```
 
-保证https://git.qmpoa.com/fe/oneid_admin_bff/-/settings/ci_cd可用runners
+保证https://企业内部 GitLab/fe/oneid_admin_bff/-/settings/ci_cd可用runners
 
 ![bff-runners-status](./bff-runners-status.png)
 
@@ -123,7 +123,7 @@ build_image.oneid_admin_bff-prod:
         docker tag $VERSION_PROD $OLDVERSION_PROD
         docker rmi $VERSION_PROD
       fi
-    # 通过Dockerfile生成qmp_mobile_ddm镜像
+    # 通过Dockerfile生成某移动端项目镜像
     - docker build -t $VERSION_PROD .
     # 删除已经在运行的容器，优雅停止
     - >

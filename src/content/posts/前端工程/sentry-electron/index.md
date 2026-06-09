@@ -18,10 +18,10 @@ draft: false
 
 ```js
 import * as Sentry from '@sentry/electron/main'
-Sentry.init({ dsn: 'https://xxx@sentry.qmpoa.com/57' })
+Sentry.init({ dsn: 'https://xxx@企业内部 Sentry/57' })
 crashReporter.start({
   ignoreSystemCrashHandler: true,
-  submitURL: 'https://sentry.qmpoa.com/api/57/minidump/?sentry_key=xxx',
+  submitURL: '企业内部 Sentry/api/57/minidump/?sentry_key=xxx',
 })
 app.on('ready', () => {})
 ```
@@ -79,7 +79,7 @@ sentry-cli --auth-token xxxx upload-dif -o org -p project xxxx(localpath)
 
 ```js
 import * as Sentry from '@sentry/electron/renderer'
-Sentry.init({ dsn: 'https://xx@sentry.qmpoa.com/57' })
+Sentry.init({ dsn: 'https://xx@企业内部 Sentry/57' })
 ```
 
 我这里遇到一个问题就是我在下面 初始化 sentry ，捕获到的错误不全，所以修改了一下加到了 vue 的全局捕获错误里主动发布一个捕获

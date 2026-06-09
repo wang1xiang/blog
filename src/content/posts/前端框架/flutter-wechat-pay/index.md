@@ -300,7 +300,7 @@ SentryUtils.init(appRunner: () => _startApp());
 Future<void> initXLog() async {
   String imId = Sp.getValue(SpConst.spImId, '');
   await XLog.init(remoteDir: 'seeapp', fileName: imId, isAutoUpload: true);
-  XLog.setFetchSignUrl('https://oneapi.qmpoa.com/api/upload/getUploadSign');
+  XLog.setFetchSignUrl('企业内部 API/api/upload/getUploadSign');
 }
 Future init() async {
   bool debug = !kReleaseMode;

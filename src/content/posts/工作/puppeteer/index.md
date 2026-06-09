@@ -207,7 +207,7 @@ const path = require('path')
 const inquirer = require('inquirer')
 const { exec } = require('child_process')
 const oneLineLog = require('single-line-log').stdout
-const jenkinsPageUrl = 'https://jenkins.qmpoa.com/job/BetaFE_qmp_pc_ddm_new_bjqtable/build?delay=0sec'
+const jenkinsPageUrl = 'https://企业内部 Jenkins/job/BetaFE_某 PC 项目_new_bjqtable/build?delay=0sec'
 const configFilePath =  path.join(__dirname, './jenkins_user_config')
 const configJoinChar = ' '
 const envFilePath = path.join(__dirname, './jenkins_env')
@@ -352,7 +352,7 @@ async function getJenkinsEnv() {
     }
   }
   env = env.toLowerCase().replace('ddm', '').replace('\r', '').replace('\n', '')
-  return `qmp_pc_ddm${env ? '_' + env : ''}`
+  return `某 PC 项目${env ? '_' + env : ''}`
 }
 async function getUserConfig() {
   const uname = (await inquirer.prompt({

@@ -68,11 +68,11 @@ One 桌面端多标签窗口偶现无法刷新，关闭标签应用闪退
 
 根据 sentry 查到 2 条相关异常
 
-https://sentry.qmpoa.com/organizations/sentry/issues/32181/?project=57&query=is%3Aunresolved&referrer=issue-stream&statsPeriod=1h
+企业内部 Sentry/organizations/sentry/issues/32181/?project=57&query=is%3Aunresolved&referrer=issue-stream&statsPeriod=1h
 
 ![electron-sentry-bug](./electron-sentry-bug.png)
 
-https://sentry.qmpoa.com/organizations/sentry/issues/19294/events/e504f067bad64b328369743c2588cbd9/?project=57&query=is%3Aunresolved&referrer=previous-event&statsPeriod=1h
+企业内部 Sentry/organizations/sentry/issues/19294/events/e504f067bad64b328369743c2588cbd9/?project=57&query=is%3Aunresolved&referrer=previous-event&statsPeriod=1h
 
 ![electron-sentry-bug1](./electron-sentry-bug1.png)
 

@@ -78,7 +78,7 @@ draft: false
 
 ## 脚手架
 
-[https://git.qmpoa.com/fe_common_lib/create-electron-vite](https://git.qmpoa.com/fe_common_lib/create-electron-vite)
+[企业内部 GitLab/fe_common_lib/create-electron-vite](企业内部 GitLab/fe_common_lib/create-electron-vite)
 
 ![electron-init](./electron-init.png)
 
@@ -247,13 +247,13 @@ MDN MessagePort [https://developer.mozilla.org/zh-CN/docs/Web/API/Channel_Messag
 
 - MAC 自动更新依赖 electron 官网模块 autoUpdater，打包后会出现三个文件
 
-  - 用于安装：/out/make/企名片 One-${version}-${arch}.dmg
-  - 用于更新：/out/make/zip/darwin/${arch}/企名片One-darwin-${arch}-${version}.zip
+  - 用于安装：/out/make/公司内部 One-${version}-${arch}.dmg
+  - 用于更新：/out/make/zip/darwin/${arch}/公司内部One-darwin-${arch}-${version}.zip
   - 用于版本检查：/out/make/zip/darwin/${arch}/RELEASES.json
 
 - WIN 自动更新依赖第三方包 electron-updater，打包后会出现三个文件
-  - 用于安装：/out/make/nsis/${arch}/企名片 One Setup ${version}.exe
-  - 用于更新：/out/make/nsis/${arch}/企名片 One Setup ${version}.exe.blockmap
+  - 用于安装：/out/make/nsis/${arch}/公司内部 One Setup ${version}.exe
+  - 用于更新：/out/make/nsis/${arch}/公司内部 One Setup ${version}.exe.blockmap
   - 用于版本检查：/out/make/nsis/${arch}/latest.yml
 
 脚手架支持自动上传 ALI OSS、灰度，详见 README.md

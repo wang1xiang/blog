@@ -1,0 +1,54 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getFeaturedPostMeta } from "@/utils/home-utils";
+import { getPostUrlBySlug } from "@/utils/url-utils";
+
+interface Props {
+	post: CollectionEntry<"posts">;
+}
+
+const { post } = Astro.props;
+const { minutes } = await getFeaturedPostMeta(post);
+
+const publishedDate = new Date(post.data.published);
+const publishedStr = `${publishedDate.getFullYear()}-${String(publishedDate.getMonth() + 1).padStart(2, "0")}-${String(publishedDate.getDate()).padStart(2, "0")}`;
+
+const excerpt =
+	post.data.description && post.data.description.length > 0
+		? post.data.description
+		: "";
+
+const tagsToShow = (post.data.tags ?? []).slice(0, 2);
+const postUrl = getPostUrlBySlug(post.id);
+---
+
+<section class="section">
+	<div class="featured">
+		<a class="featured-card" href={postUrl}>
+			<div class="featured-eyebrow">
+				<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+					<path d="M12 2 14.5 8.5 21 9 16 13.5 17.5 20 12 16.5 6.5 20 8 13.5 3 9 9.5 8.5z"></path>
+				</svg>
+				PINNED · 最新长文
+			</div>
+			<h2 class="featured-title">{post.data.title}</h2>
+			{excerpt && <p class="featured-excerpt">{excerpt}</p>}
+			<div class="featured-foot">
+				<span>{publishedStr}</span>
+				{minutes > 0 && (
+					<>
+						<span class="dot"></span>
+						<span>{minutes} min read</span>
+					</>
+				)}
+				{tagsToShow.length > 0 && (
+					<>
+						<span class="dot"></span>
+						<span>{tagsToShow.map((t) => `#${t}`).join(" · ")}</span>
+					</>
+				)}
+				<span class="read-more">阅读全文 →</span>
+			</div>
+		</a>
+	</div>
+</section>

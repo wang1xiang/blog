@@ -1,0 +1,59 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+
+interface Props {
+	posts: CollectionEntry<"posts">[];
+	totalCount?: number;
+}
+
+const { posts, totalCount } = Astro.props;
+const archiveCount = totalCount ?? posts.length;
+
+function formatDateParts(date: Date | string) {
+	const d = new Date(date);
+	const mm = String(d.getMonth() + 1).padStart(2, "0");
+	const dd = String(d.getDate()).padStart(2, "0");
+	const yyyy = d.getFullYear();
+	return { md: `${mm}-${dd}`, year: yyyy };
+}
+---
+
+<section class="section" id="articles">
+	<div class="section-head">
+		<h2 class="section-title">最近文章</h2>
+		<a class="section-action" href={url("/archive/")}>
+			归档 ({archiveCount})
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<path d="M5 12h14M13 5l7 7-7 7"></path>
+			</svg>
+		</a>
+	</div>
+
+	<div class="article-list">
+		{posts.map((post) => {
+			const { md, year } = formatDateParts(post.data.published);
+			const tagsToShow = (post.data.tags ?? []).slice(0, 2);
+			const excerpt = post.data.description ?? "";
+			return (
+				<a class="article" href={getPostUrlBySlug(post.id)}>
+					<div class="article-date">
+						{md}<span class="year">{year}</span>
+					</div>
+					<div class="article-body">
+						<h3 class="article-title">{post.data.title}</h3>
+						{excerpt && <p class="article-excerpt">{excerpt}</p>}
+						{tagsToShow.length > 0 && (
+							<div class="article-meta">
+								{tagsToShow.map((t) => (
+									<span class="tag-pill">#{t}</span>
+								))}
+							</div>
+						)}
+					</div>
+					<div class="article-arrow" aria-hidden="true">→</div>
+				</a>
+			);
+		})}
+	</div>
+</section>

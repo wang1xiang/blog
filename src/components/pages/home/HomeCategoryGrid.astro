@@ -1,0 +1,38 @@
+---
+import type { Category } from "@/utils/content-utils";
+import { url } from "@/utils/url-utils";
+
+interface Props {
+	categories: Category[];
+}
+
+const { categories } = Astro.props;
+
+const HUE_PALETTE = [270, 200, 160, 60, 0, 300, 120, 240, 90];
+function hueFor(index: number): number {
+	return HUE_PALETTE[index % HUE_PALETTE.length];
+}
+---
+
+<section class="section" id="categories">
+	<div class="section-head">
+		<h2 class="section-title">分类</h2>
+		<a class="section-action" href={url("/archive/")}>
+			全部分类
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<path d="M5 12h14M13 5l7 7-7 7"></path>
+			</svg>
+		</a>
+	</div>
+	<div class="category-grid">
+		{categories.map((cat, i) => (
+			<a class="cat-card" href={cat.url}>
+				<span class="cat-name">
+					<span class="cat-icon" style={`background: oklch(60% 0.16 ${hueFor(i)});`}></span>
+					{cat.name}
+				</span>
+				<span class="cat-count">{cat.count}</span>
+			</a>
+		))}
+	</div>
+</section>

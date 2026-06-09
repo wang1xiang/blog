@@ -1,0 +1,62 @@
+---
+import HomeFooter from "@/components/pages/home/HomeFooter.astro";
+import HomeNavbar from "@/components/pages/home/HomeNavbar.astro";
+import Layout from "./Layout.astro";
+
+import "@/components/pages/home/home.css";
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<Layout title={title} description={description}>
+	<slot slot="head" name="head" />
+
+	{/*
+		Swup 配置（astro.config.mjs:74-79）要求以下 6 个 container 必须存在，
+		否则首页 ↔ 其他页切换会回退到整页刷新。
+		HomeLayout 不需要 banner / sidebar / TOC，但必须提供同名占位 div。
+	*/}
+	<div id="banner-overlay-container" class="hidden" aria-hidden="true"></div>
+	<div id="banner-dim-container" class="hidden" aria-hidden="true"></div>
+	<div id="left-sidebar-dynamic" class="hidden" aria-hidden="true"></div>
+	<div id="right-sidebar-dynamic" class="hidden" aria-hidden="true"></div>
+	<div id="floating-toc-wrapper" class="hidden" aria-hidden="true"></div>
+
+	<div class="home-page">
+		<HomeNavbar />
+
+		{/* swup-container：唯一会被 Swup 替换的真实内容容器 */}
+		<main id="swup-container" class="transition-main">
+			{/*
+				sr-only 标题用 span 而非 h1，避免与 Hero 的 h1 冲突。
+				Layout.astro 已经处理 <title> meta tag，此处仅用于 a11y 兜底。
+			*/}
+			{title && <span class="sr-only">{title}</span>}
+			<div id="content-wrapper" class="onload-animation transition-leaving">
+				<slot />
+			</div>
+		</main>
+
+		<HomeFooter />
+	</div>
+</Layout>
+
+<style>
+	/* sr-only 工具类（项目可能已有，这里独立兜底） */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+</style>

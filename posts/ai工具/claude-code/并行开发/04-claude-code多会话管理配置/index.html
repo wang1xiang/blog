@@ -1,0 +1,1175 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>04-Claude Code多会话管理配置 - 翔子的博客</title><meta name="description" content="Claude Code 默认同一个目录下可以有多个会话，但："><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/claude-code/%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/04-claude-code%E5%A4%9A%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86%E9%85%8D%E7%BD%AE/"><meta property="og:title" content="04-Claude Code多会话管理配置 - 翔子的博客"><meta property="og:description" content="Claude Code 默认同一个目录下可以有多个会话，但："><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/claude-code/%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/04-claude-code%E5%A4%9A%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86%E9%85%8D%E7%BD%AE/"><meta name="twitter:title" content="04-Claude Code多会话管理配置 - 翔子的博客"><meta name="twitter:description" content="Claude Code 默认同一个目录下可以有多个会话，但："><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"04-Claude Code多会话管理配置","description":"Claude Code 默认同一个目录下可以有多个会话，但：","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-05-20T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>04-Claude Code多会话管理配置</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=AI%E5%B7%A5%E5%85%B7">AI工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">04-Claude Code多会话管理配置</h1> <p class="post-subtitle">Claude Code 默认同一个目录下可以有多个会话，但：</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-05-20 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 1,389 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 7 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#Claude Code</span><span class="post-tag">#并行开发</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="claude-code-多会话管理配置">Claude Code 多会话管理配置<a class="anchor" href="#claude-code-多会话管理配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><blockquote><p>配置时间：2026-04-14
+最后更新：2026-04-23
+涉及文件：<code>~/.zshrc</code>、<code>~/.claude/cs.sh</code></p></blockquote><hr><section><h2 id="背景">背景<a class="anchor" href="#背景"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>Claude Code 默认同一个目录下可以有多个会话，但：</p><ol>
+<li>没有命令行工具查看当前目录的会话列表</li>
+<li>启动 <code>claude</code> 时默认加载最近的会话</li>
+<li>无法方便地管理/删除旧会话</li>
+</ol><p>目标：封装快捷命令，像 Codex 的线程管理一样管理会话。</p><hr></section><section><h2 id="实现">实现<a class="anchor" href="#实现"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="1-核心函数_claude_project_key">1. 核心函数：<code>_claude_project_key</code><a class="anchor" href="#1-核心函数_claude_project_key"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>将当前目录的物理路径转换为 Claude Code 内部使用的项目目录名：</p><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">_claude_project_key</span><span style="--0:#ABB2BF;--1:#383A42">() {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#CD89E1;--1:#A626A4">local</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">resolved</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#56B6C2;--1:#016C9A">pwd</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-P</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> || </span><span style="--0:#56B6C2;--1:#016C9A">pwd</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># Claude Code 的转换规则：/ → -, _ → -</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#56B6C2;--1:#016C9A">echo</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$resolved</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">sed</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'s|/|-|g'</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">sed</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'s/_/-/g'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="_claude_project_key() {  local resolved=$(pwd -P 2>/dev/null || pwd)  echo &#x22;$resolved&#x22; | sed &#x27;s|/|-|g&#x27; | sed &#x27;s/_/-/g&#x27;}"><div></div></button></div></figure></div><blockquote><p><strong>转换规则示例：</strong></p><ul>
+<li><code>/Users/xiangwang/claudecode/projects/alarm-extension</code> → <code>-Users-xiangwang-claudecode-projects-alarm-extension</code></li>
+<li><code>项目目录/某 Vue 3 项目</code> → <code>-Users-xiangwang-My-公司项目-某 Vue 3 项目</code></li>
+</ul></blockquote></section><section><h3 id="2-命令一览">2. 命令一览<a class="anchor" href="#2-命令一览"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>命令</th><th>说明</th><th>示例</th></tr></thead><tbody><tr><td><code>cs</code> / <code>cslist</code></td><td>查看当前目录的会话列表</td><td><code>cs</code></td></tr><tr><td><code>csclean</code></td><td>删除当前目录的所有会话（带确认）</td><td><code>csclean</code></td></tr><tr><td><code>csdel &#x3C;名称或UUID></code></td><td>删除指定会话</td><td><code>csdel 主</code></td></tr><tr><td><code>cn</code></td><td>启动全新会话</td><td>终端输入 <code>cn</code></td></tr></tbody></table></section><section><h3 id="3-安装方式">3. 安装方式<a class="anchor" href="#3-安装方式"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>将函数提取到 <code>~/.claude/cs.sh</code>，在 <code>~/.zshrc</code> 中 source：</p><div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">~/.zshrc</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#56B6C2;--1:#016C9A">source</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$HOME</span><span style="--0:#98C379;--1:#387138">/.claude/cs.sh"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">alias</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">claude-sessions</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">'cs'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">alias</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">cslist</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">'cs'</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="source &#x22;$HOME/.claude/cs.sh&#x22;alias claude-sessions=&#x27;cs&#x27;alias cslist=&#x27;cs&#x27;"><div></div></button></div></figure></div><hr></section></section><section><h2 id="踩坑记录">踩坑记录<a class="anchor" href="#踩坑记录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="问题下划线转连字符导致路径匹配失败-2026-04-14">问题：下划线转连字符导致路径匹配失败 (2026-04-14)<a class="anchor" href="#问题下划线转连字符导致路径匹配失败-2026-04-14"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>现象：</strong></p><p>在 <code>项目目录/某 Vue 3 项目</code> 目录下执行 <code>cs</code>，输出：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">当前目录没有 Claude 会话</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="当前目录没有 Claude 会话"><div></div></button></div></figure></div><p>但实际通过 <code>ls ~/.claude/projects/-Users-xiangwang-My-公司项目-某 Vue 3 项目/</code> 查看有 24 个会话。</p><p><strong>原因：</strong></p><p>Claude Code 在创建项目目录名时，会把下划线 <code>_</code> 也转换为连字符 <code>-</code>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">实际目录名: 某 Vue 3 项目</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Claude 内部名: 某 Vue 3 项目   # _ 被转成了 -</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="实际目录名: 某 Vue 3 项目Claude 内部名: 某 Vue 3 项目   # _ 被转成了 -"><div></div></button></div></figure></div><p>初始脚本只处理了 <code>/</code> → <code>-</code> 的转换，没有处理 <code>_</code> → <code>-</code>，导致路径匹配不上。</p><p><strong>初始错误代码：</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">local</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">pwd_escaped</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#56B6C2;--1:#016C9A">pwd</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">sed</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'s|/|-|g'</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">sed</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'s/^-/-/'</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 转换结果: -Users-xiangwang-My-公司项目-某 Vue 3 项目  ❌</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 而 Claude 内部实际目录名:</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># -Users-xiangwang-My-公司项目-某 Vue 3 项目           ✅</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="local pwd_escaped=$(pwd | sed &#x27;s|/|-|g&#x27; | sed &#x27;s/^-/-/&#x27;)"><div></div></button></div></figure></div><p><strong>修复方案：</strong></p><p>新增 <code>_</code> → <code>-</code> 转换：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">_claude_project_key</span><span style="--0:#ABB2BF;--1:#383A42">() {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#CD89E1;--1:#A626A4">local</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">resolved</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#56B6C2;--1:#016C9A">pwd</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-P</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> || </span><span style="--0:#56B6C2;--1:#016C9A">pwd</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#56B6C2;--1:#016C9A">echo</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$resolved</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">sed</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'s|/|-|g'</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">sed</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'s/_/-/g'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="_claude_project_key() {  local resolved=$(pwd -P 2>/dev/null || pwd)  echo &#x22;$resolved&#x22; | sed &#x27;s|/|-|g&#x27; | sed &#x27;s/_/-/g&#x27;}"><div></div></button></div></figure></div><p><strong>修复后效果：</strong></p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">当前目录有 24 个会话：</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">名称         大小         最后活跃         文件</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">---------- ---------- ------------ ----</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">02405202   1.5M       04/10 11:23  02405202-94fc-4bf7-b6c8-aa30f2ec9503.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">快搭         780K       04/14 10:20  1da26106-98e7-48cf-815e-7356e2015f82.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">22c71a8e   5.7M       04/08 09:53  22c71a8e-6a97-414c-ae42-81cd4a04eb42.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">...</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="当前目录有 24 个会话：名称         大小         最后活跃         文件---------- ---------- ------------ ----02405202   1.5M       04/10 11:23  02405202-94fc-4bf7-b6c8-aa30f2ec9503.jsonl快搭         780K       04/14 10:20  1da26106-98e7-48cf-815e-7356e2015f82.jsonl22c71a8e   5.7M       04/08 09:53  22c71a8e-6a97-414c-ae42-81cd4a04eb42.jsonl..."><div></div></button></div></figure></div></section><section><h3 id="问题会话名称无法正确解析-2026-04-14">问题：会话名称无法正确解析 (2026-04-14)<a class="anchor" href="#问题会话名称无法正确解析-2026-04-14"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>现象：</strong></p><p>使用 <code>/rename</code> 命令重命名会话后，<code>cs</code> 仍显示 UUID 前缀而非自定义名称。</p><p><strong>原因：</strong></p><p>初始实现从 JSONL 文件的第一行查找 <code>name</code> 字段，但第一行是 <code>permission-mode</code> 类型，不包含名称。实际名称存储为 <code>"custom-title"</code> 类型。</p><p><strong>修复方案：</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 错误：从第一行查找 name 字段</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">local</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">name</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">head</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-1</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$session</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">grep</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-o</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'"name":"[^"]*"'</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">head</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-1</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">...</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 正确：查找 custom-title 类型行</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">local</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">name</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">grep</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-m1</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'"custom-title"'</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$session</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">grep</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-o</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'"customTitle":"[^"]*"'</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">sed</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">...</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="local name=$(head -1 &#x22;$session&#x22; | grep -o &#x27;&#x22;name&#x22;:&#x22;[^&#x22;]*&#x22;&#x27; | head -1 ...)local name=$(grep -m1 &#x27;&#x22;custom-title&#x22;&#x27; &#x22;$session&#x22; | grep -o &#x27;&#x22;customTitle&#x22;:&#x22;[^&#x22;]*&#x22;&#x27; | sed ...)"><div></div></button></div></figure></div></section><section><h3 id="问题会话名称只显示第一次-rename-的结果-2026-04-23">问题：会话名称只显示第一次 rename 的结果 (2026-04-23)<a class="anchor" href="#问题会话名称只显示第一次-rename-的结果-2026-04-23"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>现象：</strong></p><p>同一个会话多次使用 <code>/rename</code> 改名后，<code>cs</code> 只显示第一次设置的名称，不显示最新名称。</p><p><strong>原因：</strong></p><p><code>cs</code> 使用 <code>grep -m1</code> 只查找第一个 <code>"custom-title"</code> 事件，但每次 <code>/rename</code> 都会在 JSONL 文件末尾追加一条新的 <code>custom-title</code> 事件，所以最新名称在最后面。</p><p><strong>修复方案：</strong></p><p>使用 <code>tac</code> 先把文件倒序，再找第一个 <code>custom-title</code>（即原文件的最后一个）：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 错误：只找第一个 custom-title</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">local</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">name</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">grep</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-m1</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'"custom-title"'</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$session</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#56B6C2;--1:#016C9A">...</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 正确：找最后一个 custom-title（最新名称）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">local</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">name</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">tac</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$session</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">grep</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-m1</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'"customTitle":"[^"]*"'</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#56B6C2;--1:#016C9A">...</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="local name=$(grep -m1 &#x27;&#x22;custom-title&#x22;&#x27; &#x22;$session&#x22; | ...)local name=$(tac &#x22;$session&#x22; 2>/dev/null | grep -m1 &#x27;&#x22;customTitle&#x22;:&#x22;[^&#x22;]*&#x22;&#x27; | ...)"><div></div></button></div></figure></div></section><section><h3 id="问题_claude_project_key-多余的-sed-s---2026-04-23">问题：_claude_project_key 多余的 sed ‘s/^-/-/’ (2026-04-23)<a class="anchor" href="#问题_claude_project_key-多余的-sed-s---2026-04-23"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>原因：</strong></p><p>之前的代码有一个多余的 <code>sed 's/^-/-/'</code>，这个命令不会改变任何字符串（把开头的 <code>-</code> 替换成 <code>-</code>），属于冗余代码。</p><p><strong>修复方案：</strong></p><p>直接删除这个多余的 sed 命令。</p><hr></section></section><section><h2 id="会话存储结构">会话存储结构<a class="anchor" href="#会话存储结构"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>Claude Code 的会话数据存储在：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">~/.claude/projects/</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── -Users-xiangwang-claudecode-projects-alarm-extension/</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│   ├── 724a2c08-002c-4e45-ac81-618aa6e50640.jsonl   # 会话记录</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│   ├── a6617c75-8890-4034-940e-b197c37b60f4.jsonl   # 会话记录</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│   └── memory/                                        # 记忆目录</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── -Users-xiangwang-My-公司项目-某 Vue 3 项目/</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│   ├── 1da26106-98e7-48cf-815e-7356e2015f82.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│   ├── ...</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="~/.claude/projects/├── -Users-xiangwang-claudecode-projects-alarm-extension/│   ├── 724a2c08-002c-4e45-ac81-618aa6e50640.jsonl   # 会话记录│   ├── a6617c75-8890-4034-940e-b197c37b60f4.jsonl   # 会话记录│   └── memory/                                        # 记忆目录├── -Users-xiangwang-My-公司项目-某 Vue 3 项目/│   ├── 1da26106-98e7-48cf-815e-7356e2015f82.jsonl│   ├── ..."><div></div></button></div></figure></div><p>每个 <code>.jsonl</code> 文件是一个独立会话，按行存储 JSON 对象。</p><hr></section><section><h2 id="new-vs-fork-的区别">/new vs /fork 的区别<a class="anchor" href="#new-vs-fork-的区别"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>命令</th><th>行为</th><th>继承上下文</th><th>典型场景</th></tr></thead><tbody><tr><td><code>/new</code></td><td>创建一个全新的会话</td><td>❌ 不继承</td><td>切换到完全不同的任务</td></tr><tr><td><code>/fork</code></td><td>从当前会话分叉一个新会话</td><td>✅ 继承当前对话历史</td><td>想在当前讨论基础上另开一个分支尝试</td></tr></tbody></table><blockquote><p>类比 Git：<code>/new</code> 类似从空仓库开始，<code>/fork</code> 类似 <code>git branch</code> 从当前 commit 分出一条新分支。</p></blockquote><hr></section><section><h2 id="会话记忆机制">会话记忆机制<a class="anchor" href="#会话记忆机制"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="跨会话保留">跨会话保留<a class="anchor" href="#跨会话保留"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Claude Code 通过 <code>claude-mem</code> 插件实现了跨会话的记忆系统：</p><ul>
+<li>记忆存储在 <code>~/.claude/projects/&#x3C;project-key>/memory/</code> 目录下</li>
+<li>新开一个会话时，之前的记忆仍然可以被检索到</li>
+<li>这是<strong>预期行为</strong>，不是 bug — 设计目标是让未来会话能参考过去的内容</li>
+</ul></section><section><h3 id="注意">注意<a class="anchor" href="#注意"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>如果期望”干净的重新开始”，需要：</p><ol>
+<li>删除旧会话文件（用 <code>csclean</code>）</li>
+<li>记忆目录中的内容仍然会被保留和检索</li>
+</ol><hr></section></section><section><h2 id="命令参考">命令参考<a class="anchor" href="#命令参考"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="cs---查看会话列表">cs - 查看会话列表<a class="anchor" href="#cs---查看会话列表"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">$</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">cs</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">当前目录有</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">4</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">个会话：</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">名称</span><span style="--0:#ABB2BF;--1:#383A42">         </span><span style="--0:#98C379;--1:#387138">大小</span><span style="--0:#ABB2BF;--1:#383A42">         </span><span style="--0:#98C379;--1:#387138">最后活跃</span><span style="--0:#ABB2BF;--1:#383A42">         </span><span style="--0:#98C379;--1:#387138">文件</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">----------</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">----------</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">------------</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">----</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">查看当前仓库信息</span><span style="--0:#ABB2BF;--1:#383A42"> (Branch) 356K       04/14 09:59  56478a34...jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">主</span><span style="--0:#ABB2BF;--1:#383A42">          </span><span style="--0:#98C379;--1:#387138">672K</span><span style="--0:#ABB2BF;--1:#383A42">       </span><span style="--0:#98C379;--1:#387138">04/14</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">10:25</span><span style="--0:#ABB2BF;--1:#383A42">  </span><span style="--0:#98C379;--1:#387138">724a2c08...jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">a6617c75</span><span style="--0:#ABB2BF;--1:#383A42">    </span><span style="--0:#98C379;--1:#387138">64K</span><span style="--0:#ABB2BF;--1:#383A42">       </span><span style="--0:#98C379;--1:#387138">04/14</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">10:06</span><span style="--0:#ABB2BF;--1:#383A42">  </span><span style="--0:#98C379;--1:#387138">a6617c75...jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">d6aab07c</span><span style="--0:#ABB2BF;--1:#383A42">   </span><span style="--0:#98C379;--1:#387138">4.0K</span><span style="--0:#ABB2BF;--1:#383A42">       </span><span style="--0:#98C379;--1:#387138">04/14</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">09:55</span><span style="--0:#ABB2BF;--1:#383A42">  </span><span style="--0:#98C379;--1:#387138">d6aab07c...jsonl</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="$ cs当前目录有 4 个会话：名称         大小         最后活跃         文件---------- ---------- ------------ ----查看当前仓库信息 (Branch) 356K       04/14 09:59  56478a34...jsonl主          672K       04/14 10:25  724a2c08...jsonla6617c75    64K       04/14 10:06  a6617c75...jsonld6aab07c   4.0K       04/14 09:55  d6aab07c...jsonl"><div></div></button></div></figure></div></section><section><h3 id="csdel---删除指定会话">csdel - 删除指定会话<a class="anchor" href="#csdel---删除指定会话"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 按名称删除</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">$</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">csdel</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">主</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">已删除会话:</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">724a2c08-002c-4e45-ac81-618aa6e50640.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 按 UUID 前缀删除</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">$</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">csdel</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">724a2c08</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">已删除会话:</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">724a2c08-002c-4e45-ac81-618aa6e50640.jsonl</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="$ csdel 主已删除会话: 724a2c08-002c-4e45-ac81-618aa6e50640.jsonl$ csdel 724a2c08已删除会话: 724a2c08-002c-4e45-ac81-618aa6e50640.jsonl"><div></div></button></div></figure></div></section><section><h3 id="csclean---清空当前目录所有会话">csclean - 清空当前目录所有会话<a class="anchor" href="#csclean---清空当前目录所有会话"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">$</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">csclean</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">将删除当前目录的</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">4</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">个会话：</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#61AFEF;--1:#3360C1">56478a34-4eb4-45f5-860f-b1ff255d65eb.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#61AFEF;--1:#3360C1">724a2c08-002c-4e45-ac81-618aa6e50640.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">  </span><span style="--0:#61AFEF;--1:#3360C1">a6617c75-8890-4034-940e-b197c37b60f4.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent">  </span><span style="--0:#61AFEF;--1:#3360C1">d6aab07c-e736-4b1d-9c7c-c4e0ce7673d5.jsonl</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">确认删除？(y/N</span><span style="--0:#ABB2BF;--1:#383A42">): y</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">已删除</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">4</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">个会话</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="$ csclean将删除当前目录的 4 个会话：  56478a34-4eb4-45f5-860f-b1ff255d65eb.jsonl  724a2c08-002c-4e45-ac81-618aa6e50640.jsonl  a6617c75-8890-4034-940e-b197c37b60f4.jsonl  d6aab07c-e736-4b1d-9c7c-c4e0ce7673d5.jsonl确认删除？(y/N): y已删除 4 个会话"><div></div></button></div></figure></div></section><section><h3 id="cn---启动新会话">cn - 启动新会话<a class="anchor" href="#cn---启动新会话"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 在终端输入</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">$</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">cn</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 等价于: claude -c --new-session</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="$ cn"><div></div></button></div></figure></div></section></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/ai工具/claude-code/团队落地/claudecode团队落地指南总结/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">ClaudeCode团队落地指南总结</span> </a> <a class="post-nav-link post-nav-next " href="/posts/ai工具/claude-code/并行开发/claude-code-并行开发完全指南/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">Claude Code 并行开发完全指南</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

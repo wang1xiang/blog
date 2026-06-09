@@ -1,0 +1,1205 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>爆火Skill合集总结 - 翔子的博客</title><meta name="description" content="近期GitHub上掀起了一场以 .skill 为后缀的人格化AI模块化热潮。从「同事.skill」开始，短短几天内衍生出数十款同类项目，覆盖职场、情感、亲情、自我成长等全场景，形成了&quot;万物皆可Skill&quot;的现象级风潮。其中&quot;炼化同事S..."><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/skill%E5%BC%80%E5%8F%91/04-skill-dev/%E7%88%86%E7%81%ABskill%E5%90%88%E9%9B%86%E6%80%BB%E7%BB%93/"><meta property="og:title" content="爆火Skill合集总结 - 翔子的博客"><meta property="og:description" content="近期GitHub上掀起了一场以 .skill 为后缀的人格化AI模块化热潮。从「同事.skill」开始，短短几天内衍生出数十款同类项目，覆盖职场、情感、亲情、自我成长等全场景，形成了&quot;万物皆可Skill&quot;的现象级风潮。其中&quot;炼化同事S..."><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/skill%E5%BC%80%E5%8F%91/04-skill-dev/%E7%88%86%E7%81%ABskill%E5%90%88%E9%9B%86%E6%80%BB%E7%BB%93/"><meta name="twitter:title" content="爆火Skill合集总结 - 翔子的博客"><meta name="twitter:description" content="近期GitHub上掀起了一场以 .skill 为后缀的人格化AI模块化热潮。从「同事.skill」开始，短短几天内衍生出数十款同类项目，覆盖职场、情感、亲情、自我成长等全场景，形成了&quot;万物皆可Skill&quot;的现象级风潮。其中&quot;炼化同事S..."><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"爆火Skill合集总结","description":"近期GitHub上掀起了一场以 .skill 为后缀的人格化AI模块化热潮。从「同事.skill」开始，短短几天内衍生出数十款同类项目，覆盖职场、情感、亲情、自我成长等全场景，形成了\"万物皆可Skill\"的现象级风潮。其中\"炼化同事S...","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-05-20T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>爆火Skill合集总结</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=AI%E5%B7%A5%E5%85%B7">AI工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">爆火Skill合集总结</h1> <p class="post-subtitle">近期GitHub上掀起了一场以 .skill 为后缀的人格化AI模块化热潮。从「同事.skill」开始，短短几天内衍生出数十款同类项目，覆盖职场、情感、亲情、自我成长等全场景，形成了&quot;万物皆可Skill&quot;的现象级风潮。其中&quot;炼化同事S...</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-05-20 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 3,333 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 17 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#Skill开发</span><span class="post-tag">#04-skill-dev</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="爆火全网的skill合集总结">爆火全网的Skill合集总结<a class="anchor" href="#爆火全网的skill合集总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><section><h2 id="核心思想">核心思想<a class="anchor" href="#核心思想"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>近期GitHub上掀起了一场以 .skill 为后缀的人格化AI模块化热潮。从「同事.skill」开始，短短几天内衍生出数十款同类项目，覆盖职场、情感、亲情、自我成长等全场景，形成了”万物皆可Skill”的现象级风潮。其中”炼化同事Skill”与”反蒸馏Skill”成为技术圈焦点——前者负责复刻经验、提升协作效率，后者负责保护知识、防止能力被窃取，一攻一防构成了AI时代职场人的攻防保卫战。</p><hr></section><section><h2 id="我的理解">我的理解<a class="anchor" href="#我的理解"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这个现象非常有意思，它反映了几个深层的趋势：</p><p><strong>1. AI工具从”通用”向”人格化”演进</strong><br>
+之前的AI工具大多是通用助手，而现在人们开始追求”特定人格”的AI。这说明用户不再满足于”一个AI回答所有问题”，而是需要”像某个人那样回答问题”。这背后是对<strong>语境匹配度</strong>和<strong>风格一致性</strong>的更高要求。</p><p><strong>2. 知识资产的意识觉醒</strong><br>
+”反蒸馏Skill”的出现特别值得关注。这说明人们开始意识到：<strong>在AI时代，个人经验和知识风格也是一种资产</strong>。以前我们担心的是”工作被AI替代”，现在担心的是”我的经验被AI偷走”。这种转变非常微妙但意义重大。</p><p><strong>3. 模块化生态的形成</strong><br>
+所有项目都遵循 .skill 标准化规范，基于 Claude Skills 与 OpenClaw 架构。这意味着Skill不再是孤立的项目，而是可以即插即用的模块。这种标准化会大大加速生态的繁荣——就像当年的npm包一样。</p><p><strong>4. 情感需求的爆发</strong><br>
+从职场类到情感类（前任、暗恋对象）、亲情类（父母），这个趋势说明AI正在从”效率工具”向”情感陪伴”渗透。这可能是比职场应用更大的市场，但也伴随着更深的伦理问题。</p><hr></section><section><h2 id="主要内容">主要内容<a class="anchor" href="#主要内容"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="一全网skill项目大合集">一、全网Skill项目大合集<a class="anchor" href="#一全网skill项目大合集"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>职场类</strong>：</p><ul>
+<li>同事.skill - 复刻同事协作风格、工作流程、沟通话术，用于团队提效与经验沉淀</li>
+<li>老板.skill - 学习管理者决策逻辑、发言风格、评判标准，可用于汇报模拟、工作预判</li>
+<li>反蒸馏.skill - 对个人核心经验做模糊化处理，保护知识资产，避免被直接复制萃取</li>
+</ul><p><strong>情感类</strong>：</p><ul>
+<li>前任.skill - 基于历史对话复刻语气与互动模式，多用于情感复盘、情绪和解</li>
+<li>暗恋对象.skill - 还原相处习惯与表达特征，用于社交模拟、勇气练习</li>
+<li>重逢.skill - 针对失联关系设计，通过历史数据还原对话风格，满足情感怀念需求</li>
+</ul><p><strong>亲情成长类</strong>：</p><ul>
+<li>父母.skill - 复刻长辈语气、思维方式与关怀模式，用于情感陪伴与亲情纪念</li>
+<li>导师.skill - 学习行业经验与指导风格，提供轻量化职业方向与成长建议</li>
+<li>师兄.skill - 复刻前辈解题思路、代码风格、学习方法，大幅降低新手入门成本</li>
+</ul><p><strong>自我与数字永生类</strong>：</p><ul>
+<li>自己.skill - 整合个人数据生成数字分身，承担知识代办、记忆辅助、重复事务处理</li>
+<li>永生.skill - 长期存储个人记忆、观点、行为模式，探索人格数字化留存的可能</li>
+<li>数字人生.skill - 整合成长轨迹与决策偏好，用于人生复盘、选择模拟与自我认知</li>
+</ul><hr></section></section><section><h2 id="我的理解-1">我的理解<a class="anchor" href="#我的理解-1"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这个分类维度很有意思，它基本上覆盖了<strong>人生的所有重要关系</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>关系类型</th><th>Skill用途</th><th>背后的需求</th></tr></thead><tbody><tr><td>同事/老板/导师</td><td>职场提效</td><td>降低沟通成本、加速成长</td></tr><tr><td>前任/暗恋对象</td><td>情感模拟</td><td>情感复盘、勇气练习、怀念</td></tr><tr><td>父母/师兄</td><td>亲情传承</td><td>经验传承、情感陪伴</td></tr><tr><td>自己/永生</td><td>数字分身</td><td>记忆辅助、自我认知、数字永生</td></tr></tbody></table><p>但这里有个有趣的矛盾：<strong>我们既想复刻他人，又想保护自己不被复刻</strong>。“同事.skill”和”反蒸馏.skill”的同时爆火，正好说明了这种矛盾心态。</p><p>这让我想到一个问题：如果每个人都用”反蒸馏.skill”保护自己，那谁的数据来训练”同事.skill”呢？这可能会成为一个典型的”公地悲剧”场景。</p><p>另外，情感类Skill的伦理风险尤其值得关注。用AI复刻前任来”情感复盘”，这听起来像是一种新型的”数字疗伤”，但如果过度依赖，会不会让人逃避现实中的情感成长？</p><hr><section><h3 id="二核心能力">二、核心能力<a class="anchor" href="#二核心能力"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Skill类项目之所以能快速普及，在于其具备极强的实用能力：</p><ol>
+<li><strong>全场景人格复刻</strong> - 精准还原人物语气、用词习惯、逻辑偏好、情绪反应，高度贴近真人交互体验</li>
+<li><strong>经验与知识结构化</strong> - 自动从文档、对话、流程中提取有效信息，将零散经验转化为可调用、可传承的知识模块</li>
+<li><strong>即插即用，无需重训</strong> - 作为独立插件动态加载到大模型，不用从零训练，支持快速切换、多人共享</li>
+<li><strong>增量迭代，越用越像</strong> - 可根据新交互持续微调模型输出，不断修正偏差，让数字人格更真实</li>
+<li><strong>数据脱敏与安全可控</strong> - 支持敏感信息清洗、内容过滤、使用范围限定，降低隐私泄露风险</li>
+<li><strong>知识反萃取保护</strong> - 通过模糊化、结构化封装等方式，保护个人核心经验不被直接盗用</li>
+</ol><hr></section></section><section><h2 id="我的理解-2">我的理解<a class="anchor" href="#我的理解-2"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这些核心能力实际上解决了AI应用落地的几个关键痛点：</p><p><strong>1. 无需重训 = 降低使用门槛</strong><br>
+之前如果想让AI”像某人”，可能需要fine-tuning，这需要大量数据和计算资源。现在用Skill的方式，相当于把”人格”封装成配置文件，即插即用。这大大降低了普通人使用的门槛。</p><p><strong>2. 增量迭代 = 持续进化</strong><br>
+”越用越像”这个特性很关键。这意味着Skill不是静态的，而是可以随着交互不断进化的。这种”动态人格”比”静态人格”更有价值，因为真人也是在不断变化的。</p><p><strong>3. 反萃取保护 = 消除顾虑</strong><br>
+这是Skill生态能够持续发展的关键。如果没有保护机制，有价值的经验拥有者就不会愿意贡献他们的数据。反蒸馏技术相当于给知识资产上了”锁”，让人们更愿意参与这个生态。</p><p>但这里也有个技术问题：<strong>反蒸馏和人格复刻本质上是矛盾的</strong>。如果经验被模糊化了，那复刻的准确性会不会受影响？这可能是一个需要权衡的地方。</p><hr><section><h3 id="三快速上手以同事skill为例">三、快速上手（以同事.skill为例）<a class="anchor" href="#三快速上手以同事skill为例"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li><strong>拉取项目</strong> - 通过GitHub获取项目资源，进入项目对应目录，准备后续配置</li>
+<li><strong>准备并清洗数据</strong> - 收集对应人物的聊天记录、工作文档、风格素材；务必获得授权，并完成手机号、机密信息等脱敏处理</li>
+<li><strong>配置Skill信息</strong> - 编辑SKILL.md文件，完善项目名称、用途、场景描述；设置语气、严谨度、表达习惯等人格参数</li>
+<li><strong>加载至智能体平台</strong> - 将项目文件夹导入支持.skill标准的平台（Claude、OpenClaw等），完成挂载启用</li>
+<li><strong>测试调试与迭代</strong> - 通过真实对话校验风格一致性与逻辑准确性，增量更新数据持续优化</li>
+</ol><hr></section></section><section><h2 id="我的理解-3">我的理解<a class="anchor" href="#我的理解-3"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这个流程看起来简单，但实际上最关键的是<strong>第2步：数据准备和授权</strong>。</p><p>这里有几个容易被忽视的问题：</p><p><strong>1. 数据质量决定Skill质量</strong><br>
+如果聊天记录只有几十条，那复刻出来的人格肯定很单薄。但如果有几千条，又涉及到隐私和授权问题。这是一个两难。</p><p><strong>2. 授权不是小事</strong><br>
+”务必获得授权”说起来容易，但做起来难。同事会不会同意你用他的聊天记录训练AI？老板会不会同意？这涉及到职场关系和法律风险。</p><p><strong>3. 什么是”个人经验”，什么是”公司资产”？</strong><br>
+文章后面也提到了这个问题。如果一个同事的工作方法是在公司里积累的，那这个经验属于个人还是公司？这可能会成为未来的法律争议点。</p><p>我觉得这里可能需要一个类似”知识共享协议”的东西——明确哪些数据可以用、可以怎么用、用了之后谁受益。</p><hr><section><h3 id="四实践建议伦理与合规底线">四、实践建议（伦理与合规底线）<a class="anchor" href="#四实践建议伦理与合规底线"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li><strong>数据使用必须先授权</strong> - 严禁未经许可抓取他人聊天记录、工作内容、隐私信息，规避侵权风险</li>
+<li><strong>定位辅助工具，不替代真人</strong> - Skill适用于提效、复盘、模拟、辅助，不能替代真实情感交流与核心决策</li>
+<li><strong>职场场景严守合规</strong> - 企业数据、客户信息、商业机密必须彻底脱敏，明确区分个人经验与公司知识产权</li>
+<li><strong>情感使用保持理性</strong> - 数字人格不等同于现实个体，避免过度寄托导致现实社交退缩</li>
+<li><strong>保护自身知识资产</strong> - 高价值经验不随意开源共享，可使用反蒸馏等方式做好防护</li>
+<li><strong>遵守法律与平台规则</strong> - 不制作恶意模仿、违法违规的Skill模块，坚守技术伦理</li>
+</ol><hr></section></section><section><h2 id="我的理解-4">我的理解<a class="anchor" href="#我的理解-4"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这些建议非常务实，但执行起来会很有挑战。让我逐一分析：</p><p><strong>1. 授权问题</strong><br>
+理论上应该先授权，但实际上：</p><ul>
+<li>同事之间可能不好意思开口要授权</li>
+<li>前任更不可能授权</li>
+<li>父母可能根本不理解这是什么</li>
+</ul><p>所以”先授权”在很多场景下可能只是理想状态。</p><p><strong>2. 辅助工具 vs 替代真人</strong><br>
+这个界限很模糊。比如：</p><ul>
+<li>用”老板.skill”模拟汇报，这是”辅助”</li>
+<li>但如果所有汇报都先让AI模拟一遍，老板永远看不到你真实的临场反应，这算不算”替代”？</li>
+</ul><p><strong>3. 情感理性</strong><br>
+这是最难的。人是情感动物，如果有一个AI能像前任一样跟你聊天，你会不会不自觉地投入感情？技术中立，但人性不中立。</p><p>我觉得这里需要一个<strong>分级制度</strong>：</p><ul>
+<li>低风险：复刻自己的知识（自己.skill）</li>
+<li>中风险：复刻同事、导师（需要明确授权）</li>
+<li>高风险：复刻情感关系（前任、暗恋对象）——可能需要更严格的规范</li>
+</ul><hr></section><section><h2 id="总结">总结<a class="anchor" href="#总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这篇文章介绍了GitHub上爆火的 .skill 人格化AI模块化热潮，涵盖职场、情感、亲情、自我成长等全场景。文章详细列出了各类Skill项目，分析了Skill的核心能力，提供了快速上手指南，并强调了伦理与合规底线。Skill生态的兴起既展现了AI应用的新可能性，也带来了需要认真对待的隐私、伦理和法律问题。</p><hr></section><section><h2 id="我的扩展总结">我的扩展总结<a class="anchor" href="#我的扩展总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>从这篇文章，我们可以看到<strong>AI正在进入一个新的阶段</strong>：</p><section><h3 id="阶段一通用ai过去时">阶段一：通用AI（过去时）<a class="anchor" href="#阶段一通用ai过去时"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li>“一个AI回答所有问题”</li>
+<li>追求通用性和准确性</li>
+<li>代表：ChatGPT、Claude</li>
+</ul></section><section><h3 id="阶段二人格化ai现在时">阶段二：人格化AI（现在时）<a class="anchor" href="#阶段二人格化ai现在时"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li>“像某个人那样回答问题”</li>
+<li>追求风格匹配和情感共鸣</li>
+<li>代表：各种.skill项目</li>
+</ul></section><section><h3 id="阶段三数字永生未来时">阶段三：数字永生（未来时？）<a class="anchor" href="#阶段三数字永生未来时"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li>“即使肉体消失，数字人格永存”</li>
+<li>追求记忆延续和人格传承</li>
+<li>代表：永生.skill、数字人生.skill</li>
+</ul><p>这个演进路径很有意思——从”工具”到”分身”再到”永生”。</p><p>但每个阶段都有对应的挑战：</p><ul>
+<li>通用AI：准确性、幻觉问题</li>
+<li>人格化AI：隐私、授权、伦理</li>
+<li>数字永生：存在意义、身份认同</li>
+</ul><p>最后，我想说一个观察：<strong>技术的发展往往是由”需求”推动的，但”需求”不一定都是健康的</strong>。</p><p>我们想要”同事.skill”，是因为不想花时间跟同事沟通；想要”前任.skill”，是因为不想面对情感创伤；想要”永生.skill”，是因为不想面对死亡。</p><p>这些需求背后，是我们想要逃避困难、逃避痛苦、逃避现实的本能。但真正的成长，往往来自于面对这些困难。</p><p>所以，Skill是一个好工具，但我们也要警惕：<strong>不要用技术逃避生活本身</strong>。</p><hr><p><em>本文档基于<a href="https://mp.weixin.qq.com/s/uiW_ob3KfzcOzvMBYVWisQ%E6%95%B4%E7%90%86%E6%80%BB%E7%BB%93%EF%BC%8C%E5%B9%B6%E5%8A%A0%E5%85%A5%E4%BA%86%E6%89%A9%E5%B1%95%E7%90%86%E8%A7%A3" target="_blank" rel="noopener noreferrer">https://mp.weixin.qq.com/s/uiW_ob3KfzcOzvMBYVWisQ整理总结，并加入了扩展理解</a></em></p></section></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/ai工具/skill开发/04-skill-dev/tts-skill-百聆-cosyvoice-封装全记录/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">TTS-Skill-百聆-CosyVoice-封装全记录</span> </a> <a class="post-nav-link post-nav-next " href="/posts/其他/杂项/99-misc/gpt-image-2-提示词案例合集/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">GPT-Image-2-提示词案例合集</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

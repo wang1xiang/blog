@@ -1,0 +1,1487 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>macOS终端工具链搭建实录 - 翔子的博客</title><meta name="description" content="翔子通过 Homebrew 安装了 cmux（基于 Ghostty 的终端），希望将它配置成跟之前 iTerm2 一致的使用体验，并在此基础上搭建一整套终端工具链，提升命令行工作效率。"><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/%E5%B7%A5%E5%85%B7/%E7%BB%88%E7%AB%AF%E9%85%8D%E7%BD%AE/05-terminal-tooling/macos%E7%BB%88%E7%AB%AF%E5%B7%A5%E5%85%B7%E9%93%BE%E6%90%AD%E5%BB%BA%E5%AE%9E%E5%BD%95/"><meta property="og:title" content="macOS终端工具链搭建实录 - 翔子的博客"><meta property="og:description" content="翔子通过 Homebrew 安装了 cmux（基于 Ghostty 的终端），希望将它配置成跟之前 iTerm2 一致的使用体验，并在此基础上搭建一整套终端工具链，提升命令行工作效率。"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/%E5%B7%A5%E5%85%B7/%E7%BB%88%E7%AB%AF%E9%85%8D%E7%BD%AE/05-terminal-tooling/macos%E7%BB%88%E7%AB%AF%E5%B7%A5%E5%85%B7%E9%93%BE%E6%90%AD%E5%BB%BA%E5%AE%9E%E5%BD%95/"><meta name="twitter:title" content="macOS终端工具链搭建实录 - 翔子的博客"><meta name="twitter:description" content="翔子通过 Homebrew 安装了 cmux（基于 Ghostty 的终端），希望将它配置成跟之前 iTerm2 一致的使用体验，并在此基础上搭建一整套终端工具链，提升命令行工作效率。"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"macOS终端工具链搭建实录","description":"翔子通过 Homebrew 安装了 cmux（基于 Ghostty 的终端），希望将它配置成跟之前 iTerm2 一致的使用体验，并在此基础上搭建一整套终端工具链，提升命令行工作效率。","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-05-20T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>macOS终端工具链搭建实录</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=%E5%B7%A5%E5%85%B7">工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">macOS终端工具链搭建实录</h1> <p class="post-subtitle">翔子通过 Homebrew 安装了 cmux（基于 Ghostty 的终端），希望将它配置成跟之前 iTerm2 一致的使用体验，并在此基础上搭建一整套终端工具链，提升命令行工作效率。</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-05-20 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 1,688 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 8 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#终端配置</span><span class="post-tag">#05-terminal-tooling</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="macos-终端工具链搭建实录">macOS 终端工具链搭建实录<a class="anchor" href="#macos-终端工具链搭建实录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><blockquote><p>2026-04-15 | 翔子 | 替换 iTerm2，搭建一套完整的终端工具链</p></blockquote><section><h2 id="背景">背景<a class="anchor" href="#背景"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>翔子通过 Homebrew 安装了 cmux（基于 Ghostty 的终端），希望将它配置成跟之前 iTerm2 一致的使用体验，并在此基础上搭建一整套终端工具链，提升命令行工作效率。</p><hr></section><section><h2 id="1-cmux-安装与配置">1. cmux 安装与配置<a class="anchor" href="#1-cmux-安装与配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="11-安装">1.1 安装<a class="anchor" href="#11-安装"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">brew</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">install</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">cmux</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="brew install cmux"><div></div></button></div></figure></div><p>cmux 是基于 Ghostty 的终端模拟器，特点：</p><ul>
+<li>垂直 Tab 栏</li>
+<li>对 AI 编码代理的通知支持</li>
+<li>比 iTerm2 更轻量</li>
+</ul></section><section><h3 id="12-oh-my-zsh-自动生效">1.2 oh-my-zsh 自动生效<a class="anchor" href="#12-oh-my-zsh-自动生效"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>cmux 默认使用系统 shell（zsh），所以 <strong>oh-my-zsh 不需要额外配置</strong>，打开即生效。</p></section><section><h3 id="13-dracula-配色迁移">1.3 Dracula 配色迁移<a class="anchor" href="#13-dracula-配色迁移"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>从 iTerm2 导出配置，提取关键信息：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>项目</th><th>值</th></tr></thead><tbody><tr><td>字体</td><td>Hack Nerd Font 13pt</td></tr><tr><td>背景色</td><td><code>#1e1f28</code></td></tr><tr><td>前景色</td><td><code>#e5e5e5</code></td></tr><tr><td>Ansi 配色</td><td>完全匹配 Dracula</td></tr></tbody></table><p>通过对比 16 色 Ansi 值（<code>#ff5555</code>、<code>#50fa7b</code>、<code>#bd93f9</code>、<code>#8be9fd</code> 等），确认原配色方案就是 <strong>Dracula</strong>。</p><p>在 cmux 中设置：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">themes</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">set</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">--dark</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"Dracula"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cmux themes set --dark &#x22;Dracula&#x22;"><div></div></button></div></figure></div><p>配置文件写入：<code>/Users/xiangwang/Library/Application Support/com.cmuxterm.app/config.ghostty</code></p></section><section><h3 id="14-背景透明度--毛玻璃效果">1.4 背景透明度 + 毛玻璃效果<a class="anchor" href="#14-背景透明度--毛玻璃效果"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Ghostty 配置文件中有 <code>background-blur</code> 选项，但该功能仅在 Linux Wayland/KDE 环境下受支持。cmux 基于 macOS AppKit 实现，目前<strong>不支持窗口透明度/毛玻璃效果</strong>。窗口透明度需要 cmux 开发者在 Swift 层添加 AppKit 窗口混合属性，等待后续版本支持。</p></section><section><h3 id="15-选中即复制">1.5 选中即复制<a class="anchor" href="#15-选中即复制"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">copy-on-select</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> clipboard</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="copy-on-select = clipboard"><div></div></button></div></figure></div><p>默认 cmux 选中文字不会自动复制，需要 <code>Cmd+C</code>。加上这行后选中直接复制到剪贴板。</p><p><strong>踩坑</strong>：Ghostty 的 <code>copy-on-select</code> 有两个值：</p><ul>
+<li><code>true</code> — 优先使用 X11 选区剪贴板（macOS 上无效）</li>
+<li><code>clipboard</code> — 复制到系统剪贴板（macOS 用这个）</li>
+</ul><p>之前误写成 <code>copy-on-select = true</code> 和 <code>copy-to-clipboard = true</code> 都不生效。</p></section><section><h3 id="16-最终配置文件">1.6 最终配置文件<a class="anchor" href="#16-最终配置文件"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>cmux 读取 <code>~/.config/ghostty/config</code>（字体、字号等基础配置）和 <code>~/Library/Application Support/com.cmuxterm.app/config.ghostty</code>（主题、外观等）。</p><p><strong>~/.config/ghostty/config</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">font-family</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> JetBrainsMono Nerd Font</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">font-size</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> 14</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">theme</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> One Dark</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">scrollback-limit</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> 50000</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">split-divider-color</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> </span></span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">#3e4451</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">working-directory</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> ~/code</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">copy-on-select</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> clipboard</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="font-family = JetBrainsMono Nerd Fontfont-size = 14theme = One Darkscrollback-limit = 50000split-divider-color = #3e4451working-directory = ~/codecopy-on-select = clipboard"><div></div></button></div></figure></div><p><strong>~/Library/Application Support/com.cmuxterm.app/config.ghostty</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># cmux themes start</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">theme</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> dark:Dracula</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># cmux themes end</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">copy-on-select</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> clipboard</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# cmux themes starttheme = dark:Dracula# cmux themes endcopy-on-select = clipboard"><div></div></button></div></figure></div><hr></section></section><section><h2 id="2-stop-hook-清理">2. Stop Hook 清理<a class="anchor" href="#2-stop-hook-清理"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>去掉 <code>~/.claude/settings.json</code> 中 Stop hook 的声音和通知：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 修改前</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"afplay /System/Library/Sounds/Glass.aiff ...; osascript -e 'display notification ...'"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 修改后</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"echo '{</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">systemMessage</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">: </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">会话结束 - 如果需要分析技术债务，请使用 /techdebt 命令；如果需要记录文档，请使用 /note 命令</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">}'"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="// 修改前&#x22;command&#x22;: &#x22;afplay /System/Library/Sounds/Glass.aiff ...; osascript -e &#x27;display notification ...&#x27;&#x22;// 修改后&#x22;command&#x22;: &#x22;echo &#x27;{\&#x22;systemMessage\&#x22;: \&#x22;会话结束 - 如果需要分析技术债务，请使用 /techdebt 命令；如果需要记录文档，请使用 /note 命令\&#x22;}&#x27;&#x22;"><div></div></button></div></figure></div><p>保留夸夸报告（<code>praise-report.sh</code>）和系统提示消息，去掉了：</p><ul>
+<li><code>afplay Glass.aiff</code> — 声音</li>
+<li><code>osascript display notification</code> — macOS 系统通知</li>
+</ul><hr></section><section><h2 id="3-终端工具链选型与安装">3. 终端工具链选型与安装<a class="anchor" href="#3-终端工具链选型与安装"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="31-工具选型">3.1 工具选型<a class="anchor" href="#31-工具选型"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>工具</th><th>定位</th><th>替代</th><th>安装方式</th></tr></thead><tbody><tr><td><strong>lazygit</strong></td><td>终端 Git TUI</td><td>SourceTree</td><td><code>brew install lazygit</code></td></tr><tr><td><strong>Fresh</strong></td><td>终端编辑器</td><td>Vim/Nano（零学习成本）</td><td><code>brew install fresh-editor</code></td></tr><tr><td><strong>Yazi</strong></td><td>终端文件管理器</td><td>Finder 键盘操作</td><td><code>brew install yazi</code></td></tr></tbody></table><p>核心思路：<strong>终端里完成所有操作</strong>——文件管理、代码编辑、Git 操作都不离开终端。</p></section><section><h3 id="32-核心五件套安装">3.2 核心五件套安装<a class="anchor" href="#32-核心五件套安装"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">brew</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">install</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">zoxide</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">fzf</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">bat</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">eza</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">ripgrep</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="brew install zoxide fzf bat eza ripgrep"><div></div></button></div></figure></div><p>其中 <code>bat</code> 和 <code>ripgrep</code> 之前已安装。</p></section><section><h3 id="33-三大件使用方法">3.3 三大件使用方法<a class="anchor" href="#33-三大件使用方法"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><section><h4 id="yazi--终端文件管理器">Yazi — 终端文件管理器<a class="anchor" href="#yazi--终端文件管理器"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p><strong>启动</strong>：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">yazi</span><span style="--0:#ABB2BF;--1:#383A42">          </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 当前目录</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">yazi</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/docs</span><span style="--0:#ABB2BF;--1:#383A42">   </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 指定目录</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="yazi          # 当前目录yazi ~/docs   # 指定目录"><div></div></button></div></figure></div><p><strong>核心快捷键</strong>（Vim 风格）：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>操作</th><th>快捷键</th><th>说明</th></tr></thead><tbody><tr><td>上下移动</td><td><code>j</code> / <code>k</code></td><td>选择文件/目录</td></tr><tr><td>进入目录</td><td><code>l</code></td><td>或回车</td></tr><tr><td>返回上级</td><td><code>h</code></td><td></td></tr><tr><td>标记文件</td><td><code>Space</code></td><td>多选文件</td></tr><tr><td>复制</td><td><code>y</code></td><td>标记后复制</td></tr><tr><td>剪切</td><td><code>x</code></td><td>标记后剪切</td></tr><tr><td>粘贴</td><td><code>p</code></td><td>粘贴已复制/剪切的文件</td></tr><tr><td>删除</td><td><code>d</code></td><td>移入回收站</td></tr><tr><td>重命名</td><td><code>r</code></td><td>批量重命名</td></tr><tr><td>搜索</td><td><code>/</code></td><td>fuzzy 搜索文件名</td></tr><tr><td>命令行</td><td><code>:</code></td><td>输入命令</td></tr><tr><td>新建文件</td><td><code>n</code></td><td>创建新文件/目录</td></tr><tr><td>打开文件</td><td><code>Enter</code></td><td>用默认程序打开</td></tr><tr><td>预览</td><td>右侧自动</td><td>代码高亮、图片、PDF 等</td></tr><tr><td>退出</td><td><code>q</code></td><td></td></tr></tbody></table><p><strong>进阶功能</strong>：</p><ul>
+<li><strong>Tab</strong>：<code>t</code> 新建 Tab，<code>1/2/3</code> 切换</li>
+<li><strong>双栏模式</strong>：左右并排浏览</li>
+<li><strong>Git 状态</strong>：文件旁显示未提交/已修改标记</li>
+<li><strong>插件</strong>：通过 <code>ya pack -i &#x3C;插件名></code> 安装社区插件</li>
+</ul></section><section><h4 id="fresh--终端编辑器">Fresh — 终端编辑器<a class="anchor" href="#fresh--终端编辑器"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p><strong>启动</strong>：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">fresh</span><span style="--0:#ABB2BF;--1:#383A42">              </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 直接启动</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">fresh</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">file.ts</span><span style="--0:#ABB2BF;--1:#383A42">      </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 打开文件</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">fresh</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-r</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">dir/</span><span style="--0:#ABB2BF;--1:#383A42">      </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 打开目录（类似 VS Code）</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="fresh              # 直接启动fresh file.ts      # 打开文件fresh -r dir/      # 打开目录（类似 VS Code）"><div></div></button></div></figure></div><p><strong>核心快捷键</strong>（VS Code 风格）：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>操作</th><th>快捷键</th><th>说明</th></tr></thead><tbody><tr><td>保存</td><td><code>Cmd+S</code> / <code>Ctrl+S</code></td><td></td></tr><tr><td>命令面板</td><td><code>Cmd+Shift+P</code> / <code>Ctrl+Shift+P</code></td><td>搜索所有命令</td></tr><tr><td>文件搜索</td><td><code>Cmd+P</code> / <code>Ctrl+P</code></td><td>fuzzy 搜索文件</td></tr><tr><td>行跳转</td><td><code>Ctrl+G</code></td><td>跳到指定行</td></tr><tr><td>查找</td><td><code>Cmd+F</code> / <code>Ctrl+F</code></td><td></td></tr><tr><td>替换</td><td><code>Cmd+H</code> / <code>Ctrl+H</code></td><td></td></tr><tr><td>多光标</td><td><code>Cmd+D</code> / <code>Ctrl+D</code></td><td>选下一个相同词</td></tr><tr><td>多光标手动</td><td><code>Cmd+Click</code></td><td>在任意位置加光标</td></tr><tr><td>分屏</td><td><code>Cmd+\</code></td><td>垂直分割</td></tr><tr><td>侧边栏</td><td><code>Cmd+B</code></td><td>切换文件树</td></tr><tr><td>撤销</td><td><code>Cmd+Z</code></td><td></td></tr><tr><td>终端</td><td><code>Ctrl+`</code></td><td>内置终端</td></tr></tbody></table><p><strong>特点</strong>：</p><ul>
+<li>零配置开箱即用，不需要像 Vim 那样学命令</li>
+<li>支持 LSP（代码跳转定义、补全、诊断）</li>
+<li>支持 TypeScript 插件（沙盒环境）</li>
+<li>大文件性能优秀，GB 级文件流畅编辑</li>
+</ul></section><section><h4 id="lazygit--终端-git-tui">lazygit — 终端 Git TUI<a class="anchor" href="#lazygit--终端-git-tui"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p><strong>启动</strong>：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">lazygit</span><span style="--0:#ABB2BF;--1:#383A42">          </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 在 Git 仓库目录内启动</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="lazygit          # 在 Git 仓库目录内启动"><div></div></button></div></figure></div><p><strong>核心快捷键</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>操作</th><th>快捷键</th><th>说明</th></tr></thead><tbody><tr><td>切换面板</td><td><code>Tab</code></td><td>文件/分支/提交等面板</td></tr><tr><td>上下移动</td><td><code>j</code> / <code>k</code></td><td></td></tr><tr><td>选择/取消</td><td><code>Space</code></td><td>暂存/取消暂存文件</td></tr><tr><td>半暂存</td><td><code>Enter</code></td><td>逐行选择暂存</td></tr><tr><td>提交</td><td><code>c</code></td><td>弹出提交输入框</td></tr><tr><td>推送</td><td><code>P</code></td><td>推送到远程</td></tr><tr><td>拉取</td><td><code>p</code></td><td>从远程拉取</td></tr><tr><td>创建分支</td><td><code>n</code></td><td>新建分支</td></tr><tr><td>切换分支</td><td><code>Space</code> 在分支面板</td><td></td></tr><tr><td>stash</td><td><code>$</code></td><td>创建 stash</td></tr><tr><td>查看 stash</td><td><code>Shift+S</code></td><td>stash 面板</td></tr><tr><td>回退</td><td><code>Shift+R</code></td><td>reset 菜单</td></tr><tr><td>查看 diff</td><td><code>Enter</code> 在文件上</td><td></td></tr><tr><td>过滤文件</td><td><code>/</code></td><td>fuzzy 过滤文件列表</td></tr><tr><td>帮助</td><td><code>?</code></td><td>查看完整快捷键</td></tr><tr><td>退出</td><td><code>q</code></td><td></td></tr></tbody></table><p><strong>面板导航</strong>（按 <code>Tab</code> 切换）：</p><ol>
+<li><strong>Status</strong> — 分支、远程状态</li>
+<li><strong>Files</strong> — 工作区变更</li>
+<li><strong>Submodules</strong> — 子模块</li>
+<li><strong>Branches</strong> — 分支列表</li>
+<li><strong>Commits</strong> — 提交历史</li>
+<li><strong>Stash</strong> — 暂存列表</li>
+</ol></section></section><section><h3 id="34-zshrc-配置">3.4 .zshrc 配置<a class="anchor" href="#34-zshrc-配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 替代 cat</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">alias</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">cat</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">'bat'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 替代 ls</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">alias</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">ls</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">'eza --icons'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">alias</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">ll</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">'eza -la --icons --git'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">alias</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">tree</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">'eza --tree --icons'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># zoxide: 智能 cd（找不到时 fallback 到原生 cd）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#56B6C2;--1:#016C9A">eval</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"$(</span><span style="--0:#61AFEF;--1:#3360C1">zoxide</span><span style="--0:#98C379;--1:#387138"> init zsh)"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">alias</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">cd</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">'_zoxide_cd() { if zi "$@" 2>/dev/null; then return 0; else builtin cd "$@" 2>/dev/null; fi; }; _zoxide_cd'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># fzf: shell 集成</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#ABB2BF">[ </span><span style="--0:#56B6C2">-f</span><span style="--0:#ABB2BF"> ~/.fzf.zsh ] &#x26;&#x26; </span></span><span style="--0:#56B6C2;--1:#016C9A">source</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.fzf.zsh</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="alias cat=&#x27;bat&#x27;alias ls=&#x27;eza --icons&#x27;alias ll=&#x27;eza -la --icons --git&#x27;alias tree=&#x27;eza --tree --icons&#x27;eval &#x22;$(zoxide init zsh)&#x22;alias cd=&#x27;_zoxide_cd() { if zi &#x22;$@&#x22; 2>/dev/null; then return 0; else builtin cd &#x22;$@&#x22; 2>/dev/null; fi; }; _zoxide_cd&#x27;[ -f ~/.fzf.zsh ] &#x26;&#x26; source ~/.fzf.zsh"><div></div></button></div></figure></div></section><section><h3 id="35-zoxide-踩坑">3.5 zoxide 踩坑<a class="anchor" href="#35-zoxide-踩坑"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>刚安装时 <code>cd</code> 报错 <code>zoxide: no match found</code>。</p><p><strong>原因</strong>：zoxide 数据库是空的，需要学习你去过的目录。</p><p><strong>解决</strong>：alias 加了 fallback 逻辑——zoxide 找不到匹配时自动走原生 <code>cd</code>，不会报错。</p></section><section><h3 id="36-工具速查">3.6 工具速查<a class="anchor" href="#36-工具速查"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>原命令</th><th>新命令</th><th>说明</th></tr></thead><tbody><tr><td><code>cat</code></td><td><code>cat</code> (alias → bat)</td><td>语法高亮 + 行号</td></tr><tr><td><code>ls</code></td><td><code>ls</code> (alias → eza)</td><td>图标 + 颜色</td></tr><tr><td><code>ll</code></td><td><code>eza -la --icons --git</code></td><td>列表 + git 状态</td></tr><tr><td><code>tree</code></td><td><code>eza --tree --icons</code></td><td>树状结构</td></tr><tr><td><code>cd</code></td><td><code>cd</code> (alias → zoxide)</td><td>智能跳转，关键词模糊匹配</td></tr><tr><td><code>grep</code></td><td><code>rg</code> (ripgrep)</td><td>快 10 倍+，自动忽略 .gitignore</td></tr><tr><td><code>Ctrl+R</code></td><td><code>Ctrl+R</code> (fzf)</td><td>模糊搜索历史记录</td></tr><tr><td><code>Ctrl+T</code></td><td><code>Ctrl+T</code> (fzf)</td><td>模糊搜索文件系统</td></tr></tbody></table><hr></section></section><section><h2 id="总结">总结<a class="anchor" href="#总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这套工具链的核心思想：<strong>键盘党在终端里完成一切</strong>。</p><ul>
+<li><strong>cmux</strong>：终端外壳，Dracula 配色</li>
+<li><strong>eza + bat</strong>：看文件/看代码更舒服</li>
+<li><strong>zoxide + fzf</strong>：跳转和搜索零成本</li>
+<li><strong>Yazi</strong>：文件管理不离开终端</li>
+<li><strong>lazygit</strong>：Git 操作可视化</li>
+<li><strong>Fresh</strong>：远程/终端里写代码不求人</li>
+<li><strong>ripgrep</strong>：搜内容快</li>
+</ul><p>全部安装配置完毕，新开终端即可生效。</p></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/工具/终端配置/05-terminal-tooling/git-reflog-找回丢失代码教程/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">git-reflog-找回丢失代码教程</span> </a> <a class="post-nav-link post-nav-next " href="/posts/工具/终端配置/05-terminal-tooling/tmux-agent-配置实录/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">Tmux-Agent-配置实录</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

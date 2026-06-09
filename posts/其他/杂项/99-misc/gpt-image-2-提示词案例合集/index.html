@@ -1,0 +1,1135 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>GPT-Image-2-提示词案例合集 - 翔子的博客</title><meta name="description" content="适合：城市宣传、文旅海报、国风旅游视觉"><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/%E5%85%B6%E4%BB%96/%E6%9D%82%E9%A1%B9/99-misc/gpt-image-2-%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A1%88%E4%BE%8B%E5%90%88%E9%9B%86/"><meta property="og:title" content="GPT-Image-2-提示词案例合集 - 翔子的博客"><meta property="og:description" content="适合：城市宣传、文旅海报、国风旅游视觉"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/%E5%85%B6%E4%BB%96/%E6%9D%82%E9%A1%B9/99-misc/gpt-image-2-%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A1%88%E4%BE%8B%E5%90%88%E9%9B%86/"><meta name="twitter:title" content="GPT-Image-2-提示词案例合集 - 翔子的博客"><meta name="twitter:description" content="适合：城市宣传、文旅海报、国风旅游视觉"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"GPT-Image-2-提示词案例合集","description":"适合：城市宣传、文旅海报、国风旅游视觉","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-05-20T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>GPT-Image-2-提示词案例合集</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=%E5%85%B6%E4%BB%96">其他</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">GPT-Image-2-提示词案例合集</h1> <p class="post-subtitle">适合：城市宣传、文旅海报、国风旅游视觉</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-05-20 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 5,305 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 27 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#杂项</span><span class="post-tag">#99-misc</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="gpt-image-2-提示词案例合集">GPT Image 2 提示词案例合集<a class="anchor" href="#gpt-image-2-提示词案例合集"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><blockquote><p>来源：<a href="https://apifox.com/apiskills/gpt-image-2-prompt/" target="_blank" rel="noopener noreferrer">https://apifox.com/apiskills/gpt-image-2-prompt/</a></p><p>15 个偏中国元素、中国城市、国风审美、中文语境的提示词案例。每个案例都可以当作模板，里面的城市、标题、人物、场景都可以按需替换。</p></blockquote><hr><section><h2 id="1-中国水墨风西安海报">1. 中国水墨风西安海报<a class="anchor" href="#1-中国水墨风西安海报"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：城市宣传、文旅海报、国风旅游视觉</p><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一张精致的中国文化旅游海报，背景为纹理质感的米白色宣纸，留白充裕。画面采用优雅的水墨笔触构图，从左下角向右上角呈对角线向上蜿蜒，宛如一条流动的墨色长河。在最左侧边缘，展示 1 支正在入画的传统中国毛笔，笔尖仿佛正在勾勒出整幅场景。在流动的笔触中，描绘西安的微缩历史景观：沿曲线路径排列 3 座主要建筑地标，包括左下方 1 座古老的城门，拥有灰色石墙、拱形入口、城垛和双层歇山顶城楼；中间 1 座宏伟的传统亭台或宫殿，配有绿瓦、红木梁、高台基和台阶；以及右上角 1 座矗立在阶梯式基座上、周围点缀稀疏树木的高耸砖塔。画面中穿插一条狭窄的蓝绿色河流或水渠，辅以尘土色调、散落的岩石、蜿蜒的小路、细小的灌木以及点点柔和的秋叶红。整个地标小景呈现出一种手工 3D 微缩模型与中国水墨画及浮雕艺术相结合的质感，笔触边缘带有细腻的喷溅墨点。在画面左下方的水墨场景下方，放置 1 行醒目的黑色粗体毛笔书法"西安"。下方配有 2 行整齐的中文小字："春风得意马蹄疾，一日看尽长安花"和"十三朝古都·丝路起点"。在文字附近添加 1 枚红色印章。整体风格：诗意、高端、博物馆级城市宣传艺术品、中国传统美学、柔和暖光、高细节、构图平衡、竖版海报布局。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="一张精致的中国文化旅游海报，背景为纹理质感的米白色宣纸，留白充裕。画面采用优雅的水墨笔触构图，从左下角向右上角呈对角线向上蜿蜒，宛如一条流动的墨色长河。在最左侧边缘，展示 1 支正在入画的传统中国毛笔，笔尖仿佛正在勾勒出整幅场景。在流动的笔触中，描绘西安的微缩历史景观：沿曲线路径排列 3 座主要建筑地标，包括左下方 1 座古老的城门，拥有灰色石墙、拱形入口、城垛和双层歇山顶城楼；中间 1 座宏伟的传统亭台或宫殿，配有绿瓦、红木梁、高台基和台阶；以及右上角 1 座矗立在阶梯式基座上、周围点缀稀疏树木的高耸砖塔。画面中穿插一条狭窄的蓝绿色河流或水渠，辅以尘土色调、散落的岩石、蜿蜒的小路、细小的灌木以及点点柔和的秋叶红。整个地标小景呈现出一种手工 3D 微缩模型与中国水墨画及浮雕艺术相结合的质感，笔触边缘带有细腻的喷溅墨点。在画面左下方的水墨场景下方，放置 1 行醒目的黑色粗体毛笔书法&#x22;西安&#x22;。下方配有 2 行整齐的中文小字：&#x22;春风得意马蹄疾，一日看尽长安花&#x22;和&#x22;十三朝古都·丝路起点&#x22;。在文字附近添加 1 枚红色印章。整体风格：诗意、高端、博物馆级城市宣传艺术品、中国传统美学、柔和暖光、高细节、构图平衡、竖版海报布局。"><div></div></button></div></figure></div><hr></section><section><h2 id="2-手绘城市美食地图">2. 手绘城市美食地图<a class="anchor" href="#2-手绘城市美食地图"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：城市攻略、美食地图、本地生活内容</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">手绘地图信息图，复古羊皮纸上的水彩墨水手绘插画。标题为"成都 吃货暴走地图"，搭配戴着墨镜并竖起大拇指的卡通红辣椒。边框装饰为绿叶与红辣椒藤蔓。背景为带有黄色道路、蓝色河流和绿色公园区域的纹理米色羊皮纸。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">地图中包含地标建筑、美食地点和图例。地标建筑包括传统凉亭、传统寺院、带有攀爬熊猫的现代摩天大楼、高耸的电视塔、传统牌坊和工业建筑，标签包括人民公园、文殊院、IFS、339电视塔、宽窄巷子、东郊记忆。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">美食地点共 12 个，包括麻婆豆腐、红油水饺、冷锅串串、三大炮、蛋烘糕、九宫格火锅、肥肠粉、钵钵鸡、冒菜、盖碗茶、冰粉、兔头。每个地点配有编号、插画和中文标签。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">画面中心是一只坐着吃竹子的大熊猫。右下角加入复古罗盘和红辣椒图标提示语："温馨提示：吃辣需谨慎，肠胃要保护~"。整体风格活泼、复古、信息密集，但保持清晰可读。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="手绘地图信息图，复古羊皮纸上的水彩墨水手绘插画。标题为&#x22;成都 吃货暴走地图&#x22;，搭配戴着墨镜并竖起大拇指的卡通红辣椒。边框装饰为绿叶与红辣椒藤蔓。背景为带有黄色道路、蓝色河流和绿色公园区域的纹理米色羊皮纸。地图中包含地标建筑、美食地点和图例。地标建筑包括传统凉亭、传统寺院、带有攀爬熊猫的现代摩天大楼、高耸的电视塔、传统牌坊和工业建筑，标签包括人民公园、文殊院、IFS、339电视塔、宽窄巷子、东郊记忆。美食地点共 12 个，包括麻婆豆腐、红油水饺、冷锅串串、三大炮、蛋烘糕、九宫格火锅、肥肠粉、钵钵鸡、冒菜、盖碗茶、冰粉、兔头。每个地点配有编号、插画和中文标签。画面中心是一只坐着吃竹子的大熊猫。右下角加入复古罗盘和红辣椒图标提示语：&#x22;温馨提示：吃辣需谨慎，肠胃要保护~&#x22;。整体风格活泼、复古、信息密集，但保持清晰可读。"><div></div></button></div></figure></div><hr></section><section><h2 id="3-致敬郑问的水墨风格海报">3. 致敬郑问的水墨风格海报<a class="anchor" href="#3-致敬郑问的水墨风格海报"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：文化人物、艺术家介绍、展览视觉</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">创作一张印在陈年宣纸上的复古编辑海报，以纪念 CHEN UEN。设计风格融合了博物馆信息图表、中国水墨插画与书法。海报为单幅竖构图，背景为风化的羊皮纸，带有墨迹飞溅、褪色的手写批注、红色印章，营造出一种学术性的档案氛围。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">在最上方，放置醒目的黑色书法字体"郑问"，后接斜杠及大号衬线体罗马拼音 CHEN UEN，旁边配有一枚小红章。标题下方，添加副标题"The Taiwanese Master Who Turned Comics into Ink-Born Epic"，使用优雅的红褐色衬线字体。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">画面中心展示一幅充满戏剧性的写意场景：1 位男性艺术家身着宽松白衬衫坐在桌前，手持毛笔悬于纸上，面部被柔和的矩形模糊处理。在他身后，环绕着一圈如同光环般的单色水墨武士与历史人物：共 9 个可见人物，包括披甲将军、剑客和骑兵，从爆发式的黑色笔触和烟雾状墨迹中浮现。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">左侧为"Life &#x26; Milestones"时间线区域，列出 6 条重要年份。右侧为"Visual Method"视觉方法区域，包含 Brush as blade、Ink as atmosphere、Anatomy as fate、History as theatre、Speed lines become calligraphy 等图文研究。底部为"Why He Matters"说明区域。整体色调采用棕褐色、水墨黑、米白色、柔和灰，并点缀深红色和少许蓝色，呈现精致的文化致敬海报感。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="创作一张印在陈年宣纸上的复古编辑海报，以纪念 CHEN UEN。设计风格融合了博物馆信息图表、中国水墨插画与书法。海报为单幅竖构图，背景为风化的羊皮纸，带有墨迹飞溅、褪色的手写批注、红色印章，营造出一种学术性的档案氛围。在最上方，放置醒目的黑色书法字体&#x22;郑问&#x22;，后接斜杠及大号衬线体罗马拼音 CHEN UEN，旁边配有一枚小红章。标题下方，添加副标题&#x22;The Taiwanese Master Who Turned Comics into Ink-Born Epic&#x22;，使用优雅的红褐色衬线字体。画面中心展示一幅充满戏剧性的写意场景：1 位男性艺术家身着宽松白衬衫坐在桌前，手持毛笔悬于纸上，面部被柔和的矩形模糊处理。在他身后，环绕着一圈如同光环般的单色水墨武士与历史人物：共 9 个可见人物，包括披甲将军、剑客和骑兵，从爆发式的黑色笔触和烟雾状墨迹中浮现。左侧为&#x22;Life &#x26; Milestones&#x22;时间线区域，列出 6 条重要年份。右侧为&#x22;Visual Method&#x22;视觉方法区域，包含 Brush as blade、Ink as atmosphere、Anatomy as fate、History as theatre、Speed lines become calligraphy 等图文研究。底部为&#x22;Why He Matters&#x22;说明区域。整体色调采用棕褐色、水墨黑、米白色、柔和灰，并点缀深红色和少许蓝色，呈现精致的文化致敬海报感。"><div></div></button></div></figure></div><hr></section><section><h2 id="4-唐代妆容步骤提示词">4. 唐代妆容步骤提示词<a class="anchor" href="#4-唐代妆容步骤提示词"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：古风妆容、历史科普、教程图</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">六步还原杨玉环的唐代宫廷妆容：花钿 → 斜红 → 面靥 → 点唇 → 画眉 → 贴花。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="六步还原杨玉环的唐代宫廷妆容：花钿 → 斜红 → 面靥 → 点唇 → 画眉 → 贴花。"><div></div></button></div></figure></div><hr></section><section><h2 id="5-中国传统艺术与瓷器花瓶">5. 中国传统艺术与瓷器花瓶<a class="anchor" href="#5-中国传统艺术与瓷器花瓶"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：中式产品图、文创产品、包装设计</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一款灵感源自《千里江山图》的丝巾，环绕着王希孟笔下的青绿山水，呈现丝滑质感与柔和光影。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一款绘有杨贵妃赏花图的粉彩瓷瓶，融合了御窑风格的牡丹与蝴蝶纹饰。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="一款灵感源自《千里江山图》的丝巾，环绕着王希孟笔下的青绿山水，呈现丝滑质感与柔和光影。一款绘有杨贵妃赏花图的粉彩瓷瓶，融合了御窑风格的牡丹与蝴蝶纹饰。"><div></div></button></div></figure></div><hr></section><section><h2 id="6-梦幻东方女性肖像">6. 梦幻东方女性肖像<a class="anchor" href="#6-梦幻东方女性肖像"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：头像、人像写真、东方美学视觉</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">梦幻东方女性肖像，成年女性，特写肖像，精致的五官，白皙透亮的皮肤，细腻而干净的皮肤纹理，翡翠绿色的双眼，柔和迷人的目光，棕色波浪卷发自然垂落；米白色蕾丝头饰，点缀着绿松石蝴蝶和珍珠装饰；身着精致的蕾丝礼服，结构清晰，纹理简洁而不繁复，搭配翡翠首饰；光影采用柔和的暖金色侧逆光，轮廓光清晰但不曝光过度，皮肤带有微弱高光但无过度反光，整体光感通透干净，背景柔焦虚化，浅景深效果；高端肖像摄影品质，细节清晰且内敛，无颗粒感，无噪点，真实物理光影，8K，商业级画质。长宽比：9:16。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="梦幻东方女性肖像，成年女性，特写肖像，精致的五官，白皙透亮的皮肤，细腻而干净的皮肤纹理，翡翠绿色的双眼，柔和迷人的目光，棕色波浪卷发自然垂落；米白色蕾丝头饰，点缀着绿松石蝴蝶和珍珠装饰；身着精致的蕾丝礼服，结构清晰，纹理简洁而不繁复，搭配翡翠首饰；光影采用柔和的暖金色侧逆光，轮廓光清晰但不曝光过度，皮肤带有微弱高光但无过度反光，整体光感通透干净，背景柔焦虚化，浅景深效果；高端肖像摄影品质，细节清晰且内敛，无颗粒感，无噪点，真实物理光影，8K，商业级画质。长宽比：9:16。"><div></div></button></div></figure></div><hr></section><section><h2 id="7-微缩城市天气海报">7. 微缩城市天气海报<a class="anchor" href="#7-微缩城市天气海报"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：天气 App、城市主题视觉、社交媒体海报</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一张适用于智能手机的竖版天气海报，主题为成都，设计风格为梦幻般、超精细的微缩立体模型城市景观，背景为明亮的蓝天。在顶部中心位置，放置醒目的白色粗体中文城市名称，带有柔和的 3D 深度感和轻微的投影效果。在名称正下方，居中放置一个由圆润造型构成的蓬松白色云朵图标。图标下方，添加一行较小的白色文本显示"2026-04-22 星期三"，接着是一行较大的白色粗体温度文本"28° / 18°"，最后再添加一行居中的白色天气状况文本"多云"。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">在下半部分，打造一个融合中国传统水乡建筑与现代天际线的迷人城市：平静的绿松石色运河环绕着小岛，前景有 2 座小型拱形石桥，左侧岛屿上有一座凉亭，右侧中心附近有一座高大的多层宝塔，错落有致的灰瓦传统民居和店面，摆放着遮阳伞的户外茶桌，茂密的柳树、灌木、花卉以及水面上几艘小船。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">远景处展示现代化天际线，包含许多玻璃摩天大楼和 1 座显眼的针状观光塔。采用温暖晨光、电影级空气透视感、浅景深、移轴微缩摄影美学、高度逼真的材质、水面细腻倒影，以及精致且充满奇趣的旅游海报氛围。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="一张适用于智能手机的竖版天气海报，主题为成都，设计风格为梦幻般、超精细的微缩立体模型城市景观，背景为明亮的蓝天。在顶部中心位置，放置醒目的白色粗体中文城市名称，带有柔和的 3D 深度感和轻微的投影效果。在名称正下方，居中放置一个由圆润造型构成的蓬松白色云朵图标。图标下方，添加一行较小的白色文本显示&#x22;2026-04-22 星期三&#x22;，接着是一行较大的白色粗体温度文本&#x22;28° / 18°&#x22;，最后再添加一行居中的白色天气状况文本&#x22;多云&#x22;。在下半部分，打造一个融合中国传统水乡建筑与现代天际线的迷人城市：平静的绿松石色运河环绕着小岛，前景有 2 座小型拱形石桥，左侧岛屿上有一座凉亭，右侧中心附近有一座高大的多层宝塔，错落有致的灰瓦传统民居和店面，摆放着遮阳伞的户外茶桌，茂密的柳树、灌木、花卉以及水面上几艘小船。远景处展示现代化天际线，包含许多玻璃摩天大楼和 1 座显眼的针状观光塔。采用温暖晨光、电影级空气透视感、浅景深、移轴微缩摄影美学、高度逼真的材质、水面细腻倒影，以及精致且充满奇趣的旅游海报氛围。"><div></div></button></div></figure></div><hr></section><section><h2 id="8-高端谷物粉电商项目">8. 高端谷物粉电商项目<a class="anchor" href="#8-高端谷物粉电商项目"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：电商主图、详情页、食品饮品广告</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">中国电商产品营销项目。产品为速溶谷物粉饮品，品牌为"五谷磨房"，产品名为"核桃芝麻黑豆粉"。包装为哑光黑色零售包装盒，配有金色中文字体，正面印有大型漩涡状碗图案，内含独立黑色小袋，净含量 320g（32g×10袋）。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">整体风格为高端深色食品广告排版，色彩包括黑色、深棕色、暖金色、米色、核桃棕。灯光为戏剧性的摄影棚灯光，带有光泽高光和暖色轮廓光。氛围奢华、滋养、健康、诱人。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">版式为单个长幅复合项目，分为 5 个主要部分及底部故事板表格，包括主图、详情页、香浓细腻卖点区、冲泡方式、生活场景、独立小袋展示和视频广告分镜脚本。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">画面中包含黑芝麻、黑豆、黑米、核桃、谷物粉、透明玻璃杯中的浓稠灰褐色饮品、金属勺、散落食材、深色桌面、食材碗、产品盒与独立小袋。标题字体为金属金色粗体中文字体，正文为简洁无衬线中文字体，搭配细金色分割线和圆形食材边框。整体为超细节商业设计样机，精美电商主视觉图、详情页及广告故事板，4K。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="中国电商产品营销项目。产品为速溶谷物粉饮品，品牌为&#x22;五谷磨房&#x22;，产品名为&#x22;核桃芝麻黑豆粉&#x22;。包装为哑光黑色零售包装盒，配有金色中文字体，正面印有大型漩涡状碗图案，内含独立黑色小袋，净含量 320g（32g×10袋）。整体风格为高端深色食品广告排版，色彩包括黑色、深棕色、暖金色、米色、核桃棕。灯光为戏剧性的摄影棚灯光，带有光泽高光和暖色轮廓光。氛围奢华、滋养、健康、诱人。版式为单个长幅复合项目，分为 5 个主要部分及底部故事板表格，包括主图、详情页、香浓细腻卖点区、冲泡方式、生活场景、独立小袋展示和视频广告分镜脚本。画面中包含黑芝麻、黑豆、黑米、核桃、谷物粉、透明玻璃杯中的浓稠灰褐色饮品、金属勺、散落食材、深色桌面、食材碗、产品盒与独立小袋。标题字体为金属金色粗体中文字体，正文为简洁无衬线中文字体，搭配细金色分割线和圆形食材边框。整体为超细节商业设计样机，精美电商主视觉图、详情页及广告故事板，4K。"><div></div></button></div></figure></div><hr></section><section><h2 id="9-怀旧中国校园小卖部场景">9. 怀旧中国校园小卖部场景<a class="anchor" href="#9-怀旧中国校园小卖部场景"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：怀旧影像、生活化照片、年代感内容</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一张极具写实感的纪录片风格街头照片，拍摄于中国的一座老旧小镇，展现了斑驳的灰泥墙和裸露砖墙映衬下的怀旧小学小卖部。主体是一家极小的路边店铺，挂着一块褪色的红色招牌，上面写着"小卖部 便民商店"，屋顶是风化的黏土瓦片，配有生锈的金属支架。右侧背景中，一座混凝土校门上方悬挂着醒目的红色标语"好好学习 天天向上"，校门为紧锁的铁门。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">小卖部前，4 名身穿蓝白相间中国校服的小学生排成松散的队列，主要以背影和四分之三侧后方视角呈现，每人背着不同素色书包，放学后正在挑选玩具和零食。店主坐在昏暗的店铺内，被商品部分遮挡。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">店面挂满了琳琅满目的零食包装袋、糖果、泡泡糖、小型玩具扭蛋、塑料球、棒棒糖、廉价文具、儿童读物和盒装商品。环境应呈现出真实的生活气息：开裂的油漆、剥落的海报、布满灰尘的人行道、不平整的混凝土路面、老墙、柔和的午后阳光、温暖的泥土色调、浅景深、自然瑕疵、真实纹理，以及来自 21 世纪初的记忆视觉感。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="一张极具写实感的纪录片风格街头照片，拍摄于中国的一座老旧小镇，展现了斑驳的灰泥墙和裸露砖墙映衬下的怀旧小学小卖部。主体是一家极小的路边店铺，挂着一块褪色的红色招牌，上面写着&#x22;小卖部 便民商店&#x22;，屋顶是风化的黏土瓦片，配有生锈的金属支架。右侧背景中，一座混凝土校门上方悬挂着醒目的红色标语&#x22;好好学习 天天向上&#x22;，校门为紧锁的铁门。小卖部前，4 名身穿蓝白相间中国校服的小学生排成松散的队列，主要以背影和四分之三侧后方视角呈现，每人背着不同素色书包，放学后正在挑选玩具和零食。店主坐在昏暗的店铺内，被商品部分遮挡。店面挂满了琳琅满目的零食包装袋、糖果、泡泡糖、小型玩具扭蛋、塑料球、棒棒糖、廉价文具、儿童读物和盒装商品。环境应呈现出真实的生活气息：开裂的油漆、剥落的海报、布满灰尘的人行道、不平整的混凝土路面、老墙、柔和的午后阳光、温暖的泥土色调、浅景深、自然瑕疵、真实纹理，以及来自 21 世纪初的记忆视觉感。"><div></div></button></div></figure></div><hr></section><section><h2 id="10-中国小学生在街角小店">10. 中国小学生在街角小店<a class="anchor" href="#10-中国小学生在街角小店"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：街头纪实、生活化影像、真实场景参考</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一张写实风格的街头纪录片式抓拍照片，展现了三名小学生在中国一家老式社区便利店购买零食的场景，采用柔和的自然光拍摄。画面以店面视角平视构图，带有轻微的日常快照压缩感，纹理真实，富有层次。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">左侧，一名女学生侧身站立，身穿浅粉色拉链外套、深色牛仔裤，佩戴红领巾，扎着马尾辫并戴着白色发带，正低头看着手中的硬币或小物件。中间，一名男学生背对镜头，穿着亮蓝色校服运动套装，背着印有卡通图案的深蓝红色双肩包，身体微微前倾靠向柜台。右侧，一名扎着两个浅粉色发圈低马尾的年幼女学生靠在大型冰柜旁，身穿白色长袖上衣和蓝色运动裤，身旁放着一个粉色书包。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">柜台后昏暗的店内，一名身穿印有卡通图案粉色上衣的店主半掩在阴影中。柜台上堆满包装零食、透明塑料袋装糖果、色彩鲜艳的饼干盒、罐子和各类小商品。店面陈旧朴素，米色墙面略有剥落，左侧墙上贴着日历或通知单，配有金属框窗户和开放式服务窗口。人物面部应进行柔和处理或背对镜头，强调写实感与隐私，而非肖像细节。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="一张写实风格的街头纪录片式抓拍照片，展现了三名小学生在中国一家老式社区便利店购买零食的场景，采用柔和的自然光拍摄。画面以店面视角平视构图，带有轻微的日常快照压缩感，纹理真实，富有层次。左侧，一名女学生侧身站立，身穿浅粉色拉链外套、深色牛仔裤，佩戴红领巾，扎着马尾辫并戴着白色发带，正低头看着手中的硬币或小物件。中间，一名男学生背对镜头，穿着亮蓝色校服运动套装，背着印有卡通图案的深蓝红色双肩包，身体微微前倾靠向柜台。右侧，一名扎着两个浅粉色发圈低马尾的年幼女学生靠在大型冰柜旁，身穿白色长袖上衣和蓝色运动裤，身旁放着一个粉色书包。柜台后昏暗的店内，一名身穿印有卡通图案粉色上衣的店主半掩在阴影中。柜台上堆满包装零食、透明塑料袋装糖果、色彩鲜艳的饼干盒、罐子和各类小商品。店面陈旧朴素，米色墙面略有剥落，左侧墙上贴着日历或通知单，配有金属框窗户和开放式服务窗口。人物面部应进行柔和处理或背对镜头，强调写实感与隐私，而非肖像细节。"><div></div></button></div></figure></div><hr></section><section><h2 id="11-中国水墨笔触上海海报">11. 中国水墨笔触上海海报<a class="anchor" href="#11-中国水墨笔触上海海报"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：上海城市宣传、海派文化、旅游海报</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一张精致的中国城市宣传海报，背景为暖色调的米白色纹理纸。画面左下角伸出一支巨大的传统毛笔，向上挥洒出一道极具张力的笔触，并幻化为一座微缩的雕塑感城市景观。笔触呈现出水墨、水彩与浮雕结合的质感，边缘流畅，形状如浪潮般动感十足。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">在笔触内部，描绘上海，将其打造为融合中国艺术风格的优雅微缩景观：东方明珠塔、上海中心大厦以及外滩历史悠久的钟楼建筑，作为精细的建筑模型从笔触中升起。前景加入一条蜿蜒的蓝色河流，点缀 2 艘小船、梯田状堤岸，以及环绕建筑的写意传统云纹，并融入纹理岩石与秋色树木。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">配色采用柔和的青蓝色、石米色、浅灰色、铁锈红与水墨黑。整体风格融合中国水墨画、纸雕、浅浮雕微缩建筑与高端旅游海报设计。左下角附近放置醒目的黑色中国书法字"上海"，下方添加 2 行较小的中文宣传文案："申江潮起千帆竞，海上风来万象新"以及"海派都会・东方门户"。竖构图，艺术作品居中，留白充裕，布局极简，细节丰富。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="一张精致的中国城市宣传海报，背景为暖色调的米白色纹理纸。画面左下角伸出一支巨大的传统毛笔，向上挥洒出一道极具张力的笔触，并幻化为一座微缩的雕塑感城市景观。笔触呈现出水墨、水彩与浮雕结合的质感，边缘流畅，形状如浪潮般动感十足。在笔触内部，描绘上海，将其打造为融合中国艺术风格的优雅微缩景观：东方明珠塔、上海中心大厦以及外滩历史悠久的钟楼建筑，作为精细的建筑模型从笔触中升起。前景加入一条蜿蜒的蓝色河流，点缀 2 艘小船、梯田状堤岸，以及环绕建筑的写意传统云纹，并融入纹理岩石与秋色树木。配色采用柔和的青蓝色、石米色、浅灰色、铁锈红与水墨黑。整体风格融合中国水墨画、纸雕、浅浮雕微缩建筑与高端旅游海报设计。左下角附近放置醒目的黑色中国书法字&#x22;上海&#x22;，下方添加 2 行较小的中文宣传文案：&#x22;申江潮起千帆竞，海上风来万象新&#x22;以及&#x22;海派都会・东方门户&#x22;。竖构图，艺术作品居中，留白充裕，布局极简，细节丰富。"><div></div></button></div></figure></div><hr></section><section><h2 id="12-复古中国美食地图海报">12. 复古中国美食地图海报<a class="anchor" href="#12-复古中国美食地图海报"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：地方美食、文旅攻略、城市地图</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一张手绘复古中国旅游美食地图海报，采用水彩与水墨画风格，以俯瞰视角呈现云雾缭绕的山区县城景观。构图为一张风格化的缙云插画地图，带有淡雅的宣纸纹理，背景为柔和的米色，点缀着青灰色山脉、蜿蜒河流、乡村公路、古镇、奇石、竹叶，四角以粉色花卉装裱。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">左上角为醒目的艺术书法标题"缙云 山野美食暴走地图"，下方配有小型副标题丝带，写着"黄帝缙云·人间仙都"。中心位置为标注"缙云县城"的县城主城区，周围环绕着连接各个景点与当地美食的插画路线。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">包含 12 个带编号的美食站点，每个站点在地图对应位置旁配有一份写实风格的食物手绘图，并带有橙色圆形数字、中文标签及一行简短描述。地图上标注新建镇、壶镇镇、大洋镇、仙都景区、河阳古民居、岩宕书房、蛟龙大峡谷以及缙云县城。右下角添加小型图例框和装饰性罗盘。整体氛围优雅、匠心独运、怀旧且高级，像一张结合地方美食指南与风景地图插画的文化旅游海报。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="一张手绘复古中国旅游美食地图海报，采用水彩与水墨画风格，以俯瞰视角呈现云雾缭绕的山区县城景观。构图为一张风格化的缙云插画地图，带有淡雅的宣纸纹理，背景为柔和的米色，点缀着青灰色山脉、蜿蜒河流、乡村公路、古镇、奇石、竹叶，四角以粉色花卉装裱。左上角为醒目的艺术书法标题&#x22;缙云 山野美食暴走地图&#x22;，下方配有小型副标题丝带，写着&#x22;黄帝缙云·人间仙都&#x22;。中心位置为标注&#x22;缙云县城&#x22;的县城主城区，周围环绕着连接各个景点与当地美食的插画路线。包含 12 个带编号的美食站点，每个站点在地图对应位置旁配有一份写实风格的食物手绘图，并带有橙色圆形数字、中文标签及一行简短描述。地图上标注新建镇、壶镇镇、大洋镇、仙都景区、河阳古民居、岩宕书房、蛟龙大峡谷以及缙云县城。右下角添加小型图例框和装饰性罗盘。整体氛围优雅、匠心独运、怀旧且高级，像一张结合地方美食指南与风景地图插画的文化旅游海报。"><div></div></button></div></figure></div><hr></section><section><h2 id="13-传统中国青绿山水">13. 传统中国青绿山水<a class="anchor" href="#13-传统中国青绿山水"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：国风插画、山水背景、文化封面</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">传统中国青绿山水风格，新中式奇幻插画，月下仙境，竖构图。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">层峦叠的青绿山峰，山体呈现出宝石般通透发光的质感，青绿色渐变，山脊边缘带有精致的金箔勾勒与金色点缀，山间云雾缭绕。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">远景处，一轮巨大的明月高悬于天际，月光洒满山川河流。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">近景处，一座精致的古典中式凉亭内透出暖光，四周环绕着苍劲的松树、金色的树木、溪流、瀑布、烟雾及发光粒子，一条河流蜿蜒穿过山谷。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">左上角添加竖排手写书法字：东方美学，字号与间距适中。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">层次丰富，留白优雅，空灵静谧，梦幻唯美，重彩工笔风格，细节精致，柔和光影，电影级氛围，高端国风插画，超精细，8K，强烈的艺术感，诗意仙境，9:16 比例。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="传统中国青绿山水风格，新中式奇幻插画，月下仙境，竖构图。层峦叠的青绿山峰，山体呈现出宝石般通透发光的质感，青绿色渐变，山脊边缘带有精致的金箔勾勒与金色点缀，山间云雾缭绕。远景处，一轮巨大的明月高悬于天际，月光洒满山川河流。近景处，一座精致的古典中式凉亭内透出暖光，四周环绕着苍劲的松树、金色的树木、溪流、瀑布、烟雾及发光粒子，一条河流蜿蜒穿过山谷。左上角添加竖排手写书法字：东方美学，字号与间距适中。层次丰富，留白优雅，空灵静谧，梦幻唯美，重彩工笔风格，细节精致，柔和光影，电影级氛围，高端国风插画，超精细，8K，强烈的艺术感，诗意仙境，9:16 比例。"><div></div></button></div></figure></div><hr></section><section><h2 id="14-中国城市水墨笔触海报">14. 中国城市水墨笔触海报<a class="anchor" href="#14-中国城市水墨笔触海报"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：南京、苏州、杭州等城市宣传海报</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">一张极简主义的高端中国城市旅游海报，背景为米白色纹理纸张，留白广阔。一支传统书法毛笔从左下角切入，其一气呵成的笔触幻化为南京的精致微缩景观。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">在修长的墨迹形状内，构建一个细腻的立体模型式中国古城场景，包含层叠的山峦、风格化的卷云、淡绿色的水系、石墙以及古典建筑。在笔触左下方，展示 1 座带有灰砖墙和传统屋顶的坚固城门，城垛上插着微小的红旗。在右下方，展示 6 栋紧凑的传统临水建筑，配有深色瓦片屋顶和红色木结构。在右上角，展示 1 条穿过树林通往 1 座宏伟古城楼的宏大阶梯，城楼配有蓝灰色瓦片。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">采用墨黑、石灰、柔和青色、淡玉色、米色和柔和土红色的精致配色，融合水墨画、纸雕浮雕和超精细微缩模型的美学风格。笔触边缘呈现干笔擦拭的有机质感，仿佛城市是从笔墨中生长出来的一般。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">在笔触下方放置醒目的大字黑色中国书法"南京"。下方添加两行较小的印刷体中文文本："江南佳丽地，金陵帝王州"和"六朝古都·山水金陵"。整体构图诗意、优雅、高端且富有文化底蕴。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="一张极简主义的高端中国城市旅游海报，背景为米白色纹理纸张，留白广阔。一支传统书法毛笔从左下角切入，其一气呵成的笔触幻化为南京的精致微缩景观。在修长的墨迹形状内，构建一个细腻的立体模型式中国古城场景，包含层叠的山峦、风格化的卷云、淡绿色的水系、石墙以及古典建筑。在笔触左下方，展示 1 座带有灰砖墙和传统屋顶的坚固城门，城垛上插着微小的红旗。在右下方，展示 6 栋紧凑的传统临水建筑，配有深色瓦片屋顶和红色木结构。在右上角，展示 1 条穿过树林通往 1 座宏伟古城楼的宏大阶梯，城楼配有蓝灰色瓦片。采用墨黑、石灰、柔和青色、淡玉色、米色和柔和土红色的精致配色，融合水墨画、纸雕浮雕和超精细微缩模型的美学风格。笔触边缘呈现干笔擦拭的有机质感，仿佛城市是从笔墨中生长出来的一般。在笔触下方放置醒目的大字黑色中国书法&#x22;南京&#x22;。下方添加两行较小的印刷体中文文本：&#x22;江南佳丽地，金陵帝王州&#x22;和&#x22;六朝古都·山水金陵&#x22;。整体构图诗意、优雅、高端且富有文化底蕴。"><div></div></button></div></figure></div><hr></section><section><h2 id="15-中国五一铁路旅行信息图">15. 中国五一铁路旅行信息图<a class="anchor" href="#15-中国五一铁路旅行信息图"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>适合</strong>：小红书旅行攻略、路线规划、假期出行内容</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">创作一张精致的小红书风格中国旅行信息图海报，采用柔和的水彩地图美学，方形格式，展示一条穿越中国的五天高铁旅行路线。左上角为醒目的毛笔书法标题：五一出行计划。其正下方添加一条带有白色中文字符的绿色丝带副标题：广州→湖南→武汉→北京。副标题下方添加一行较小的中文文字："一路向北·发现中国之美"。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">背景为米色和浅鼠尾草绿色的中国中北部淡彩插画地图，带有淡淡的山脉纹理、柔和的河流以及角落处微妙的花卉装饰。一条垂直弯曲的铁路线从底部中心向上延伸至顶部中心，连接 4 个城市，并配有橙红色定位针和醒目的红色中文城市名称。从下到上依次为：广州、湖南、武汉、北京。沿途在轨道上放置白色小型高铁图标，并标注 3 个绿色旅行时间标签："广州→湖南 高铁约 2.5 小时"、"湖南→武汉 高铁约 1.5 小时"以及"武汉→北京 高铁约 4.5 小时"。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">在每个城市附近，包含一个风景拼贴画或地标插画群：广州配以现代天际线和广州塔；湖南配以青山和人文景观；武汉配以黄鹤楼和历史建筑；北京配以皇家宫殿建筑。在地图周围放置 4 张圆角矩形行程卡片，配有绿色标题、奶油色背景和照片缩略图。右下角添加备注面板，包含"行程亮点"和"出行小贴士"。底部中心放置"行程总览"，包含总时长、总里程、推荐交通和最佳出行时间。整体使用橄榄绿、鼠尾草绿、米色和暖红色调，将中国传统旅行海报的魅力与现代信息图的清晰度结合起来。</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="创作一张精致的小红书风格中国旅行信息图海报，采用柔和的水彩地图美学，方形格式，展示一条穿越中国的五天高铁旅行路线。左上角为醒目的毛笔书法标题：五一出行计划。其正下方添加一条带有白色中文字符的绿色丝带副标题：广州→湖南→武汉→北京。副标题下方添加一行较小的中文文字：&#x22;一路向北·发现中国之美&#x22;。背景为米色和浅鼠尾草绿色的中国中北部淡彩插画地图，带有淡淡的山脉纹理、柔和的河流以及角落处微妙的花卉装饰。一条垂直弯曲的铁路线从底部中心向上延伸至顶部中心，连接 4 个城市，并配有橙红色定位针和醒目的红色中文城市名称。从下到上依次为：广州、湖南、武汉、北京。沿途在轨道上放置白色小型高铁图标，并标注 3 个绿色旅行时间标签：&#x22;广州→湖南 高铁约 2.5 小时&#x22;、&#x22;湖南→武汉 高铁约 1.5 小时&#x22;以及&#x22;武汉→北京 高铁约 4.5 小时&#x22;。在每个城市附近，包含一个风景拼贴画或地标插画群：广州配以现代天际线和广州塔；湖南配以青山和人文景观；武汉配以黄鹤楼和历史建筑；北京配以皇家宫殿建筑。在地图周围放置 4 张圆角矩形行程卡片，配有绿色标题、奶油色背景和照片缩略图。右下角添加备注面板，包含&#x22;行程亮点&#x22;和&#x22;出行小贴士&#x22;。底部中心放置&#x22;行程总览&#x22;，包含总时长、总里程、推荐交通和最佳出行时间。整体使用橄榄绿、鼠尾草绿、米色和暖红色调，将中国传统旅行海报的魅力与现代信息图的清晰度结合起来。"><div></div></button></div></figure></div><hr></section><section><h2 id="使用建议">使用建议<a class="anchor" href="#使用建议"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这些提示词不一定要原封不动复制。更好的用法是把它们当成模板：</p><ul>
+<li>城市可以替换</li>
+<li>标题可以替换</li>
+<li>文案可以替换</li>
+<li>主体可以替换</li>
+<li>风格和构图可以保留</li>
+</ul><p>比如”西安海报”可以换成”洛阳海报”，“成都美食地图”可以换成”广州美食地图”。真正有用的不是某一句固定 prompt，而是这些提示词里面的结构：<strong>主体、场景、风格、细节、文字、构图、用途</strong>，都写得比较完整。</p></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/ai工具/skill开发/04-skill-dev/爆火skill合集总结/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">爆火Skill合集总结</span> </a> <a class="post-nav-link post-nav-next " href="/posts/其他/项目调研/07-项目调研/pi-agent-harness-研究笔记/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">pi-agent-harness-研究笔记</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

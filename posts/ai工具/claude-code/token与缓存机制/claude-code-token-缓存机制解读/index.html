@@ -1,0 +1,1461 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>Claude-Code-Token-缓存机制解读 - 翔子的博客</title><meta name="description" content="问题：Agent 每执行一步，都要从头重新阅读系统指令、工具定义、历史对话。"><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/claude-code/token%E4%B8%8E%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/claude-code-token-%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6%E8%A7%A3%E8%AF%BB/"><meta property="og:title" content="Claude-Code-Token-缓存机制解读 - 翔子的博客"><meta property="og:description" content="问题：Agent 每执行一步，都要从头重新阅读系统指令、工具定义、历史对话。"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/claude-code/token%E4%B8%8E%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/claude-code-token-%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6%E8%A7%A3%E8%AF%BB/"><meta name="twitter:title" content="Claude-Code-Token-缓存机制解读 - 翔子的博客"><meta name="twitter:description" content="问题：Agent 每执行一步，都要从头重新阅读系统指令、工具定义、历史对话。"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Claude-Code-Token-缓存机制解读","description":"问题：Agent 每执行一步，都要从头重新阅读系统指令、工具定义、历史对话。","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-06-05T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>Claude-Code-Token-缓存机制解读</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=AI%E5%B7%A5%E5%85%B7">AI工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">Claude-Code-Token-缓存机制解读</h1> <p class="post-subtitle">问题：Agent 每执行一步，都要从头重新阅读系统指令、工具定义、历史对话。</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-06-05 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 3,539 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 18 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#Claude Code</span><span class="post-tag">#Token与缓存机制</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="claude-code-token-缓存机制解读">Claude Code Token 缓存机制解读<a class="anchor" href="#claude-code-token-缓存机制解读"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><section><h2 id="1-核心概念上下文税context-tax">1. 核心概念：上下文税（Context Tax）<a class="anchor" href="#1-核心概念上下文税context-tax"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>问题</strong>：Agent 每执行一步，都要从头重新阅读系统指令、工具定义、历史对话。</p><p><strong>算账</strong>：20,000 token 的系统提示 × 50 轮 = <strong>100 万 token 冗余计算</strong>，按全价计费但不产生新价值。这就是”上下文税”。</p><p><strong>解决方法</strong>：Prompt Caching（提示词缓存）。但要用好它，必须理解其底层逻辑。</p></section><section><h2 id="2-面板数字四个累计指标">2. 面板数字：四个累计指标<a class="anchor" href="#2-面板数字四个累计指标"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>Claude Code <code>/usage</code> 面板显示的四个数值均为 <strong>Session 累计值（Session Totals）</strong>，而非单轮快照。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">字段</th><th align="left">官方名称</th><th align="left">含义（累计值）</th><th align="left">计费权重</th></tr></thead><tbody><tr><td align="left"><strong>Input</strong></td><td align="left"><code>input_tokens</code></td><td align="left">累计 <strong>首次处理</strong> 的 token（未命中缓存）。包含用户输入、<strong>工具返回结果</strong>、系统 Prompt 变动。</td><td align="left"><strong>全价</strong> (1×)</td></tr><tr><td align="left"><strong>Output</strong></td><td align="left"><code>output_tokens</code></td><td align="left">累计 <strong>模型生成</strong> 的 token（回答、代码、工具调用）。</td><td align="left"><strong>全价</strong> (通常 3~5× Input 单价)</td></tr><tr><td align="left"><strong>Cache Read</strong></td><td align="left"><code>cache_read_input_tokens</code></td><td align="left">累计从缓存 <strong>读取</strong> 的 token（命中缓存的历史内容）。</td><td align="left"><strong>极低价</strong> (约 0.1× Input，即 1 折)</td></tr><tr><td align="left"><strong>Cache Write</strong></td><td align="left"><code>cache_creation_input_tokens</code></td><td align="left">累计 <strong>写入</strong> 缓存的 token（新内容首次存档）。</td><td align="left"><strong>较高价</strong> (约 1.25× ~ 2× Input)</td></tr></tbody></table><section><h3 id="关键纠正点">关键纠正点<a class="anchor" href="#关键纠正点"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li><strong>Input ≠ 用户打字量</strong>：Agent 模式下，<code>Input</code> 包含大量 <strong>Tool Output</strong>（如 <code>Read</code> 文件内容、<code>Grep</code> 结果）。你打 10 个字，Input 却 8.4k，是因为后台静默工具返回了几千 token 的代码片段。</li>
+<li><strong>是累计值，不是单轮</strong>：每轮都在累加。<code>Cache Read</code> 的 2.5m = 15 轮 × 每轮 180k 旧历史复用。</li>
+</ol></section></section><section><h2 id="3-底层原理为什么能缓存">3. 底层原理：为什么能缓存？<a class="anchor" href="#3-底层原理为什么能缓存"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="31-transformer-的-kv-cache-机制">3.1 Transformer 的 KV Cache 机制<a class="anchor" href="#31-transformer-的-kv-cache-机制"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>每个 LLM 推理请求有两个阶段：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">阶段</th><th align="left">名称</th><th align="left">特点</th><th align="left">缓存作用</th></tr></thead><tbody><tr><td align="left"><strong>阶段 1</strong></td><td align="left">预填充（Prefill）</td><td align="left">计算密集型，为每个 token 计算 Query、Key、Value 向量</td><td align="left">生成 KV 张量</td></tr><tr><td align="left"><strong>阶段 2</strong></td><td align="left">解码（Decode）</td><td align="left">内存受限型，逐个生成输出 token</td><td align="left">复用 KV 状态</td></tr></tbody></table><p><strong>关键洞察</strong>：Key 和 Value 向量<strong>仅取决于其之前的 token</strong>。一旦为前缀计算出 KV 张量，就永远不需要改变。</p><p><strong>缓存的本质</strong>：基础设施存储这些 KV 张量，通过**累加级联哈希（Cumulative/Cascaded Hashing）**索引。API 内部以内容块（Blocks）为单位维护哈希链——不是对整个前缀算一个哈希，而是随着内容块流式累加。当新请求前缀匹配时，系统自动向后滚动寻找最长匹配前缀（2026 年新版 API 的 Auto-Caching 机制），KV 张量直接检索，<strong>跳过所有预填充计算</strong>。</p><p><strong>复杂度降级</strong>：从 O(n²) 降到 O(n)。对于重复 50 轮的 20,000 token 前缀，这是巨大的缩减。</p><p><strong>⚠️ 关键陷阱</strong>：哈希是流式累加的，这意味着<strong>一旦中间插入了任何动态内容</strong>（如随机排序的 JSON 键、每次不同的 tool output 顺序），其后的所有 KV 缓存都会雪崩式失效。这也是为什么”静态前缀必须绝对不变”——不是设计建议，是底层机制的硬约束。</p><section><h4 id="什么是-api-视角下的-block内容块">什么是 API 视角下的 Block（内容块）？<a class="anchor" href="#什么是-api-视角下的-block内容块"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>Anthropic 协议中，内容是高度结构化的：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">内容类型</th><th align="left">Block 计数</th></tr></thead><tbody><tr><td align="left">System Prompt</td><td align="left">1 Block</td></tr><tr><td align="left">Tool Definition</td><td align="left">1 Block</td></tr><tr><td align="left">每条 User Message</td><td align="left">1 Block</td></tr><tr><td align="left">每个独立的 Tool Use（工具调用）</td><td align="left">1 Block</td></tr><tr><td align="left">每个对应的 Tool Result（工具返回）</td><td align="left">1 Block</td></tr></tbody></table><p><strong>工程含义</strong>：一轮并发跑 5 个 Bash 命令 = 10 个 Blocks，哈希链极速延长。回溯窗口上限约 20 Blocks，超出部分会被冲刷掉。</p></section></section><section><h3 id="32-静态前缀-vs-动态尾部">3.2 静态前缀 vs 动态尾部<a class="anchor" href="#32-静态前缀-vs-动态尾部"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>智能体发送的每个请求由两部分组成：</p><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">┌─────────────────────────────────────────┐</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│  静态前缀（Static Prefix）               │  ← 缓存命中区，只付一次钱</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│  系统指令 + 工具定义 + CLAUDE.md          │</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├─────────────────────────────────────────┤</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│  动态尾部（Dynamic Tail）                │  ← 每轮新增，全价计算</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│  用户消息 + 工具输出 + 对话历史           │</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">└─────────────────────────────────────────</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="┌─────────────────────────────────────────┐│  静态前缀（Static Prefix）               │  ← 缓存命中区，只付一次钱│  系统指令 + 工具定义 + CLAUDE.md          │├─────────────────────────────────────────┤│  动态尾部（Dynamic Tail）                │  ← 每轮新增，全价计算│  用户消息 + 工具输出 + 对话历史           │└─────────────────────────────────────────"><div></div></button></div></figure></div><ul>
+<li><strong>静态前缀</strong>：整个会话中完全相同的部分。这是你一直在无谓重复计算的昂贵部分。</li>
+<li><strong>动态尾部</strong>：随请求变化的部分。这才是真正需要新鲜计算的内容。</li>
+</ul><p><strong>提示词缓存的工作原理</strong>：存储静态前缀的数学状态（KV 张量），后续请求直接读取，跳过重新计算。你只需支付一次处理该前缀的费用。</p></section></section><section><h2 id="4-架构设计如何构建提示词">4. 架构设计：如何构建提示词<a class="anchor" href="#4-架构设计如何构建提示词"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="41-最佳结构从变与不变开始">4.1 最佳结构（从变与不变开始）<a class="anchor" href="#41-最佳结构从变与不变开始"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Claude Code 的请求组织方式（按变更频率排序）：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">层级</th><th align="left">内容</th><th align="left">变更时机</th><th align="left">缓存影响</th></tr></thead><tbody><tr><td align="left"><strong>系统提示层</strong></td><td align="left">核心指令、工具定义、输出样式</td><td align="left">切换模型、升级 CC、加载新工具</td><td align="left">变更会<strong>失效整个缓存</strong></td></tr><tr><td align="left"><strong>项目上下文层</strong></td><td align="left"><code>CLAUDE.md</code>、自动内存、无范围规则</td><td align="left"><code>/clear</code> 或 <code>/compact</code> 后</td><td align="left">会话中期编辑不生效也不失效</td></tr><tr><td align="left"><strong>对话层</strong></td><td align="left">用户消息、模型响应、工具结果</td><td align="left">每个回合</td><td align="left">仅前缀匹配部分命中</td></tr></tbody></table><p><strong>启示</strong>：如果你在开发自己的 Agent，遵循此结构：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">顶部：系统指令和规则（不要在中途改变）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">中间：预先加载所有工具（不增不减）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">随后：检索上下文（会话期间保持静态）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">底部：对话历史和工具输出（动态增长）</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="顶部：系统指令和规则（不要在中途改变）中间：预先加载所有工具（不增不减）随后：检索上下文（会话期间保持静态）底部：对话历史和工具输出（动态增长）"><div></div></button></div></figure></div></section><section><h3 id="42-三层缓存架构失效范围">4.2 三层缓存架构（失效范围）<a class="anchor" href="#42-三层缓存架构失效范围"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Prompt 按变更频率分层，缓存失效是分层级的：</p><ul>
+<li><strong>系统提示层变更</strong>（切换模型、升级 CC）→ 整个缓存失效，下一轮全价重建</li>
+<li><strong>项目上下文层变更</strong>（<code>/compact</code>）→ 对话层失效，系统提示层保留</li>
+<li><strong>对话层变更</strong>（每轮新消息）→ 仅新增部分按 Input 计费，前缀命中 Cache Read</li>
+</ul></section></section><section><h2 id="5-健康状态诊断">5. 健康状态诊断<a class="anchor" href="#5-健康状态诊断"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="51-缓存效率公式">5.1 缓存效率公式<a class="anchor" href="#51-缓存效率公式"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">缓存效率得分 = cache_read_input_tokens / cache_creation_input_tokens</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="缓存效率得分 = cache_read_input_tokens / cache_creation_input_tokens"><div></div></button></div></figure></div><p>像监控系统 uptime 一样监控它。Claude Code 实现了 <strong>92% 命中率</strong> 和 <strong>81% 成本削减</strong>。</p></section><section><h3 id="52-健康-vs-异常状态对比">5.2 健康 vs 异常状态对比<a class="anchor" href="#52-健康-vs-异常状态对比"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">状态</th><th align="left">Read vs Write</th><th align="left">含义</th><th align="left">成本</th></tr></thead><tbody><tr><td align="left"><strong>✅ 健康</strong></td><td align="left"><code>Read >> Write</code></td><td align="left">滚雪球效应，大部分内容从缓存读取</td><td align="left">极低（1 折）</td></tr><tr><td align="left"><strong>️ 初期</strong></td><td align="left"><code>Write > Read</code></td><td align="left">Session 刚开始，写入积累快于读取</td><td align="left">正常过渡</td></tr><tr><td align="left"><strong>❌ 异常</strong></td><td align="left"><code>Write > Read</code>（长会话）</td><td align="left">TTL 过期或前缀断裂，反复重建</td><td align="left">极高（全价 × 1.25）</td></tr></tbody></table></section><section><h3 id="53-异常诊断指南">5.3 异常诊断指南<a class="anchor" href="#53-异常诊断指南"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>当面板显示 <code>Write > Read</code>（长会话中）时，按以下顺序排查：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">排查项</th><th align="left">检查方法</th><th align="left">处理</th></tr></thead><tbody><tr><td align="left"><strong>TTL 过期</strong></td><td align="left">是否空闲 >5 分钟（API 用户）</td><td align="left">保持活跃，避免中断</td></tr><tr><td align="left"><strong>前缀断裂</strong></td><td align="left">是否切换模型/改 CLAUDE.md/拒绝裸工具名</td><td align="left">会话初期锁定配置</td></tr><tr><td align="left"><strong>网关不支持</strong></td><td align="left">连续 3 轮 <code>Cache Read ≈ 0</code></td><td align="left">见第 8 节前线战报，考虑切换原生 API</td></tr></tbody></table></section></section><section><h2 id="6-ttl-策略与缓存生命周期">6. TTL 策略与缓存生命周期<a class="anchor" href="#6-ttl-策略与缓存生命周期"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">身份验证方式</th><th align="left">默认 TTL</th><th align="left">说明</th></tr></thead><tbody><tr><td align="left"><strong>Claude 订阅</strong></td><td align="left">1 小时</td><td align="left">自动开启，不额外收费。适合长时工作。</td></tr><tr><td align="left"><strong>API 密钥 / 第三方网关</strong></td><td align="left">5 分钟</td><td align="left">你当前使用 Qwen 网关，属于此类。空闲 5 分钟即失效。</td></tr><tr><td align="left"><strong>开启 1 小时 TTL</strong></td><td align="left">5 分钟 → 1 小时</td><td align="left">设置 <code>ENABLE_PROMPT_CACHING_1H=1</code>。注意：<strong>1 小时 TTL 的 Cache Write 费率更高</strong>（2× 基础价）。</td></tr></tbody></table><p><strong>缓存保持机制</strong>：每个命中缓存的请求都会重置 TTL 计时器。只要持续工作，缓存就保持”温暖”。长时间间隙后，下一请求重新计算完整输入并重建缓存。</p></section><section><h2 id="7-操作红黑榜安全-vs-危险">7. 操作红黑榜（安全 vs 危险）<a class="anchor" href="#7-操作红黑榜安全-vs-危险"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">分类</th><th align="left">操作示例</th><th align="left">缓存影响</th><th align="left">建议</th></tr></thead><tbody><tr><td align="left"><strong>✅ 安全操作</strong></td><td align="left">编辑文件</td><td align="left">仅附加 <code>&#x3C;system-reminder></code>，前缀不变</td><td align="left">放心操作</td></tr><tr><td align="left"></td><td align="left"><code>/recap</code></td><td align="left">附加摘要到对话末尾，不替换历史</td><td align="left">放心操作</td></tr><tr><td align="left"></td><td align="left"><code>/rewind</code>（重绕）</td><td align="left">截断回早期回合，<strong>直接命中已缓存前缀</strong></td><td align="left"><strong>优先于 <code>/compact</code></strong></td></tr><tr><td align="left"></td><td align="left">调用 Skills/Commands</td><td align="left">指令注入为用户消息，附加在末尾</td><td align="left">放心操作</td></tr><tr><td align="left"></td><td align="left">更改权限模式</td><td align="left">不改变系统提示或工具定义</td><td align="left">放心操作</td></tr><tr><td align="left"><strong>❌ 危险操作</strong></td><td align="left">切换模型 (<code>/model</code>)</td><td align="left"><strong>完全失效</strong>，每个模型独立缓存</td><td align="left">会话初期选定，中途不改</td></tr><tr><td align="left"></td><td align="left">更改工作量 (<code>/effort</code>)</td><td align="left">改变缓存键，<strong>完全失效</strong></td><td align="left">同上</td></tr><tr><td align="left"></td><td align="left">开启 Fast Mode</td><td align="left">添加请求头改变缓存键</td><td align="left">同上</td></tr><tr><td align="left"></td><td align="left">Compact (<code>/compact</code>)</td><td align="left"><strong>下一轮必定缓存未命中</strong>，对话层哈希完全改变，需重新全量 Cache Write</td><td align="left">仅在任务自然中断点使用，<strong>严禁高频迭代中期执行</strong></td></tr><tr><td align="left"></td><td align="left">拒绝裸工具名 (<code>Bash</code>)</td><td align="left">移除系统提示中的工具定义</td><td align="left">用作用域规则替代 <code>Bash(rm *)</code></td></tr><tr><td align="left"></td><td align="left">连接/断开 MCP</td><td align="left">若工具加载到前缀（非延迟模式），<strong>完全失效</strong></td><td align="left">检查 MCP 延迟加载配置</td></tr></tbody></table><section><h3 id="71-关于-compact-的正确认知">7.1 关于 <code>/compact</code> 的正确认知<a class="anchor" href="#71-关于-compact-的正确认知"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>/compact</code> <strong>不是一次缓存安全的操作</strong>。它的真实行为：</p><ol>
+<li><strong>临时请求命中缓存</strong>：Claude Code 先发起一次临时请求（该请求本身命中缓存）来生成摘要。</li>
+<li><strong>摘要替换历史</strong>：用新摘要彻底替换掉现有的对话历史层。</li>
+<li><strong>下一轮必定 Cache Miss</strong>：由于对话层被砍掉重练，前缀的哈希完全改变，下一轮必须重新进行一次高昂的 Cache Write。</li>
+</ol><p><strong>忠告</strong>：<code>/compact</code> 是一次性断骨疗伤，切忌在任务高频迭代中期执行。必须等待任务彻底结束、自然中断时才可使用。高频任务中需要压缩时，优先考虑 <code>/recap</code>（附加摘要到末尾，不替换历史）。</p></section><section><h3 id="72-子代理缓存">7.2 子代理缓存<a class="anchor" href="#72-子代理缓存"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>独立构建</strong>：子代理启动自己的对话，<strong>不继承父级缓存</strong>，首轮无命中。</li>
+<li><strong>强制 TTL</strong>：子代理强制使用 <strong>5 分钟 TTL</strong>（即使主对话配置了 1 小时）。</li>
+<li><strong>父级无影响</strong>：子代理结果仅附加到父对话末尾，父级前缀保持完整。</li>
+</ul></section><section><h3 id="73-mcp-服务器缓存细节">7.3 MCP 服务器缓存细节<a class="anchor" href="#73-mcp-服务器缓存细节"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>延迟工具</strong>（默认，支持模型上）：服务器连接/断开/更改工具列表<strong>不破坏缓存</strong>。</li>
+<li><strong>加载到前缀的工具</strong>（Haiku、Vertex AI、自定义网关）：任何变化都会<strong>使缓存失效</strong>。</li>
+<li><strong>排查</strong>：缓存频繁失效时，检查 MCP 服务器是否意外断开重连。</li>
+</ul></section></section><section><h2 id="8-前线战报第三方网关缓存不生效qwendashscope">8. 前线战报：第三方网关缓存不生效（Qwen/DashScope）<a class="anchor" href="#8-前线战报第三方网关缓存不生效qwendashscope"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="81-异常面板现场">8.1 异常面板现场<a class="anchor" href="#81-异常面板现场"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>现象</strong>：某 Session 显示 <code>Cache Write: 316.5k</code> > <code>Cache Read: 276.2k</code>。</p><p>在原生 Anthropic API 下，长会话几乎不可能出现 <code>Write > Read</code>——正常情况是雪崩式滚雪球效应（<code>Read >> Write</code>）。只有在网关根本不支持缓存、或回溯窗口（Backtrack Window > 20 blocks，Block 定义见 3.1 节）被冲刷掉时才会发生。</p><p></p><center><figure><img src="https://raw.githubusercontent.com/wang1xiang/assets/master/images/2026-06-05-cc-token-write-gt-read-anomaly.png" alt="Write 大于 Read 的异常面板"><figcaption>Write 大于 Read 的异常面板</figcaption></figure></center><p></p><p><strong>解读</strong>：</p><ul>
+<li><code>Input: 131.4k</code>：累计首次处理量。</li>
+<li><code>Cache Read: 276.2k</code>：累计复用旧历史量。</li>
+<li><code>Cache Write: 316.5k</code>：累计写入量。</li>
+<li><strong>结论</strong>：系统大部分时间在”重新计算”而非”复习”。这是典型的<strong>网关缓存不工作</strong>特征。</li>
+</ul></section><section><h3 id="82-技术原因">8.2 技术原因<a class="anchor" href="#82-技术原因"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li>
+<p><strong>DashScope 隐式缓存不工作</strong>：</p>
+<ul>
+<li>Claude Code v2.x+ 自动注入 <code>cache_control</code> 标记。</li>
+<li><strong>已知缺陷</strong>：DashScope 的 <code>/apps/anthropic</code> 端点上，<strong>隐式缓存不工作</strong>（<a href="https://github.com/QwenLM/qwen-code/issues/2823" target="_blank" rel="noopener noreferrer">GitHub Issue #2823</a>）。</li>
+<li><strong>结果</strong>：网关未正确响应 Cache Read，所有历史按 Input 全价计费。</li>
+</ul>
+</li>
+<li>
+<p><strong>Compact 加剧问题</strong>：</p>
+<ul>
+<li><code>/compact</code> 本身就会导致下一轮缓存未命中（见 7.1 节）。</li>
+<li>在网关缓存不生效的前提下，Compact 后的全量重新计算雪上加霜。</li>
+</ul>
+</li>
+</ol></section><section><h3 id="83-验证方法">8.3 验证方法<a class="anchor" href="#83-验证方法"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>对比连续 3 轮数据：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">如果缓存正常工作（Anthropic 原生 API）:</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Round 1: Input 高 (重建), Cache Write 高</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Round 2: Input 降低, Cache Read 增长 ✅</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Round 3: Read >> Write, 健康状态</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">如果缓存不工作（Qwen 网关）:</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Round 1: Input 高</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Round 2: Input 依然高 (无 Cache Read)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Round 3: Input 依然高, Cache Read ≈ 0 ❌</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="如果缓存正常工作（Anthropic 原生 API）:Round 1: Input 高 (重建), Cache Write 高Round 2: Input 降低, Cache Read 增长 ✅Round 3: Read >> Write, 健康状态如果缓存不工作（Qwen 网关）:Round 1: Input 高Round 2: Input 依然高 (无 Cache Read)Round 3: Input 依然高, Cache Read ≈ 0 ❌"><div></div></button></div></figure></div></section><section><h3 id="84-成本影响">8.4 成本影响<a class="anchor" href="#84-成本影响"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">方案</th><th align="left">缓存命中率</th><th align="left">实际成本</th></tr></thead><tbody><tr><td align="left"><strong>Anthropic 原生 API</strong></td><td align="left">80-90%</td><td align="left">Input 全价的 10-20%</td></tr><tr><td align="left"><strong>Qwen 网关（当前）</strong></td><td align="left">接近 0%</td><td align="left">Input 全价（无缓存优惠）</td></tr></tbody></table><p>Reddit 上有用户报告通过第三方网关使用 Claude Code 时 Token 费用异常高，原因正是缓存未生效。</p></section><section><h3 id="85-建议">8.5 建议<a class="anchor" href="#85-建议"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li><strong>验证状态</strong>：检查连续几轮 <code>Cache Read</code>。若一直为 0 或极低，确认缓存未工作。</li>
+<li><strong>权衡方案</strong>：
+<ul>
+<li>追求缓存优化 → 切换 Anthropic 原生模型（Sonnet/Opus）。</li>
+<li>继续用 Qwen → 接受 Input 全价，但 Qwen 单价低，可能仍有成本优势。</li>
+</ul>
+</li>
+<li><strong>关注修复</strong>：DashScope 正在改进 Anthropic 兼容端点缓存支持。</li>
+</ol><p><strong>来源</strong>：<a href="https://github.com/QwenLM/qwen-code/issues/2823" target="_blank" rel="noopener noreferrer">GitHub Issue #2823</a> | <a href="https://www.reddit.com/r/Qwen_AI/comments/1s48o3e/question_very_high_token_charges_using_claude/" target="_blank" rel="noopener noreferrer">Reddit 讨论</a> | <a href="https://help.aliyun.com/zh/model-studio/context-cache" target="_blank" rel="noopener noreferrer">阿里云文档</a></p></section></section><section><h2 id="9-调研纠错记录">9. 调研纠错记录<a class="anchor" href="#9-调研纠错记录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>本次调研过程充满反复验证，以下记录核心争议点及 AI 口误，供日后参考。</p><section><h3 id="争议一为什么打-10-个字input-却有-84k">争议一：为什么打 10 个字，Input 却有 8.4k？<a class="anchor" href="#争议一为什么打-10-个字input-却有-84k"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>错误猜测</strong>：System Prompt 没命中缓存？Input 包含了上一轮 Output？
+<strong>正确结论</strong>：<strong>Tool Output 是 Input 的大头</strong>。Agent 模式下，模型为回答 10 个字，后台可能执行 <code>Grep</code>、<code>Read</code> 等静默工具，返回的代码片段（几千 token）都算 Input。</p></section><section><h3 id="争议二cache-read-是否有-180k-天花板">争议二：Cache Read 是否有 180k 天花板？<a class="anchor" href="#争议二cache-read-是否有-180k-天花板"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>错误假设</strong>：181.9k 是窗口上限，到达后截断。
+<strong>真相</strong>：180k 是<strong>单轮前缀缓存上限</strong>，2.5m 是<strong>累计总量</strong>（15 轮 × 180k）。</p></section><section><h3 id="争议三ai-混淆单轮与累计">争议三：AI 混淆”单轮”与”累计”<a class="anchor" href="#争议三ai-混淆单轮与累计"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>在解释过程中，AI 多次用”本轮”描述累计数据，忽略这是 3.5 小时的总账本。</p><p></p><center><figure><img src="https://raw.githubusercontent.com/wang1xiang/assets/master/images/2026-06-05-cc-token-wrong-table-round-vs-cumulative.png" alt="AI 混淆单轮与累计的表格"><figcaption>AI 混淆单轮与累计的表格</figcaption></figure></center><p></p><p></p><center><figure><img src="https://raw.githubusercontent.com/wang1xiang/assets/master/images/2026-06-05-cc-token-persistent-error-round-language.png" alt="AI 持续使用&#x22;本轮&#x22;描述累计数据"><figcaption>AI 持续使用"本轮"描述累计数据</figcaption></figure></center><p></p><p><strong>反思</strong>：解释 Token 机制时，必须坚持 <strong>“面板数字 = 累计总额”</strong> 第一性原理。任何”本轮”描述必须明确指”这一轮对累计值的贡献”。</p></section></section><section><h2 id="10-总结">10. 总结<a class="anchor" href="#10-总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><ul>
+<li><strong>面板数字</strong> = 历史账单总额（累计值），非单轮快照。</li>
+<li><strong>Cost 估算</strong> = 本地估值，第三方模型费率可能不准，以服务商后台为准。</li>
+<li><strong>核心机制</strong> = KV Cache 前缀复用。静态前缀只付一次钱，动态尾部按轮计费。</li>
+<li><strong>缓存不是”功能”，是架构规范</strong>：提示词必须按”变与不变”分层组织。</li>
+<li><strong>最佳实践</strong>：
+<ol>
+<li><strong>保持活跃</strong>：避免 >5 分钟中断（API 用户）。</li>
+<li><strong>锁定配置</strong>：会话初期选定模型/Effort，中途不改。</li>
+<li><strong>善用 Rewind</strong>：走错路时用 <code>/rewind</code> 替代 <code>/compact</code>，可复用旧缓存。</li>
+<li><strong>监控 Read/Write</strong>：健康比率 <code>Read >> Write</code>。异常时检查 TTL 或前缀断裂。</li>
+<li><strong>验证网关缓存</strong>：第三方网关（Qwen）当前可能不生效，定期检查确认。</li>
+<li><strong>控制并发 Tool Calls</strong>：单轮并发 10 个命令 = 20 Blocks，容易冲刷回溯窗口。尽量串行或分批执行。</li>
+</ol>
+</li>
+</ul></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/其他/项目调研/07-项目调研/open-design-designmd-提炼指南/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">Open-Design-DESIGN.md-提炼指南</span> </a> <a class="post-nav-link post-nav-next " href="/posts/ai工具/claude-code/记忆系统/claude-mem完整工作原理调研/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">claude-mem完整工作原理调研</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

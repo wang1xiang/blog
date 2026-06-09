@@ -1,0 +1,1210 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>Open-Design-DESIGN.md-提炼指南 - 翔子的博客</title><meta name="description" content="OD 用得好不好的核心变量就是 DESIGN.md。"><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/%E5%85%B6%E4%BB%96/%E9%A1%B9%E7%9B%AE%E8%B0%83%E7%A0%94/07-%E9%A1%B9%E7%9B%AE%E8%B0%83%E7%A0%94/open-design-designmd-%E6%8F%90%E7%82%BC%E6%8C%87%E5%8D%97/"><meta property="og:title" content="Open-Design-DESIGN.md-提炼指南 - 翔子的博客"><meta property="og:description" content="OD 用得好不好的核心变量就是 DESIGN.md。"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/%E5%85%B6%E4%BB%96/%E9%A1%B9%E7%9B%AE%E8%B0%83%E7%A0%94/07-%E9%A1%B9%E7%9B%AE%E8%B0%83%E7%A0%94/open-design-designmd-%E6%8F%90%E7%82%BC%E6%8C%87%E5%8D%97/"><meta name="twitter:title" content="Open-Design-DESIGN.md-提炼指南 - 翔子的博客"><meta name="twitter:description" content="OD 用得好不好的核心变量就是 DESIGN.md。"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Open-Design-DESIGN.md-提炼指南","description":"OD 用得好不好的核心变量就是 DESIGN.md。","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-06-08T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>Open-Design-DESIGN.md-提炼指南</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=%E5%85%B6%E4%BB%96">其他</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">Open-Design-DESIGN.md-提炼指南</h1> <p class="post-subtitle">OD 用得好不好的核心变量就是 DESIGN.md。</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-06-08 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 2,350 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 12 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#项目调研</span><span class="post-tag">#07-项目调研</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="open-design-designmd-9-节-schema-提炼指南">Open Design DESIGN.md 9 节 schema 提炼指南<a class="anchor" href="#open-design-designmd-9-节-schema-提炼指南"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><section><h2 id="1-为什么需要-designmd">1. 为什么需要 DESIGN.md<a class="anchor" href="#1-为什么需要-designmd"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>OD 用得好不好的<strong>核心变量</strong>就是 DESIGN.md。</p><p><strong>没有 DESIGN.md 的 OD</strong>：</p><ul>
+<li>输出风格随机，第 1 次和第 10 次完全不一样</li>
+<li>颜色、间距、字体全靠模型脑补</li>
+<li>跟”直接让 Claude Code 写 React”没本质区别</li>
+</ul><p><strong>有 DESIGN.md 的 OD</strong>：</p><ul>
+<li>所有输出强制对齐同一份契约</li>
+<li>100 个页面 1 种风格</li>
+<li>品牌规范从”文档里大家尽量遵守”变成”代码里机械强制执行”</li>
+</ul><p>→ DESIGN.md 是 OD 的<strong>灵魂</strong>，不是可选项。</p></section><section><h2 id="2-两种提炼路径">2. 两种提炼路径<a class="anchor" href="#2-两种提炼路径"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="路径-a让-claude-自动提炼推荐">路径 A：让 Claude 自动提炼（推荐）<a class="anchor" href="#路径-a让-claude-自动提炼推荐"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>只回答 3 个问题，Claude 直接出 DESIGN.md：</p><ol>
+<li><strong>品牌名/产品名</strong></li>
+<li><strong>参考素材</strong>（任选一种或多种）：
+<ul>
+<li>现有项目代码仓库路径</li>
+<li>截图（已做的 UI、想模仿的网站截图）</li>
+<li>参考网站 URL（如 <a href="https://linear.app%EF%BC%89" target="_blank" rel="noopener noreferrer">https://linear.app）</a></li>
+<li>已有 Figma 设计稿</li>
+<li>一段品牌调性描述（“赛博朋克 + 简洁混合”）</li>
+</ul>
+</li>
+<li><strong>使用场景</strong>（B 端工具 / C 端营销 / 个人作品集 / …）</li>
+</ol><p><strong>优势</strong>：30 秒搞定，逆向工程出风格契约
+<strong>适用</strong>：你有明确参考对象（已有项目、想模仿的产品）</p></section><section><h3 id="路径-b手动按-9-节填写">路径 B：手动按 9 节填写<a class="anchor" href="#路径-b手动按-9-节填写"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>按下面的完整模板填，<strong>全部填完约 30-60 分钟</strong>。</p><p><strong>优势</strong>：每个细节自己掌控，理解最深
+<strong>适用</strong>：从零定义新品牌、要求精细化打磨</p></section></section><section><h2 id="3-完整-9-节-designmd-模板">3. 完整 9 节 DESIGN.md 模板<a class="anchor" href="#3-完整-9-节-designmd-模板"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>整段可直接复制，按你的实际值替换占位符即可：</p><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238"># {品牌名} Design System</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#9FA3AB;--1:#646568;--1fs:italic">> 一句话品牌描述：例如 "一个让前端工程师 30 秒做出小红书爆款笔记的 AI 工具"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# {品牌名} Design System> 一句话品牌描述：例如 &#x22;一个让前端工程师 30 秒做出小红书爆款笔记的 AI 工具&#x22;"><div></div></button></div></figure></div><section><h3 id="section-1-visual-thesis视觉论断">Section 1: Visual Thesis（视觉论断）<a class="anchor" href="#section-1-visual-thesis视觉论断"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>用 3-5 句话回答这个产品看起来应该是什么”感觉”。</strong>
+不是描述”有什么”，而是描述”为什么这么设计”。</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 1. Visual Thesis</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#D19A66;--1:#875D01;--1fw:bold">**气质**</span><span style="--0:#ABB2BF;--1:#383A42">：克制、专业、不喧哗。我们相信"少即是多"。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#D19A66;--1:#875D01;--1fw:bold">**隐喻**</span><span style="--0:#ABB2BF;--1:#383A42">：像一本设计精良的杂志，不是一个炫技的网页。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#D19A66;--1:#875D01;--1fw:bold">**反对**</span><span style="--0:#ABB2BF;--1:#383A42">：拒绝渐变滥用、拒绝玻璃拟态、拒绝过度动画。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#D19A66;--1:#875D01;--1fw:bold">**致敬**</span><span style="--0:#ABB2BF;--1:#383A42">：Linear、Stripe、Notion 的克制美学。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#D19A66;--1:#875D01;--1fw:bold">**情绪关键词**</span><span style="--0:#ABB2BF;--1:#383A42">：sharp、quiet、confident、generous</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 1. Visual Thesis- **气质**：克制、专业、不喧哗。我们相信&#x22;少即是多&#x22;。- **隐喻**：像一本设计精良的杂志，不是一个炫技的网页。- **反对**：拒绝渐变滥用、拒绝玻璃拟态、拒绝过度动画。- **致敬**：Linear、Stripe、Notion 的克制美学。- **情绪关键词**：sharp、quiet、confident、generous"><div></div></button></div></figure></div></section><section><h3 id="section-2-color-system颜色系统">Section 2: Color System（颜色系统）<a class="anchor" href="#section-2-color-system颜色系统"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-o9fy7gyc4" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 2. Color System</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 主色（Primary）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Brand Primary: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#5E6AD2</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — Linear 风格靛紫色，用于主 CTA、品牌强调</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Brand Primary Hover: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#4A55C2</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Brand Primary Active: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#3C46B4</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 中性色（Neutrals）— 9 阶</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-50: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#FAFAFA</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 最浅背景</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-100: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#F4F4F5</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 卡片背景</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-200: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#E4E4E7</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 分隔线</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-300: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#D4D4D8</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-400: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#A1A1AA</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-500: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#71717A</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 次要文字</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-600: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#52525B</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-700: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#3F3F46</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-800: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#27272A</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 主要文字</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-900: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#18181B</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 最深背景</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> gray-950: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#09090B</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 语义色（Semantic）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">25</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Success: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#10B981</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">26</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Warning: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#F59E0B</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">27</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Error: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#EF4444</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">28</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Info: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#3B82F6</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">29</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">30</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 主题模式</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">31</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">32</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 支持: 深色模式（默认）+ 浅色模式</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">33</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 背景色: 深色 </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#09090B</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> / 浅色 </span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#FFFFFF</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">34</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 主文字: 深色 </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#FAFAFA</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> / 浅色 </span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">#18181B</span><span style="--0:#E5C07B">`</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 2. Color System### 主色（Primary）- Brand Primary: &#x60;#5E6AD2&#x60; — Linear 风格靛紫色，用于主 CTA、品牌强调- Brand Primary Hover: &#x60;#4A55C2&#x60;- Brand Primary Active: &#x60;#3C46B4&#x60;### 中性色（Neutrals）— 9 阶- gray-50: &#x60;#FAFAFA&#x60; — 最浅背景- gray-100: &#x60;#F4F4F5&#x60; — 卡片背景- gray-200: &#x60;#E4E4E7&#x60; — 分隔线- gray-300: &#x60;#D4D4D8&#x60;- gray-400: &#x60;#A1A1AA&#x60;- gray-500: &#x60;#71717A&#x60; — 次要文字- gray-600: &#x60;#52525B&#x60;- gray-700: &#x60;#3F3F46&#x60;- gray-800: &#x60;#27272A&#x60; — 主要文字- gray-900: &#x60;#18181B&#x60; — 最深背景- gray-950: &#x60;#09090B&#x60;### 语义色（Semantic）- Success: &#x60;#10B981&#x60;- Warning: &#x60;#F59E0B&#x60;- Error: &#x60;#EF4444&#x60;- Info: &#x60;#3B82F6&#x60;### 主题模式- 支持: 深色模式（默认）+ 浅色模式- 背景色: 深色 &#x60;#09090B&#x60; / 浅色 &#x60;#FFFFFF&#x60;- 主文字: 深色 &#x60;#FAFAFA&#x60; / 浅色 &#x60;#18181B&#x60;"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-o9fy7gyc4"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="section-3-typography字体系统">Section 3: Typography（字体系统）<a class="anchor" href="#section-3-typography字体系统"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-mg2hr8x32" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 3. Typography</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 字体栈</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Sans: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">"Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Mono: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">"JetBrains Mono", "SF Mono", Monaco, Consolas, monospace</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 字重</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Regular: 400 / Medium: 500 / Semibold: 600 / Bold: 700</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 字号（type scale）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> xs: 12px / 1.5</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> sm: 14px / 1.5</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> base: 16px / 1.6</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> lg: 18px / 1.6</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> xl: 20px / 1.4</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 2xl: 24px / 1.3</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 3xl: 30px / 1.2</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 4xl: 36px / 1.15</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 5xl: 48px / 1.1</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 6xl: 60px / 1.05</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">25</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 标题层级</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">26</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">27</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> H1: 4xl-5xl，bold，行高 1.1（hero 标题）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">28</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> H2: 3xl，semibold，行高 1.2（章节标题）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">29</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> H3: 2xl，semibold，行高 1.3（卡片标题）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">30</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Body: base，regular（正文）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">31</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Caption: sm，regular，gray-500（辅助信息）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">32</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">33</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 中文优化</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">34</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">35</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 中文字符使用 </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">letter-spacing: 0.02em</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> 增加可读性</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">36</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 中英文混排时英文用 Inter，中文用系统默认</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 3. Typography### 字体栈- Sans: &#x60;&#x22;Inter&#x22;, -apple-system, BlinkMacSystemFont, &#x22;PingFang SC&#x22;, &#x22;Microsoft YaHei&#x22;, sans-serif&#x60;- Mono: &#x60;&#x22;JetBrains Mono&#x22;, &#x22;SF Mono&#x22;, Monaco, Consolas, monospace&#x60;### 字重- Regular: 400 / Medium: 500 / Semibold: 600 / Bold: 700### 字号（type scale）- xs: 12px / 1.5- sm: 14px / 1.5- base: 16px / 1.6- lg: 18px / 1.6- xl: 20px / 1.4- 2xl: 24px / 1.3- 3xl: 30px / 1.2- 4xl: 36px / 1.15- 5xl: 48px / 1.1- 6xl: 60px / 1.05### 标题层级- H1: 4xl-5xl，bold，行高 1.1（hero 标题）- H2: 3xl，semibold，行高 1.2（章节标题）- H3: 2xl，semibold，行高 1.3（卡片标题）- Body: base，regular（正文）- Caption: sm，regular，gray-500（辅助信息）### 中文优化- 中文字符使用 &#x60;letter-spacing: 0.02em&#x60; 增加可读性- 中英文混排时英文用 Inter，中文用系统默认"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-mg2hr8x32"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="section-4-spacing-system间距系统">Section 4: Spacing System（间距系统）<a class="anchor" href="#section-4-spacing-system间距系统"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-mqykm1jo6" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 4. Spacing System</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 基础单位</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">4px 为最小步进，所有间距必须是 4 的倍数（不允许 5px、7px）。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 间距阶</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">0/1/2/3/4/5/6/8/10/12/16/20/24</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">对应 0/4/8/12/16/20/24/32/40/48/64/80/96 px</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 常用语义</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 组件内部 padding: 16-24px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 组件之间间距: 24-32px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 章节之间间距: 64-96px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 页面边距（移动）: 16-20px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 页面边距（桌面）: 32-48px</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 4. Spacing System### 基础单位4px 为最小步进，所有间距必须是 4 的倍数（不允许 5px、7px）。### 间距阶0/1/2/3/4/5/6/8/10/12/16/20/24对应 0/4/8/12/16/20/24/32/40/48/64/80/96 px### 常用语义- 组件内部 padding: 16-24px- 组件之间间距: 24-32px- 章节之间间距: 64-96px- 页面边距（移动）: 16-20px- 页面边距（桌面）: 32-48px"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-mqykm1jo6"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="section-5-layout--geometry布局与几何">Section 5: Layout &#x26; Geometry（布局与几何）<a class="anchor" href="#section-5-layout--geometry布局与几何"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-c6upkdi6l" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 5. Layout &#x26; Geometry</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 容器宽度</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 默认最大宽度: 1200px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 阅读型内容: 720px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 表单/对话框: 480px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 栅格</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 桌面: 12 列，gutter 24px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 平板: 8 列，gutter 16px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 移动: 4 列，gutter 16px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 断点</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> mobile: &#x3C; 768px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> tablet: 768-1024px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> desktop: 1024-1440px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> wide: > 1440px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 圆角</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> sm: 4px / md: 8px / lg: 12px / xl: 16px / full: 9999px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">25</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">26</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 阴影</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">27</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">28</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> sm: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">0 1px 2px rgba(0,0,0,0.05)</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">29</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> md: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06)</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">30</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> lg: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.05)</span><span style="--0:#E5C07B">`</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">31</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> xl: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">0 20px 25px rgba(0,0,0,0.08), 0 10px 10px rgba(0,0,0,0.04)</span><span style="--0:#E5C07B">`</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 5. Layout &#x26; Geometry### 容器宽度- 默认最大宽度: 1200px- 阅读型内容: 720px- 表单/对话框: 480px### 栅格- 桌面: 12 列，gutter 24px- 平板: 8 列，gutter 16px- 移动: 4 列，gutter 16px### 断点- mobile: < 768px- tablet: 768-1024px- desktop: 1024-1440px- wide: > 1440px### 圆角- sm: 4px / md: 8px / lg: 12px / xl: 16px / full: 9999px### 阴影- sm: &#x60;0 1px 2px rgba(0,0,0,0.05)&#x60;- md: &#x60;0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06)&#x60;- lg: &#x60;0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.05)&#x60;- xl: &#x60;0 20px 25px rgba(0,0,0,0.08), 0 10px 10px rgba(0,0,0,0.04)&#x60;"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-c6upkdi6l"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="section-6-motion动效规范">Section 6: Motion（动效规范）<a class="anchor" href="#section-6-motion动效规范"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-4tbnx3est" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 6. Motion</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 缓动函数</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> standard: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">cubic-bezier(0.4, 0, 0.2, 1)</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 大部分场景</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> decelerate: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">cubic-bezier(0, 0, 0.2, 1)</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 入场</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> accelerate: </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">cubic-bezier(0.4, 0, 1, 1)</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> — 出场</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 时长</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> instant: 100ms（hover、focus）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> fast: 200ms（按钮反馈、Tooltip）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> normal: 300ms（卡片悬浮、抽屉）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> slow: 500ms（页面过渡、Modal）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 原则</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 所有 hover 状态必须有过渡，严禁瞬切</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 减少视差和大幅位移，优先用透明度和细微缩放</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">prefers-reduced-motion: reduce</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> 时关闭所有非必要动画</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 6. Motion### 缓动函数- standard: &#x60;cubic-bezier(0.4, 0, 0.2, 1)&#x60; — 大部分场景- decelerate: &#x60;cubic-bezier(0, 0, 0.2, 1)&#x60; — 入场- accelerate: &#x60;cubic-bezier(0.4, 0, 1, 1)&#x60; — 出场### 时长- instant: 100ms（hover、focus）- fast: 200ms（按钮反馈、Tooltip）- normal: 300ms（卡片悬浮、抽屉）- slow: 500ms（页面过渡、Modal）### 原则- 所有 hover 状态必须有过渡，严禁瞬切- 减少视差和大幅位移，优先用透明度和细微缩放- &#x60;prefers-reduced-motion: reduce&#x60; 时关闭所有非必要动画"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-4tbnx3est"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="section-7-voice--tone语言风格">Section 7: Voice &#x26; Tone（语言风格）<a class="anchor" href="#section-7-voice--tone语言风格"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-vfgbm1015" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 7. Voice &#x26; Tone</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 整体气质</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 专业 + 克制，不卖萌、不口号化</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 结论先行，把核心结论放第一句</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 不用感叹号，不用 emoji 装饰（功能性 emoji 除外）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 标题写法</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ✅ "30 秒生成爆款笔记"</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ "🚀 超快超强的笔记神器！！！"</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 按钮文案</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ✅ "开始使用"、"创建项目"、"下载"</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ "立即抢购！"、"点我点我"</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 错误提示</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ✅ "邮箱格式不正确"、"密码至少 8 位"</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ "出错啦~"、"哎呀！"</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 中英文混排规则</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">25</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">26</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 中英文之间空格："使用 OD 生成首页"</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">27</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 数字两侧空格："3 个核心功能"</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">28</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 标点符号用全角中文标点</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 7. Voice &#x26; Tone### 整体气质- 专业 + 克制，不卖萌、不口号化- 结论先行，把核心结论放第一句- 不用感叹号，不用 emoji 装饰（功能性 emoji 除外）### 标题写法- ✅ &#x22;30 秒生成爆款笔记&#x22;- ❌ &#x22;🚀 超快超强的笔记神器！！！&#x22;### 按钮文案- ✅ &#x22;开始使用&#x22;、&#x22;创建项目&#x22;、&#x22;下载&#x22;- ❌ &#x22;立即抢购！&#x22;、&#x22;点我点我&#x22;### 错误提示- ✅ &#x22;邮箱格式不正确&#x22;、&#x22;密码至少 8 位&#x22;- ❌ &#x22;出错啦~&#x22;、&#x22;哎呀！&#x22;### 中英文混排规则- 中英文之间空格：&#x22;使用 OD 生成首页&#x22;- 数字两侧空格：&#x22;3 个核心功能&#x22;- 标点符号用全角中文标点"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-vfgbm1015"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="section-8-components--patterns组件与模式">Section 8: Components &#x26; Patterns（组件与模式）<a class="anchor" href="#section-8-components--patterns组件与模式"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-zwbx1dzgn" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 8. Components &#x26; Patterns</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 按钮（Button）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| 类型        | 用法           | 示例       |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| :---------- | :------------- | :--------- |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| Primary     | 页面唯一主操作 | "开始使用" |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| Secondary   | 次要操作       | "了解更多" |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| Ghost       | 第三级操作     | "取消"     |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| Destructive | 删除/危险操作  | "删除项目" |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 卡片（Card）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 默认背景: gray-100 / gray-900（暗色）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 内边距: 24px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 圆角: md (8px)</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 悬浮态: 增加 shadow-md + 微缩放 1.01</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 表单（Form）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 输入框高度: 40px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 标签上方对齐</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 错误信息在输入框下方，红色，sm 字号</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 必填项用 </span></span><span style="--1:#383A42"><span style="--0:#E5C07B">`</span><span style="--0:#98C379">*</span><span style="--0:#E5C07B">`</span></span><span style="--0:#ABB2BF;--1:#383A42"> 标记</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">25</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">26</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 导航（Navigation）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">27</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">28</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 顶部导航高度: 56px（固定）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">29</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 侧边栏宽度: 240px</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">30</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> 当前页面用 brand-primary 标识</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 8. Components &#x26; Patterns### 按钮（Button）| 类型        | 用法           | 示例       || :---------- | :------------- | :--------- || Primary     | 页面唯一主操作 | &#x22;开始使用&#x22; || Secondary   | 次要操作       | &#x22;了解更多&#x22; || Ghost       | 第三级操作     | &#x22;取消&#x22;     || Destructive | 删除/危险操作  | &#x22;删除项目&#x22; |### 卡片（Card）- 默认背景: gray-100 / gray-900（暗色）- 内边距: 24px- 圆角: md (8px)- 悬浮态: 增加 shadow-md + 微缩放 1.01### 表单（Form）- 输入框高度: 40px- 标签上方对齐- 错误信息在输入框下方，红色，sm 字号- 必填项用 &#x60;*&#x60; 标记### 导航（Navigation）- 顶部导航高度: 56px（固定）- 侧边栏宽度: 240px- 当前页面用 brand-primary 标识"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-zwbx1dzgn"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="section-9-anti-patterns反模式--禁止清单">Section 9: Anti-Patterns（反模式 / 禁止清单）<a class="anchor" href="#section-9-anti-patterns反模式--禁止清单"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>这一节最重要——它告诉 OD「不要做什么」</strong>，能直接干掉 70% 的 AI 滥用模式。</p><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-1orz2o1gj" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## 9. Anti-Patterns</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 颜色</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许使用规范外的颜色（hex 必须在 2 节定义的列表中）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许超过 3 个品牌色同时出现在一个屏幕</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许在白底页面用纯黑 #000000（用 gray-800/900 代替）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 字体</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许使用规范外的字体</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许同一页面超过 2 种字号差异极大的标题</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许中文用 italic 斜体</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 布局</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许间距不是 4 的倍数</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许卡片堆叠超过 3 层</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许整页都是渐变背景</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 动效</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许 hover 状态没有过渡</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许 1 秒以上的页面切换动画</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">25</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许自动播放的视频/动画</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">26</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">27</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 文案</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">28</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">29</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许使用感叹号（除错误提示外）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">30</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许营销话术（"震撼"、"颠覆"、"史上最强"）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">31</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许中英文之间不加空格</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">32</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">33</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### 视觉装饰</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">34</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">35</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许玻璃拟态（backdrop-filter blur）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">36</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许神经拟态（Neumorphism）</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">37</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许过度光晕和发光效果</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">38</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> ❌ 不允许装饰性 emoji（功能性除外）</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## 9. Anti-Patterns### 颜色- ❌ 不允许使用规范外的颜色（hex 必须在 2 节定义的列表中）- ❌ 不允许超过 3 个品牌色同时出现在一个屏幕- ❌ 不允许在白底页面用纯黑 #000000（用 gray-800/900 代替）### 字体- ❌ 不允许使用规范外的字体- ❌ 不允许同一页面超过 2 种字号差异极大的标题- ❌ 不允许中文用 italic 斜体### 布局- ❌ 不允许间距不是 4 的倍数- ❌ 不允许卡片堆叠超过 3 层- ❌ 不允许整页都是渐变背景### 动效- ❌ 不允许 hover 状态没有过渡- ❌ 不允许 1 秒以上的页面切换动画- ❌ 不允许自动播放的视频/动画### 文案- ❌ 不允许使用感叹号（除错误提示外）- ❌ 不允许营销话术（&#x22;震撼&#x22;、&#x22;颠覆&#x22;、&#x22;史上最强&#x22;）- ❌ 不允许中英文之间不加空格### 视觉装饰- ❌ 不允许玻璃拟态（backdrop-filter blur）- ❌ 不允许神经拟态（Neumorphism）- ❌ 不允许过度光晕和发光效果- ❌ 不允许装饰性 emoji（功能性除外）"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-1orz2o1gj"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section></section><section><h2 id="4-designmd-放哪里">4. DESIGN.md 放哪里<a class="anchor" href="#4-designmd-放哪里"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 全局通用（所有项目都用）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">~/.od/design-systems/&#x3C;品牌名>/DESIGN.md</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 仅当前项目用</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{你的项目目录}/.od/design-systems/&#x3C;品牌名>/DESIGN.md</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="~/.od/design-systems/<品牌名>/DESIGN.md{你的项目目录}/.od/design-systems/<品牌名>/DESIGN.md"><div></div></button></div></figure></div><p>放好后在 OD 桌面应用 → Design System 页应该能看到新加的设计系统，选中即可。</p><p>或者在 Claude Code 里说：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">用 Open Design 的 {你的品牌名} 设计系统生成首页</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="用 Open Design 的 {你的品牌名} 设计系统生成首页"><div></div></button></div></figure></div></section><section><h2 id="5-实操建议">5. 实操建议<a class="anchor" href="#5-实操建议"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>最快路径</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 1: 找一个你最欣赏的产品作为参考（推荐 Linear / Stripe / Vercel）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 2: 给 Claude 发一句："参考 https://linear.app 的设计，给我一个叫 XXX 的工具</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">        </span></span><span style="--0:#abb2bf;--1:#383a42">生成一份 OD 的 9 节 DESIGN.md，使用场景是 B 端 SaaS"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 3: Claude 30 秒出文件</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 4: 自己微调主色和字体，其他保持默认</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 5: 跑一遍 OD 输出，对比效果</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Step 1: 找一个你最欣赏的产品作为参考（推荐 Linear / Stripe / Vercel）Step 2: 给 Claude 发一句：&#x22;参考 https://linear.app 的设计，给我一个叫 XXX 的工具        生成一份 OD 的 9 节 DESIGN.md，使用场景是 B 端 SaaS&#x22;Step 3: Claude 30 秒出文件Step 4: 自己微调主色和字体，其他保持默认Step 5: 跑一遍 OD 输出，对比效果"><div></div></button></div></figure></div><p><strong>精雕细琢的路径</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 1: 用 Web Inspector 扒参考网站的实际 CSS 变量（颜色、字号、间距）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 2: 手动按 9 节模板填，每个字段用真实数值</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 3: 第 9 节（Anti-Patterns）一定要写满——这是品牌一致性的护城河</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 4: 找 3 个不同场景（landing、dashboard、form）测试输出</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Step 5: 哪里走样就回头补充 Anti-Patterns 规则</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Step 1: 用 Web Inspector 扒参考网站的实际 CSS 变量（颜色、字号、间距）Step 2: 手动按 9 节模板填，每个字段用真实数值Step 3: 第 9 节（Anti-Patterns）一定要写满——这是品牌一致性的护城河Step 4: 找 3 个不同场景（landing、dashboard、form）测试输出Step 5: 哪里走样就回头补充 Anti-Patterns 规则"><div></div></button></div></figure></div></section><section><h2 id="6-关键洞察">6. 关键洞察<a class="anchor" href="#6-关键洞察"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><ul>
+<li><strong>第 1 节（Visual Thesis）和第 9 节（Anti-Patterns）是灵魂</strong>——它们告诉 OD「这个品牌是什么 / 不是什么」</li>
+<li><strong>中间 7 节是骨肉</strong>——具体的可执行参数</li>
+<li><strong>Anti-Patterns 越具体越好</strong>——AI 喜欢”安全的平庸”，禁令越明确越能逼出品牌特色</li>
+<li><strong>复用价值高</strong>——这套 9 节 schema 不仅给 OD 用，也可以喂给 Claude Code / Cursor 让它们写代码时自动遵守</li>
+</ul></section><section><h2 id="7-关联资料">7. 关联资料<a class="anchor" href="#7-关联资料"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><ul>
+<li>同目录：Open-Design-开源版-Claude-Design-完整调研（OD 整体调研）</li>
+<li>参考品牌资源：
+<ul>
+<li><a href="https://linear.app" target="_blank" rel="noopener noreferrer">Linear Design</a></li>
+<li><a href="https://press.stripe.com" target="_blank" rel="noopener noreferrer">Stripe Press</a></li>
+<li><a href="https://vercel.com/design" target="_blank" rel="noopener noreferrer">Vercel Design</a></li>
+<li><a href="https://www.refactoringui.com" target="_blank" rel="noopener noreferrer">Refactoring UI</a>（设计系统理论基础）</li>
+</ul>
+</li>
+</ul></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev disabled" href="/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">返回首页</span> </a> <a class="post-nav-link post-nav-next " href="/posts/ai工具/claude-code/token与缓存机制/claude-code-token-缓存机制解读/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">Claude-Code-Token-缓存机制解读</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

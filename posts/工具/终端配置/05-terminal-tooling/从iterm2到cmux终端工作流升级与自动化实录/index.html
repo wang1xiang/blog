@@ -1,0 +1,1428 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>从iTerm2到cmux终端工作流升级与自动化实录 - 翔子的博客</title><meta name="description" content="之前已将终端从 iTerm2 切换到 cmux，搭建了基础工具链（lazygit/Yazi/Fresh 等）。本次继续完善：把 iTerm2 的外观配置（Dracula 主题、背景图、字体）完整迁移到 cmux，并基于 cmux 浏览..."><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/%E5%B7%A5%E5%85%B7/%E7%BB%88%E7%AB%AF%E9%85%8D%E7%BD%AE/05-terminal-tooling/%E4%BB%8Eiterm2%E5%88%B0cmux%E7%BB%88%E7%AB%AF%E5%B7%A5%E4%BD%9C%E6%B5%81%E5%8D%87%E7%BA%A7%E4%B8%8E%E8%87%AA%E5%8A%A8%E5%8C%96%E5%AE%9E%E5%BD%95/"><meta property="og:title" content="从iTerm2到cmux终端工作流升级与自动化实录 - 翔子的博客"><meta property="og:description" content="之前已将终端从 iTerm2 切换到 cmux，搭建了基础工具链（lazygit/Yazi/Fresh 等）。本次继续完善：把 iTerm2 的外观配置（Dracula 主题、背景图、字体）完整迁移到 cmux，并基于 cmux 浏览..."><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/%E5%B7%A5%E5%85%B7/%E7%BB%88%E7%AB%AF%E9%85%8D%E7%BD%AE/05-terminal-tooling/%E4%BB%8Eiterm2%E5%88%B0cmux%E7%BB%88%E7%AB%AF%E5%B7%A5%E4%BD%9C%E6%B5%81%E5%8D%87%E7%BA%A7%E4%B8%8E%E8%87%AA%E5%8A%A8%E5%8C%96%E5%AE%9E%E5%BD%95/"><meta name="twitter:title" content="从iTerm2到cmux终端工作流升级与自动化实录 - 翔子的博客"><meta name="twitter:description" content="之前已将终端从 iTerm2 切换到 cmux，搭建了基础工具链（lazygit/Yazi/Fresh 等）。本次继续完善：把 iTerm2 的外观配置（Dracula 主题、背景图、字体）完整迁移到 cmux，并基于 cmux 浏览..."><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"从iTerm2到cmux终端工作流升级与自动化实录","description":"之前已将终端从 iTerm2 切换到 cmux，搭建了基础工具链（lazygit/Yazi/Fresh 等）。本次继续完善：把 iTerm2 的外观配置（Dracula 主题、背景图、字体）完整迁移到 cmux，并基于 cmux 浏览...","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-05-20T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>从iTerm2到cmux终端工作流升级与自动化实录</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=%E5%B7%A5%E5%85%B7">工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">从iTerm2到cmux终端工作流升级与自动化实录</h1> <p class="post-subtitle">之前已将终端从 iTerm2 切换到 cmux，搭建了基础工具链（lazygit/Yazi/Fresh 等）。本次继续完善：把 iTerm2 的外观配置（Dracula 主题、背景图、字体）完整迁移到 cmux，并基于 cmux 浏览...</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-05-20 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 3,339 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 17 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#终端配置</span><span class="post-tag">#05-terminal-tooling</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="从-iterm2-到-cmux终端工作流升级与自动化实录">从 iTerm2 到 cmux：终端工作流升级与自动化实录<a class="anchor" href="#从-iterm2-到-cmux终端工作流升级与自动化实录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><blockquote><p>2026-05-11 | 翔子 | 将 iTerm2 完整迁移到 cmux，搭建浏览器自动化工作流</p></blockquote><hr><section><h2 id="背景">背景<a class="anchor" href="#背景"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>之前已将终端从 iTerm2 切换到 cmux，搭建了基础工具链（lazygit/Yazi/Fresh 等）。本次继续完善：把 iTerm2 的外观配置（Dracula 主题、背景图、字体）完整迁移到 cmux，并基于 cmux 浏览器自动化能力开发了一个 CDK 自动填表 Skill。</p><hr></section><section><h2 id="1-iterm2--cmux-配置迁移">1. iTerm2 → cmux 配置迁移<a class="anchor" href="#1-iterm2--cmux-配置迁移"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="11-迁移思路">1.1 迁移思路<a class="anchor" href="#11-迁移思路"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>cmux 底层是 Ghostty，终端行为配置走 <code>~/.config/ghostty/config</code>，外观/主题走 cmux 自身的主题系统。iTerm2 的配置存储在 <code>~/Library/Preferences/com.googlecode.iterm2.plist</code>，需要提取关键值。</p></section><section><h3 id="12-提取-iterm2-关键配置">1.2 提取 iTerm2 关键配置<a class="anchor" href="#12-提取-iterm2-关键配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>通过读取 plist 文件获取：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>项目</th><th>iTerm2 值</th></tr></thead><tbody><tr><td>字体</td><td>HackNF-Regular 13pt</td></tr><tr><td>配色</td><td>Dracula（非 One Dark）</td></tr><tr><td>背景透明度</td><td>0.017（几乎不透明）</td></tr><tr><td>滚动缓冲</td><td>1000 行</td></tr></tbody></table><p><strong>关键发现</strong>：之前误以为 iTerm2 用的是 One Dark，实际提取 Ansi 色值后确认是 <strong>Dracula</strong>（<code>#ff5555</code>、<code>#50fa7b</code>、<code>#bd93f9</code>、<code>#8be9fd</code> 等）。</p></section><section><h3 id="13-ghostty-最终配置">1.3 Ghostty 最终配置<a class="anchor" href="#13-ghostty-最终配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>~/.config/ghostty/config</code>：</p><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><div class="ec-collapse ec-collapse--collapsed" id="collapse-tdhy8fq8q" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">font-family</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> Hack Nerd Font</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">font-size</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> 13</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">theme</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> Dracula</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">scrollback-limit</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> 10000</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">split-divider-color</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> </span></span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">#3e4451</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">working-directory</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> ~/code</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">copy-on-select</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> clipboard</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># Cursor (match iTerm2: no blink)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">cursor-style</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> block</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">cursor-style-blink</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> false</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">cursor-color</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> </span></span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">#bbbbbb</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># Background image</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">background-image</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> ~/Downloads/壁纸3/IMG_20250505_165711.jpg</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">background-image-opacity</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> 0.33</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">background-image-fit</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> stretch</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">background-opacity</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> 0.8</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># Mouse</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">mouse-reporting</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> true</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># Window</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code"><span style="--0:#CD89E1;--1:#AF4238">window-save-state</span><span style="--1:#383A42"><span style="--0:#98C379"> </span><span style="--0:#ABB2BF">=</span><span style="--0:#98C379"> always</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="font-family = Hack Nerd Fontfont-size = 13theme = Draculascrollback-limit = 10000split-divider-color = #3e4451working-directory = ~/codecopy-on-select = clipboard# Cursor (match iTerm2: no blink)cursor-style = blockcursor-style-blink = falsecursor-color = #bbbbbb# Background imagebackground-image = ~/Downloads/壁纸3/IMG_20250505_165711.jpgbackground-image-opacity = 0.33background-image-fit = stretchbackground-opacity = 0.8# Mousemouse-reporting = true# Windowwindow-save-state = always"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-tdhy8fq8q"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div><p><strong>踩坑</strong>：</p><ul>
+<li><code>background-opacity</code> 与 <code>background-image-opacity</code> 是独立参数，前者控制终端整体透明度，后者控制背景图透明度。</li>
+<li>背景图 opacity 从 0.05 调到 0.33 才看清，配合 <code>background-opacity = 0.8</code> 效果最佳。</li>
+<li><code>copy-on-select</code> 的值要用 <code>clipboard</code> 而不是 <code>true</code>，后者在 macOS 上无效。</li>
+</ul></section><section><h3 id="14-修改后无需重启">1.4 修改后无需重启<a class="anchor" href="#14-修改后无需重启"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>编辑 <code>~/.config/ghostty/config</code> 后，cmux 会自动热重载，无需重启终端。</p><hr></section></section><section><h2 id="2-cmux-skill-安装与使用">2. cmux Skill 安装与使用<a class="anchor" href="#2-cmux-skill-安装与使用"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="21-已安装-skill-列表">2.1 已安装 Skill 列表<a class="anchor" href="#21-已安装-skill-列表"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 在项目目录 ~/.claude/skills/ 下</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42">              </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 核心窗口管理</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux-browser</span><span style="--0:#ABB2BF;--1:#383A42">      </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 浏览器自动化</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux-markdown</span><span style="--0:#ABB2BF;--1:#383A42">     </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># Markdown 预览面板</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux-debug-windows</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 调试窗口（开发用）</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cmux              # 核心窗口管理cmux-browser      # 浏览器自动化cmux-markdown     # Markdown 预览面板cmux-debug-windows # 调试窗口（开发用）"><div></div></button></div></figure></div><p>安装方式：从 cmux 官网下载 skill 包，解压到 <code>~/.claude/skills/</code> 或项目 <code>.claude/skills/</code> 目录。</p></section><section><h3 id="22-cmux-browser-核心能力">2.2 cmux-browser 核心能力<a class="anchor" href="#22-cmux-browser-核心能力"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>在 cmux 中打开浏览器 surface，支持完整的 DOM 操作：</p><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-ioh2d5g1d" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span><button class="ec-collapse__header-toggle" type="button" aria-expanded="false" aria-controls="collapse-ioh2d5g1d"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__header-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 打开网页（自动分屏）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">browser</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">open</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">https://example.com</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 获取页面可交互元素快照（含 ref）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">browser</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">surface:2</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">snapshot</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">--interactive</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 点击元素</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">browser</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">surface:2</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">click</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">e47</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">--snapshot-after</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 填表</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">browser</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">surface:2</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">fill</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"#email"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">--text</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"ops@example.com"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">browser</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">surface:2</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">select</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"#server"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"10"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 执行 JS</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">browser</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">surface:2</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">eval</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"document.title"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 导航</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">browser</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">surface:2</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">navigate</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">https://example.org</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cmux browser open https://example.comcmux browser surface:2 snapshot --interactivecmux browser surface:2 click e47 --snapshot-aftercmux browser surface:2 fill &#x22;#email&#x22; --text &#x22;ops@example.com&#x22;cmux browser surface:2 select &#x22;#server&#x22; &#x22;10&#x22;cmux browser surface:2 eval &#x22;document.title&#x22;cmux browser surface:2 navigate https://example.org"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-ioh2d5g1d"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="23-cmux-markdown">2.3 cmux-markdown<a class="anchor" href="#23-cmux-markdown"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>在侧边栏打开实时渲染的 markdown 面板：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">markdown</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">open</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">plan.md</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cmux markdown open plan.md"><div></div></button></div></figure></div><hr></section></section><section><h2 id="3-自定义命令cmuxjson">3. 自定义命令（cmux.json）<a class="anchor" href="#3-自定义命令cmuxjson"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>通过 <code>~/.config/cmux/cmux.json</code> 或项目根目录 <code>./cmux.json</code> 定义自定义命令和工作区布局。</p><p>常用 action 类型：</p><ul>
+<li><code>"builtin"</code> — 内置命令别名（如 <code>cmux.newTerminal</code>、<code>cmux.splitRight</code>）</li>
+<li><code>"command"</code> — 在终端中运行 shell 命令</li>
+<li><code>"agent"</code> — 启动编码代理（codex / claude）</li>
+<li><code>"workspaceCommand"</code> — 运行命名工作区布局</li>
+</ul><p>编辑后按 <code>Cmd+Shift+，</code> 或运行 <code>cmux reload-config</code> 生效。</p><section><h3 id="32-cmuxjson-配置层级与优先级">3.2 cmux.json 配置层级与优先级<a class="anchor" href="#32-cmuxjson-配置层级与优先级"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>cmux 的设置分两层存储：</p><ol>
+<li><strong>UI 直接修改</strong> → 保存在 macOS <code>UserDefaults</code>（<code>com.cmuxterm.app</code>）内部存储</li>
+<li><strong>手动编辑 <code>cmux.json</code></strong> → 文件级管理，优先级更高</li>
+</ol><p>规则：<code>cmux.json</code> 中<strong>存在且未注释</strong>的设置会覆盖 UI 的值；删掉或注释则回退到 UI 存储的值。</p><blockquote><p>建议把需要固定下来的配置都写到 <code>cmux.json</code> 里做版本管理，换机器或重装时能直接恢复。</p></blockquote></section><section><h3 id="33-当前完整配置">3.3 当前完整配置<a class="anchor" href="#33-当前完整配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>~/.config/cmux/cmux.json</code>：</p><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-p3rpg1z9w" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="jsonc"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"$schema"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"schemaVersion"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">1</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"app"</span><span style="--0:#ABB2BF;--1:#383A42">: {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"appearance"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"system"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"appIcon"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"automatic"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"commandPaletteSearchesAllSurfaces"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">false</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"focusPaneOnFirstClick"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">false</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"keepWorkspaceOpenWhenClosingLastSurface"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">false</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"language"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"system"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"minimalMode"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"newWorkspacePlacement"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"afterCurrent"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"preferredEditor"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">""</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"renameSelectsExistingName"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"reorderOnNotification"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"sendAnonymousTelemetry"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"warnBeforeQuit"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">},</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"notifications"</span><span style="--0:#ABB2BF;--1:#383A42">: {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">""</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"customSoundFilePath"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">""</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"dockBadge"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">25</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"paneFlash"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">26</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showInMenuBar"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">27</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"sound"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"default"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">28</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"unreadPaneRing"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">29</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">},</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">30</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">31</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"sidebar"</span><span style="--0:#ABB2BF;--1:#383A42">: {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">32</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"branchLayout"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"vertical"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">33</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"hideAllDetails"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">false</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">34</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"openPortLinksInCmuxBrowser"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">35</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"openPullRequestLinksInCmuxBrowser"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">36</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showBranchDirectory"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">37</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showCustomMetadata"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">38</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showLog"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">39</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showNotificationMessage"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">40</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showPorts"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">41</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showProgress"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">42</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showPullRequests"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">43</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showSSH"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">44</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">},</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">45</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">46</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"sidebarAppearance"</span><span style="--0:#ABB2BF;--1:#383A42">: {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">47</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"darkModeTintColor"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">null</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">48</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"lightModeTintColor"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">null</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">49</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"matchTerminalBackground"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">false</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">50</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"tintColor"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"#000000"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">51</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"tintOpacity"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">0.1555706521739131</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">52</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">},</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">53</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">54</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"automation"</span><span style="--0:#ABB2BF;--1:#383A42">: {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">55</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"claudeBinaryPath"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">""</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">56</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"claudeCodeIntegration"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">57</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"portBase"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">9100</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">58</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"portRange"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">10</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">59</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"socketControlMode"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"cmuxOnly"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">60</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"socketPassword"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">""</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">61</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">},</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">62</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">63</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"browser"</span><span style="--0:#ABB2BF;--1:#383A42">: {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">64</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"defaultSearchEngine"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"google"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">65</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"hostsToOpenInEmbeddedBrowser"</span><span style="--0:#ABB2BF;--1:#383A42">: [],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">66</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"insecureHttpHostsAllowedInEmbeddedBrowser"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">67</div></div><div class="code"><span class="indent">      </span><span style="--0:#98C379;--1:#387138">"localhost"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">68</div></div><div class="code"><span class="indent">      </span><span style="--0:#98C379;--1:#387138">"127.0.0.1"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">69</div></div><div class="code"><span class="indent">      </span><span style="--0:#98C379;--1:#387138">"::1"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">70</div></div><div class="code"><span class="indent">      </span><span style="--0:#98C379;--1:#387138">"0.0.0.0"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">71</div></div><div class="code"><span class="indent">      </span><span style="--0:#98C379;--1:#387138">"*.localtest.me"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">72</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">73</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"interceptTerminalOpenCommandInCmuxBrowser"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">74</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"openTerminalLinksInCmuxBrowser"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">75</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"reactGrabVersion"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"0.1.29"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">76</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showImportHintOnBlankTabs"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">77</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"showSearchSuggestions"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#016C9A">true</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">78</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"theme"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"system"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">79</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"urlsToAlwaysOpenExternally"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span><span style="--0:#98C379;--1:#387138">"localhost"</span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">80</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">},</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">81</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;$schema&#x22;: &#x22;https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json&#x22;,  &#x22;schemaVersion&#x22;: 1,  &#x22;app&#x22;: {    &#x22;appearance&#x22;: &#x22;system&#x22;,    &#x22;appIcon&#x22;: &#x22;automatic&#x22;,    &#x22;commandPaletteSearchesAllSurfaces&#x22;: false,    &#x22;focusPaneOnFirstClick&#x22;: false,    &#x22;keepWorkspaceOpenWhenClosingLastSurface&#x22;: false,    &#x22;language&#x22;: &#x22;system&#x22;,    &#x22;minimalMode&#x22;: true,    &#x22;newWorkspacePlacement&#x22;: &#x22;afterCurrent&#x22;,    &#x22;preferredEditor&#x22;: &#x22;&#x22;,    &#x22;renameSelectsExistingName&#x22;: true,    &#x22;reorderOnNotification&#x22;: true,    &#x22;sendAnonymousTelemetry&#x22;: true,    &#x22;warnBeforeQuit&#x22;: true,  },  &#x22;notifications&#x22;: {    &#x22;command&#x22;: &#x22;&#x22;,    &#x22;customSoundFilePath&#x22;: &#x22;&#x22;,    &#x22;dockBadge&#x22;: true,    &#x22;paneFlash&#x22;: true,    &#x22;showInMenuBar&#x22;: true,    &#x22;sound&#x22;: &#x22;default&#x22;,    &#x22;unreadPaneRing&#x22;: true,  },  &#x22;sidebar&#x22;: {    &#x22;branchLayout&#x22;: &#x22;vertical&#x22;,    &#x22;hideAllDetails&#x22;: false,    &#x22;openPortLinksInCmuxBrowser&#x22;: true,    &#x22;openPullRequestLinksInCmuxBrowser&#x22;: true,    &#x22;showBranchDirectory&#x22;: true,    &#x22;showCustomMetadata&#x22;: true,    &#x22;showLog&#x22;: true,    &#x22;showNotificationMessage&#x22;: true,    &#x22;showPorts&#x22;: true,    &#x22;showProgress&#x22;: true,    &#x22;showPullRequests&#x22;: true,    &#x22;showSSH&#x22;: true,  },  &#x22;sidebarAppearance&#x22;: {    &#x22;darkModeTintColor&#x22;: null,    &#x22;lightModeTintColor&#x22;: null,    &#x22;matchTerminalBackground&#x22;: false,    &#x22;tintColor&#x22;: &#x22;#000000&#x22;,    &#x22;tintOpacity&#x22;: 0.1555706521739131,  },  &#x22;automation&#x22;: {    &#x22;claudeBinaryPath&#x22;: &#x22;&#x22;,    &#x22;claudeCodeIntegration&#x22;: true,    &#x22;portBase&#x22;: 9100,    &#x22;portRange&#x22;: 10,    &#x22;socketControlMode&#x22;: &#x22;cmuxOnly&#x22;,    &#x22;socketPassword&#x22;: &#x22;&#x22;,  },  &#x22;browser&#x22;: {    &#x22;defaultSearchEngine&#x22;: &#x22;google&#x22;,    &#x22;hostsToOpenInEmbeddedBrowser&#x22;: [],    &#x22;insecureHttpHostsAllowedInEmbeddedBrowser&#x22;: [      &#x22;localhost&#x22;,      &#x22;127.0.0.1&#x22;,      &#x22;::1&#x22;,      &#x22;0.0.0.0&#x22;,      &#x22;*.localtest.me&#x22;,    ],    &#x22;interceptTerminalOpenCommandInCmuxBrowser&#x22;: true,    &#x22;openTerminalLinksInCmuxBrowser&#x22;: true,    &#x22;reactGrabVersion&#x22;: &#x22;0.1.29&#x22;,    &#x22;showImportHintOnBlankTabs&#x22;: true,    &#x22;showSearchSuggestions&#x22;: true,    &#x22;theme&#x22;: &#x22;system&#x22;,    &#x22;urlsToAlwaysOpenExternally&#x22;: [&#x22;localhost&#x22;],  },}"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-p3rpg1z9w"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="34-关键设置说明">3.4 关键设置说明<a class="anchor" href="#34-关键设置说明"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>设置</th><th>值</th><th>作用</th></tr></thead><tbody><tr><td><code>app.minimalMode</code></td><td><code>true</code></td><td>隐藏工作区标题栏，控件移到侧边栏</td></tr><tr><td><code>sidebarAppearance.tintOpacity</code></td><td><code>0.156</code></td><td>侧边栏底色透明度（从默认 <code>0.18</code> 微调）</td></tr><tr><td><code>browser.hostsToOpenInEmbeddedBrowser</code></td><td><code>[]</code></td><td>空数组 = 所有链接默认在内嵌浏览器打开</td></tr><tr><td><code>browser.urlsToAlwaysOpenExternally</code></td><td><code>["localhost"]</code></td><td>localhost 强制走外部浏览器</td></tr><tr><td><code>browser.insecureHttpHostsAllowedInEmbeddedBrowser</code></td><td><code>localhost</code> 等</td><td>这些 HTTP 地址不弹不安全警告</td></tr></tbody></table><p>编辑后重载：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">reload-config</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cmux reload-config"><div></div></button></div></figure></div><hr></section></section><section><h2 id="4-dock-右侧边栏配置">4. Dock 右侧边栏配置<a class="anchor" href="#4-dock-右侧边栏配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="41-dock-功能概述">4.1 Dock 功能概述<a class="anchor" href="#41-dock-功能概述"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Dock 是 cmux 的右侧边栏终端控制面板，可以把常用的 TUI 工具钉在右侧边栏，不占用主终端空间。</p><ul>
+<li>每个 Dock 面板都是一个独立的 Ghostty 终端实例</li>
+<li>保持正常键盘行为（j/k、Ctrl-C 等）</li>
+<li>命令退出后自动进入交互式 shell，方便后续操作</li>
+</ul></section><section><h3 id="42-配置结构">4.2 配置结构<a class="anchor" href="#42-配置结构"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Dock 通过 JSON 配置文件管理，支持两层优先级：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>路径</th><th>用途</th><th>适用场景</th></tr></thead><tbody><tr><td><code>.cmux/dock.json</code></td><td>项目级配置</td><td>项目专属的 TUI 工具（如特定项目的 dev server）</td></tr><tr><td><code>~/.config/cmux/dock.json</code></td><td>全局配置</td><td>个人默认 Dock，所有项目通用</td></tr></tbody></table><p><strong>优先级规则</strong>：项目级 > 全局。如果项目目录下存在 <code>.cmux/dock.json</code>，则忽略全局配置。</p></section><section><h3 id="43-全局-dock-配置">4.3 全局 Dock 配置<a class="anchor" href="#43-全局-dock-配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>~/.config/cmux/dock.json</code>（个人全局）：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"controls"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"id"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"git"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"title"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"Git"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"lazygit"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"cwd"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"."</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"height"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">400</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;controls&#x22;: [    {      &#x22;id&#x22;: &#x22;git&#x22;,      &#x22;title&#x22;: &#x22;Git&#x22;,      &#x22;command&#x22;: &#x22;lazygit&#x22;,      &#x22;cwd&#x22;: &#x22;.&#x22;,      &#x22;height&#x22;: 400    }  ]}"><div></div></button></div></figure></div><p>全局只保留 <code>lazygit</code>，因为其他功能（文件浏览、搜索）已经有左侧边栏常驻了。</p></section><section><h3 id="44-字段说明">4.4 字段说明<a class="anchor" href="#44-字段说明"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"controls"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"id"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"stable-unique-id"</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 稳定唯一的标识符</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"title"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"面板标题"</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// Dock 头部显示的标签</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"要执行的命令"</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 在登录 shell 中运行</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"cwd"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"."</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 可选：工作目录</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"height"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">400</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 可选：面板高度（points）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span class="indent">      </span><span style="--0:#E6888F;--1:#AF4238">"env"</span><span style="--0:#ABB2BF;--1:#383A42">: { </span><span style="--0:#E6888F;--1:#AF4238">"KEY"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"value"</span><span style="--0:#ABB2BF;--1:#383A42"> } </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 可选：环境变量（非机密）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;controls&#x22;: [    {      &#x22;id&#x22;: &#x22;stable-unique-id&#x22;, // 稳定唯一的标识符      &#x22;title&#x22;: &#x22;面板标题&#x22;, // Dock 头部显示的标签      &#x22;command&#x22;: &#x22;要执行的命令&#x22;, // 在登录 shell 中运行      &#x22;cwd&#x22;: &#x22;.&#x22;, // 可选：工作目录      &#x22;height&#x22;: 400, // 可选：面板高度（points）      &#x22;env&#x22;: { &#x22;KEY&#x22;: &#x22;value&#x22; } // 可选：环境变量（非机密）    }  ]}"><div></div></button></div></figure></div></section><section><h3 id="45-启用-dock-beta-功能">4.5 启用 Dock Beta 功能<a class="anchor" href="#45-启用-dock-beta-功能"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Dock 目前是 Beta 功能，需要先手动启用：</p><ol>
+<li>进入 cmux 设置 → <strong>Beta Features</strong></li>
+<li>打开 <strong>Dock</strong> 开关</li>
+<li>完全退出 cmux App，重新打开</li>
+</ol><p><strong>踩坑</strong>：</p><ul>
+<li><strong>Dock 开关不在 <code>cmux.json</code> 里</strong>——这是 App 级别的 Beta 功能，无法通过配置文件开启</li>
+<li><strong>右侧边栏需要手动打开</strong>——按 <code>Cmd+Opt+B</code> 切换右侧边栏可见性，或 <code>Cmd+Shift+P</code> 打开命令面板搜索 “Show Sidebar Dock”</li>
+<li><strong>快捷键绑定</strong>——在 <code>cmux.json</code> 的 <code>shortcuts.bindings</code> 中添加：
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"toggleFileExplorer"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"cmd+opt+b"</span><span style="--0:#ABB2BF;--1:#383A42">,   </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 右侧边栏开关</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"focusRightSidebar"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"cmd+shift+e"</span><span style="--0:#ABB2BF;--1:#383A42">   </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 聚焦右侧边栏</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="&#x22;toggleFileExplorer&#x22;: &#x22;cmd+opt+b&#x22;,   // 右侧边栏开关&#x22;focusRightSidebar&#x22;: &#x22;cmd+shift+e&#x22;   // 聚焦右侧边栏"><div></div></button></div></figure></div>
+</li>
+</ul></section><section><h3 id="46-trust-gate信任确认">4.6 Trust Gate（信任确认）<a class="anchor" href="#46-trust-gate信任确认"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>项目级 Dock 配置第一次使用时会弹出信任确认——因为项目配置能执行任意命令，cmux 做了安全检查。全局配置不会弹。</p></section><section><h3 id="47-命令退出后的行为">4.7 命令退出后的行为<a class="anchor" href="#47-命令退出后的行为"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Dock 面板里的命令退出后（比如 lazygit 按了 q），面板不会消失，而是<strong>自动进入交互式 shell</strong>，可以继续操作或输入新命令。</p><hr></section></section><section><h2 id="5-claude-code-teams--omc-集成">5. Claude Code Teams / OMC 集成<a class="anchor" href="#5-claude-code-teams--omc-集成"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>cmux 内置对 Claude Code Teams 和 Oh My Claude Code (OMC) 的支持：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># Claude Code Teams（ teammate 面板自动转为 cmux splits）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">claude-teams</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># OMC 多代理编排</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">cmux</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">omc</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cmux claude-teamscmux omc"><div></div></button></div></figure></div><p>原理：创建 tmux shim 脚本，拦截 OMC/Claude 的 tmux 命令并翻译为 cmux API 调用。</p><hr></section><section><h2 id="5-cdk-exchanger-skill-开发实录">5. CDK Exchanger Skill 开发实录<a class="anchor" href="#5-cdk-exchanger-skill-开发实录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>基于 cmux-browser 开发了一个项目级 Skill，用于《向僵尸开炮BT版》每日签到 CDK 自动填表。</p><section><h3 id="51-需求分析">5.1 需求分析<a class="anchor" href="#51-需求分析"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>手动兑换流程繁琐：</p><ol>
+<li>打开 <code>https://jsbt.thecm8.com/index/cdk/</code></li>
+<li>关闭公告弹窗</li>
+<li>选区服 → 填账号 → 点击获取角色</li>
+<li>选角色 → 填 CDK</li>
+<li>看验证码 → 输入 → 点击领取</li>
+</ol><p>前 4 步完全固定，可以自动化；第 5 步验证码需手动（OCR 识别率太低）。</p></section><section><h3 id="52-技术方案">5.2 技术方案<a class="anchor" href="#52-技术方案"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>页面自动化</strong>：cmux-browser API（<code>open</code>、<code>click</code>、<code>fill</code>、<code>select</code>、<code>eval</code>）</li>
+<li><strong>弹窗处理</strong>：snapshot 获取元素 ref，点击 Close</li>
+<li><strong>角色获取</strong>：点击”获取”后轮询 <code>roles.options.length</code>，再用 eval 遍历匹配角色名</li>
+<li><strong>验证码</strong>：脚本填完表单后退出，用户在浏览器面板手动输入</li>
+</ul></section><section><h3 id="53-踩坑记录">5.3 踩坑记录<a class="anchor" href="#53-踩坑记录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>问题</th><th>原因</th><th>解决</th></tr></thead><tbody><tr><td>Bash 3.2 不支持中文关联数组</td><td>macOS 默认 Bash 3.2</td><td>改用 <code>case</code> 函数映射区服</td></tr><tr><td>cmux browser eval 不支持 <code>return</code></td><td>执行环境限制</td><td>用全局变量 <code>window.__rv</code> 传值</td></tr><tr><td><code>click --snapshot-after</code> 后 URL 没变</td><td>单页应用弹窗，非跳转</td><td>用 <code>eval</code> 直接 <code>window.location.href</code> 导航</td></tr><tr><td>验证码提交后自动刷新</td><td>后端每次生成新验证码</td><td>脚本不处理提交，留给用户手动</td></tr><tr><td>tesseract OCR 识别率接近 0</td><td>验证码有干扰线、粘连字</td><td>直接弃用 OCR，改手动输入</td></tr></tbody></table></section><section><h3 id="54-最终脚本">5.4 最终脚本<a class="anchor" href="#54-最终脚本"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>claudecode/.claude/skills/cdk-exchanger/scripts/exchange.sh</code>：</p><ul>
+<li>参数硬编码（十区 / 18507730419 / seeing / js2024666）</li>
+<li>5 步自动化：打开页面 → 关弹窗 → 填表单 → 获取角色 → 提示手动完成</li>
+<li>仅通过 <code>/cdk-exchanger</code> 命令触发</li>
+</ul></section><section><h3 id="55-文件结构">5.5 文件结构<a class="anchor" href="#55-文件结构"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">claudecode/.claude/skills/cdk-exchanger/</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── SKILL.md              # Skill 说明</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">└── scripts/</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">    </span></span><span style="--0:#abb2bf;--1:#383a42">└── exchange.sh       # 主脚本</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="claudecode/.claude/skills/cdk-exchanger/├── SKILL.md              # Skill 说明└── scripts/    └── exchange.sh       # 主脚本"><div></div></button></div></figure></div><hr></section></section><section><h2 id="6-当前完整终端工具链">6. 当前完整终端工具链<a class="anchor" href="#6-当前完整终端工具链"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>层级</th><th>工具</th><th>说明</th></tr></thead><tbody><tr><td>终端</td><td><strong>cmux</strong></td><td>基于 Ghostty，垂直 Tab，支持浏览器自动化</td></tr><tr><td>Shell</td><td><strong>zsh + oh-my-zsh</strong></td><td>Powerlevel10k 主题，git/autojump 插件</td></tr><tr><td>文件管理</td><td><strong>Yazi</strong></td><td>终端文件管理器，Vim 快捷键</td></tr><tr><td>Git</td><td><strong>lazygit</strong></td><td>终端 Git TUI</td></tr><tr><td>编辑器</td><td><strong>Fresh</strong></td><td>终端编辑器，VS Code 快捷键</td></tr><tr><td>搜索</td><td><strong>fzf + ripgrep</strong></td><td>模糊搜索 + 快速文本搜索</td></tr><tr><td>跳转</td><td><strong>zoxide</strong></td><td>智能 cd，关键词匹配</td></tr><tr><td>查看</td><td><strong>bat + eza</strong></td><td>语法高亮 cat + 图标版 ls</td></tr></tbody></table><hr></section><section><h2 id="总结">总结<a class="anchor" href="#总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>从 iTerm2 到 cmux 的迁移已全部完成：</p><ol>
+<li><strong>视觉还原</strong>：Dracula 主题、Hack Nerd Font 13、背景图、光标样式，与 iTerm2 完全一致</li>
+<li><strong>能力升级</strong>：cmux-browser 让终端具备了浏览器自动化能力，可以操作网页、填表、抓数据</li>
+<li><strong>工作流自动化</strong>：基于 cmux-browser 开发了 CDK 自动填表 Skill，每日签到从 5 步手动操作缩减为 1 步（只看验证码）</li>
+<li><strong>项目级隔离</strong>：Skill 放在项目 <code>.claude/skills/</code> 下，不污染全局</li>
+</ol><hr></section><section><h2 id="7-cmux-与-iterm2-内存占用对比实录">7. cmux 与 iTerm2 内存占用对比实录<a class="anchor" href="#7-cmux-与-iterm2-内存占用对比实录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="71-现象">7.1 现象<a class="anchor" href="#71-现象"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>迁移到 cmux 后发现 Lemon（腾讯柠檬清理）显示 cmux 内存占用高达 <strong>2-3 GB</strong>，而 iTerm2 仅 338 MB。产生疑问：cmux 本身是否比 iTerm2 更吃内存？</p></section><section><h3 id="72-排查过程">7.2 排查过程<a class="anchor" href="#72-排查过程"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>第一步：拆解 cmux 进程树</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">ps</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-eo</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">pid,ppid,rss,comm</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">grep</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-E</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"cmux|claude"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="ps -eo pid,ppid,rss,comm | grep -E &#x22;cmux|claude&#x22;"><div></div></button></div></figure></div><p>发现 cmux 主进程本身只有 <strong>~180 MB</strong>，但底下挂了多个 Claude Code 会话，每个 300-400 MB。</p><p><strong>第二步：对比统计口径</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>终端</th><th>Claude 归属</th><th>Lemon 显示</th></tr></thead><tbody><tr><td>cmux</td><td>Claude 是 cmux 的直接子孙进程</td><td><strong>全部归到 cmux</strong> 名下</td></tr><tr><td>iTerm2 + tmux</td><td>Claude 是 tmux → zsh 的子进程</td><td><strong>tmux 单独统计</strong>，不归 iTerm2</td></tr></tbody></table><p><strong>关键发现</strong>：iTerm2 的 338 MB 只是 iTerm2 自身，Claude 进程挂在 tmux 名下，Lemon 不会把它们加在一起。</p><p><strong>第三步：关掉自动挂载对比</strong></p><p>将 <code>automation.claudeCodeIntegration</code> 从 <code>true</code> 改为 <code>false</code>：</p><ul>
+<li>之前：cmux 2-3 GB（含多个自动挂载的 Claude 会话）</li>
+<li>之后：cmux ~1.2 GB（仅剩当前会话）</li>
+</ul><p><strong>结论</strong>：内存高不是 cmux 本身的问题，而是 <code>claudeCodeIntegration: true</code> 时，每个新终端 tab 都会自动启动一个 Claude Code 进程。</p></section><section><h3 id="73-隐藏的常驻进程">7.3 隐藏的常驻进程<a class="anchor" href="#73-隐藏的常驻进程"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>排查中还发现一个<strong>不属于 cmux 但挂在 cmux 名下</strong>的进程：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">PPID 11689 → /Users/xiangwang/.bun/bin/bun .../claude-mem/10.6.2/scripts/worker-service.cjs --daemon</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="PPID 11689 → /Users/xiangwang/.bun/bin/bun .../claude-mem/10.6.2/scripts/worker-service.cjs --daemon"><div></div></button></div></figure></div><p>这是 <strong>claude-mem MCP 插件的守护进程</strong>（常驻后台搜索服务），PID 88742，常驻内存 ~280 MB。它是 <code>--daemon</code> 模式，不会自动退出。</p></section><section><h3 id="74-统计口径差异">7.4 统计口径差异<a class="anchor" href="#74-统计口径差异"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>ps</code> 统计的 cmux 直系子进程 ~1 GB，但 Lemon 显示 1.6-2 GB，差距来自：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>来源</th><th>ps 能看到</th><th>Lemon 统计</th></tr></thead><tbody><tr><td>cmux 主进程</td><td>181 MB</td><td>✓</td></tr><tr><td>Claude 会话</td><td>400-500 MB</td><td>✓</td></tr><tr><td>claude-mem 守护进程</td><td>280 MB</td><td>✓</td></tr><tr><td>GPU 渲染内存</td><td><strong>看不到</strong></td><td>✓</td></tr><tr><td>共享库 / 系统框架</td><td><strong>看不到</strong></td><td>✓</td></tr></tbody></table><p>cmux 基于 Metal GPU 加速，内嵌浏览器引擎、字体缓存等共享内存 <code>ps</code> 的 RSS 不计入，但系统级监控工具会算进去。</p></section><section><h3 id="75-关键决策">7.5 关键决策<a class="anchor" href="#75-关键决策"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>是否关掉 <code>claudeCodeIntegration</code>？</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>方案</th><th>内存</th><th>通知</th><th>便利性</th></tr></thead><tbody><tr><td><code>true</code>（自动挂载）</td><td>高（每个 tab 自动启动 Claude）</td><td><strong>有</strong>（cmux dock badge / pane flash）</td><td>高</td></tr><tr><td><code>false</code>（手动启动）</td><td>低（需要时才启动 Claude）</td><td><strong>无</strong>（通知通道断开）</td><td>低</td></tr></tbody></table><p><strong>最终选择</strong>：改回 <code>true</code>。因为桌面通知和 Claude 完成任务的反馈对 workflow 更重要，内存开销是 Claude Code 本身特性，不是 cmux 的问题。</p></section><section><h3 id="76-踩坑">7.6 踩坑<a class="anchor" href="#76-踩坑"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>Homebrew formula 版本滞后</strong>：<code>brew info claude-code</code> 显示 2.1.126，但实际 cmux 内置版本已是 2.1.138。Claude Code 不是通过 Homebrew 安装的，而是通过 cmux 内置的 <code>/Applications/cmux.app/Contents/Resources/bin/claude</code>。</li>
+<li><strong>Agent View 需要 v2.1.139</strong>：当前 cmux 内置版本 2.1.138 尚不支持，需等 cmux App 更新。</li>
+<li><strong>claude-mem 守护进程常驻</strong>：如果不需要跨会话记忆检索，可以在 <code>/config</code> 里移除 claude-mem MCP server 来释放 ~280 MB 内存。</li>
+</ul></section><section><h3 id="77-经验">7.7 经验<a class="anchor" href="#77-经验"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li><strong>cmux 自身内存并不高</strong>（~180 MB），高的是它集成的 AI 代理进程</li>
+<li><strong>每个 Claude Code 会话 ~300-400 MB</strong> 是正常开销，跟终端无关</li>
+<li><strong>监控工具的统计口径不同</strong>会导致认知偏差——Lemon 把 cmux 所有子孙进程都算到 cmux 头上，而 iTerm2 的 Claude 进程被 tmux 隔离了</li>
+<li><strong>不要凭单一监控工具做判断</strong>，要结合 <code>ps</code>、<code>top</code>、Activity Monitor 多方验证</li>
+</ol><hr></section></section><section><h2 id="8-agent-view-初探">8. Agent View 初探<a class="anchor" href="#8-agent-view-初探"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>Claude Code v2.1.139 新增了 <strong>Agent View</strong>（研究预览），是一个统一的会话管理界面：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">claude</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">agents</span><span style="--0:#ABB2BF;--1:#383A42">          </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 打开 Agent View</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">claude</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">--bg</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"prompt"</span><span style="--0:#ABB2BF;--1:#383A42">   </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 直接后台启动会话</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="claude agents          # 打开 Agent Viewclaude --bg &#x22;prompt&#x22;   # 直接后台启动会话"><div></div></button></div></figure></div><p><strong>核心能力</strong>：</p><ul>
+<li>一个屏幕管理所有后台会话（运行中 / 等待输入 / 已完成）</li>
+<li>输入 prompt 直接派发新会话并行工作</li>
+<li><code>Space</code> peek 查看会话状态，<code>Enter</code> attach 进入完整对话</li>
+<li><code>←</code> detach 回到列表，会话继续后台运行</li>
+<li><code>Ctrl+X</code> 停止/删除会话</li>
+<li><code>Ctrl+S</code> 按状态或目录分组</li>
+</ul><p><strong>与 iTerm2 + tmux 的区别</strong>：Agent View 的会话由 supervisor 进程托管，不依赖终端附着，关闭 cmux 后会话仍继续运行。tmux 的会话则必须保持 tmux server 运行。</p><hr><p>下一步可探索：</p><ul>
+<li>cmux-markdown 实时预览写文档</li>
+<li>cmux.json 自定义命令绑定快捷键</li>
+<li>更多浏览器自动化场景（自动化测试、数据抓取）</li>
+<li>Agent View 实际使用体验</li>
+</ul></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/工具/终端配置/05-terminal-tooling/tmux配置总结/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">tmux配置总结</span> </a> <a class="post-nav-link post-nav-next " href="/posts/ai工具/claude-code/记忆系统/claude-code-三层记忆系统/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">如何让Claude Code永远按你的代码风格输出？</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

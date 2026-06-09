@@ -1,0 +1,1269 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>claude-mem故障排查与修复实录 - 翔子的博客</title><meta name="description" content="claude-mem 是一个为 Claude Code 提供&quot;长期记忆&quot;的开源工具，通过 MCP 协议实现跨会话、跨项目的记忆存储。某天发现 2026-04-17 到 2026-04-22 之间 5 天的观察记录全部丢失。"><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/skill%E5%BC%80%E5%8F%91/04-skill-dev/claude-mem%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5%E4%B8%8E%E4%BF%AE%E5%A4%8D%E5%AE%9E%E5%BD%95/"><meta property="og:title" content="claude-mem故障排查与修复实录 - 翔子的博客"><meta property="og:description" content="claude-mem 是一个为 Claude Code 提供&quot;长期记忆&quot;的开源工具，通过 MCP 协议实现跨会话、跨项目的记忆存储。某天发现 2026-04-17 到 2026-04-22 之间 5 天的观察记录全部丢失。"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/skill%E5%BC%80%E5%8F%91/04-skill-dev/claude-mem%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5%E4%B8%8E%E4%BF%AE%E5%A4%8D%E5%AE%9E%E5%BD%95/"><meta name="twitter:title" content="claude-mem故障排查与修复实录 - 翔子的博客"><meta name="twitter:description" content="claude-mem 是一个为 Claude Code 提供&quot;长期记忆&quot;的开源工具，通过 MCP 协议实现跨会话、跨项目的记忆存储。某天发现 2026-04-17 到 2026-04-22 之间 5 天的观察记录全部丢失。"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"claude-mem故障排查与修复实录","description":"claude-mem 是一个为 Claude Code 提供\"长期记忆\"的开源工具，通过 MCP 协议实现跨会话、跨项目的记忆存储。某天发现 2026-04-17 到 2026-04-22 之间 5 天的观察记录全部丢失。","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-05-26T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>claude-mem故障排查与修复实录</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=AI%E5%B7%A5%E5%85%B7">AI工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">claude-mem故障排查与修复实录</h1> <p class="post-subtitle">claude-mem 是一个为 Claude Code 提供&quot;长期记忆&quot;的开源工具，通过 MCP 协议实现跨会话、跨项目的记忆存储。某天发现 2026-04-17 到 2026-04-22 之间 5 天的观察记录全部丢失。</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-05-26 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 4,315 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 22 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#Skill开发</span><span class="post-tag">#04-skill-dev</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="claude-mem-故障排查与修复实录">claude-mem 故障排查与修复实录<a class="anchor" href="#claude-mem-故障排查与修复实录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><section><h2 id="背景">背景<a class="anchor" href="#背景"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>claude-mem 是一个为 Claude Code 提供”长期记忆”的开源工具，通过 MCP 协议实现跨会话、跨项目的记忆存储。某天发现 2026-04-17 到 2026-04-22 之间 5 天的观察记录全部丢失。</p></section><section><h2 id="排查过程">排查过程<a class="anchor" href="#排查过程"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="第一步确认数据丢失范围">第一步：确认数据丢失范围<a class="anchor" href="#第一步确认数据丢失范围"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">sqlite3</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/claude-mem.db</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"SELECT date(created_at, 'localtime') as day, count(*) FROM observations GROUP BY day ORDER BY day DESC;"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sqlite3 ~/.claude-mem/claude-mem.db &#x22;SELECT date(created_at, &#x27;localtime&#x27;) as day, count(*) FROM observations GROUP BY day ORDER BY day DESC;&#x22;"><div></div></button></div></figure></div><p>结果：</p><ul>
+<li>4/17 之前：大量记录（每天 250-400 条）</li>
+<li><strong>4/17 到 4/22：0 条（5 天空白）</strong></li>
+<li>4/22 之后：恢复正常</li>
+</ul></section><section><h3 id="第二步定位问题">第二步：定位问题<a class="anchor" href="#第二步定位问题"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>假象</strong>：一开始以为是 hooks 丢失导致 observation 没被收集。</p><p><strong>真相</strong>：检查 <code>pending_messages</code> 表发现有 166 条 <code>status='failed'</code> 的记录，说明 hooks 一直工作，observation 被收集了，但处理失败了。</p></section><section><h3 id="第三步查日志找根因">第三步：查日志找根因<a class="anchor" href="#第三步查日志找根因"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">tail</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-100</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/logs/claude-mem-2026-04-20.log</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="tail -100 ~/.claude-mem/logs/claude-mem-2026-04-20.log"><div></div></button></div></figure></div><p>关键日志：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">[SDK] API Error: 400 {"error":{"code":"invalid_parameter_error","message":"model `claude-sonnet-4-5` is not supported"...}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">[DB] STORED | obsCount=0 | obsIds=[]</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[SDK] API Error: 400 {&#x22;error&#x22;:{&#x22;code&#x22;:&#x22;invalid_parameter_error&#x22;,&#x22;message&#x22;:&#x22;model &#x60;claude-sonnet-4-5&#x60; is not supported&#x22;...}[DB] STORED | obsCount=0 | obsIds=[]"><div></div></button></div></figure></div><p><strong>根因</strong>：claude-mem worker 默认模型是 <code>claude-sonnet-4-5</code>（硬编码在 worker-service.cjs 中），但我们用的是 DashScope（阿里云）API，不支持这个模型。所有 API 调用都返回 400 错误，observation 被标记为 <code>failed</code> 后丢弃。</p><p><strong>为什么之前能工作？</strong> claude-mem 是<strong>按项目隔离</strong>的。其他项目（<code>某 Vue 3 项目</code>、<code>某 PC 项目</code> 等）的 hooks 一直存在，那些项目用的是不同的 API 端点。只有 <code>claudecode</code> 这个项目的 hooks 之前被清掉了。</p></section></section><section><h2 id="修复过程">修复过程<a class="anchor" href="#修复过程"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="修复-1修改-worker-模型配置">修复 1：修改 worker 模型配置<a class="anchor" href="#修复-1修改-worker-模型配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 修改 ~/.claude-mem/settings.json</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">"CLAUDE_MEM_MODEL"</span><span style="--0:#56B6C2;--1:#016C9A">:</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"qwen3.6-plus"</span><span style="--0:#ABB2BF;--1:#383A42">  </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 改成 DashScope 支持的模型</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="&#x22;CLAUDE_MEM_MODEL&#x22;: &#x22;qwen3.6-plus&#x22;  # 改成 DashScope 支持的模型"><div></div></button></div></figure></div></section><section><h3 id="修复-2恢复-hooks-到-settingsjson">修复 2：恢复 hooks 到 settings.json<a class="anchor" href="#修复-2恢复-hooks-到-settingsjson"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>在 <code>~/.claude/settings.json</code> 中添加 claude-mem 的 6 个 hooks：</p><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-rzy5jm92v" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"hooks"</span><span style="--0:#ABB2BF;--1:#383A42">: {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"SessionStart"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">"type"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"command"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$HOME/.claude/plugins/marketplaces/thedotmack/plugin</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">; node </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/bun-runner.js</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/worker-service.cjs</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> start)"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">"timeout"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">60</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"PostToolUse"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">"matcher"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"*"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">"hooks"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">          </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"type"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"command"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$HOME/.claude/plugins/marketplaces/thedotmack/plugin</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">; node </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/bun-runner.js</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/worker-service.cjs</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> hook claude-code observation)"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"timeout"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">120</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">          </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">        </span></span><span style="--0:#ABB2BF;--1:#383A42">]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"UserPromptSubmit"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">"hooks"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">25</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">          </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">26</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"type"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"command"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">27</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$HOME/.claude/plugins/marketplaces/thedotmack/plugin</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">; node </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/bun-runner.js</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/worker-service.cjs</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> hook claude-code session-init)"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">28</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"timeout"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">60</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">29</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">          </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">30</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">        </span></span><span style="--0:#ABB2BF;--1:#383A42">]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">31</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">32</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">33</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"Stop"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">34</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">35</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">"hooks"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">36</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">          </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">37</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"type"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"command"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">38</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$HOME/.claude/plugins/marketplaces/thedotmack/plugin</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">; node </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/bun-runner.js</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/worker-service.cjs</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> hook claude-code summarize)"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">39</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"timeout"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">120</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">40</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">          </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">41</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">        </span></span><span style="--0:#ABB2BF;--1:#383A42">]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">42</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">43</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">44</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"SessionEnd"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">45</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">46</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">"hooks"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">47</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">          </span></span><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">48</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"type"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"command"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">49</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$HOME/.claude/plugins/marketplaces/thedotmack/plugin</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">; node </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/bun-runner.js</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$_P/scripts/worker-service.cjs</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138"> hook claude-code session-complete)"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">50</div></div><div class="code"><span class="indent">            </span><span style="--0:#E6888F;--1:#AF4238">"timeout"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">30</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">51</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">          </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">52</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">        </span></span><span style="--0:#ABB2BF;--1:#383A42">]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">53</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">      </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">54</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">    </span></span><span style="--0:#ABB2BF;--1:#383A42">]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">55</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">56</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;hooks&#x22;: {    &#x22;SessionStart&#x22;: [      {        &#x22;type&#x22;: &#x22;command&#x22;,        &#x22;command&#x22;: &#x22;(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=\&#x22;$HOME/.claude/plugins/marketplaces/thedotmack/plugin\&#x22;; node \&#x22;$_P/scripts/bun-runner.js\&#x22; \&#x22;$_P/scripts/worker-service.cjs\&#x22; start)&#x22;,        &#x22;timeout&#x22;: 60      }    ],    &#x22;PostToolUse&#x22;: [      {        &#x22;matcher&#x22;: &#x22;*&#x22;,        &#x22;hooks&#x22;: [          {            &#x22;type&#x22;: &#x22;command&#x22;,            &#x22;command&#x22;: &#x22;(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=\&#x22;$HOME/.claude/plugins/marketplaces/thedotmack/plugin\&#x22;; node \&#x22;$_P/scripts/bun-runner.js\&#x22; \&#x22;$_P/scripts/worker-service.cjs\&#x22; hook claude-code observation)&#x22;,            &#x22;timeout&#x22;: 120          }        ]      }    ],    &#x22;UserPromptSubmit&#x22;: [      {        &#x22;hooks&#x22;: [          {            &#x22;type&#x22;: &#x22;command&#x22;,            &#x22;command&#x22;: &#x22;(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=\&#x22;$HOME/.claude/plugins/marketplaces/thedotmack/plugin\&#x22;; node \&#x22;$_P/scripts/bun-runner.js\&#x22; \&#x22;$_P/scripts/worker-service.cjs\&#x22; hook claude-code session-init)&#x22;,            &#x22;timeout&#x22;: 60          }        ]      }    ],    &#x22;Stop&#x22;: [      {        &#x22;hooks&#x22;: [          {            &#x22;type&#x22;: &#x22;command&#x22;,            &#x22;command&#x22;: &#x22;(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=\&#x22;$HOME/.claude/plugins/marketplaces/thedotmack/plugin\&#x22;; node \&#x22;$_P/scripts/bun-runner.js\&#x22; \&#x22;$_P/scripts/worker-service.cjs\&#x22; hook claude-code summarize)&#x22;,            &#x22;timeout&#x22;: 120          }        ]      }    ],    &#x22;SessionEnd&#x22;: [      {        &#x22;hooks&#x22;: [          {            &#x22;type&#x22;: &#x22;command&#x22;,            &#x22;command&#x22;: &#x22;(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; _P=\&#x22;$HOME/.claude/plugins/marketplaces/thedotmack/plugin\&#x22;; node \&#x22;$_P/scripts/bun-runner.js\&#x22; \&#x22;$_P/scripts/worker-service.cjs\&#x22; hook claude-code session-complete)&#x22;,            &#x22;timeout&#x22;: 30          }        ]      }    ]  }}"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-rzy5jm92v"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section><section><h3 id="修复-3去掉环境变量隔离让-worker-自动继承">修复 3：去掉环境变量隔离，让 worker 自动继承<a class="anchor" href="#修复-3去掉环境变量隔离让-worker-自动继承"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>之前的方案是 <code>(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; ...)</code>，这样每次切换国内模型都要手动改配置。</p><p><strong>最终方案</strong>：去掉 <code>unset</code>，让 worker 直接继承 Claude Code 的环境变量。</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 修改 ~/.claude-mem/settings.json</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 删除 "CLAUDE_MEM_MODEL" 这一行，让 worker 继承 ANTHROPIC_MODEL</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 修改 ~/.claude/settings.json</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 去掉所有 hooks 里的 "(unset ANTHROPIC_BASE_URL ANTHROPIC_MODEL; ...)"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code=""><div></div></button></div></figure></div><p>这样以后切换国内模型时，worker 自动就用新的了。</p></section></section><section><h2 id="预防机制">预防机制<a class="anchor" href="#预防机制"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="1-状态栏实时显示">1. 状态栏实时显示<a class="anchor" href="#1-状态栏实时显示"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>修改 <code>~/.claude/statusline-command.sh</code>，在状态栏添加 claude-mem 状态：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 检查 claude-mem status</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">cmem_status</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">""</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#61AFEF;--1:#3360C1">lsof</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-i</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">:37777</span><span style="--0:#ABB2BF;--1:#383A42"> ></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">cmem_status</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">" 🧠"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">else</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">cmem_status</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">" 🚨"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cmem_status=&#x22;&#x22;if lsof -i :37777 >/dev/null 2>&#x26;1; then  cmem_status=&#x22; 🧠&#x22;else  cmem_status=&#x22; 🚨&#x22;fi"><div></div></button></div></figure></div><ul>
+<li><code>🧠</code> = claude-mem 正在运行</li>
+<li><code>🚨</code> = claude-mem 挂了</li>
+</ul></section><section><h3 id="2-会话启动时自动检查">2. 会话启动时自动检查<a class="anchor" href="#2-会话启动时自动检查"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>在 <code>SessionStart</code> hook 中添加健康检查：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#61AFEF;--1:#3360C1">lsof</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-i</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">:37777</span><span style="--0:#ABB2BF;--1:#383A42"> ></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#56B6C2;--1:#016C9A">echo</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"{</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">systemMessage</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">: </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">🧠 claude-mem 正在运行</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">}"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">else</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#56B6C2;--1:#016C9A">echo</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"{</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">systemMessage</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">: </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">🚨 claude-mem 未运行！运行 ~/.claude/hooks/fix-claude-mem.sh 修复</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">}"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="if lsof -i :37777 >/dev/null 2>&#x26;1; then  echo &#x22;{\&#x22;systemMessage\&#x22;: \&#x22;🧠 claude-mem 正在运行\&#x22;}&#x22;else  echo &#x22;{\&#x22;systemMessage\&#x22;: \&#x22;🚨 claude-mem 未运行！运行 ~/.claude/hooks/fix-claude-mem.sh 修复\&#x22;}&#x22;fi"><div></div></button></div></figure></div></section><section><h3 id="3-自动诊断修复脚本">3. 自动诊断修复脚本<a class="anchor" href="#3-自动诊断修复脚本"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>创建了 <code>~/.claude/hooks/fix-claude-mem.sh</code>，一键诊断和修复：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">~/.claude/hooks/fix-claude-mem.sh</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="~/.claude/hooks/fix-claude-mem.sh"><div></div></button></div></figure></div><p>脚本自动检查：</p><ol>
+<li>Worker 是否在运行</li>
+<li>端口 37777 是否被占用</li>
+<li>最近 1 小时是否有新 observation</li>
+<li>pending/failed 队列状态</li>
+<li>hooks 是否在 settings.json 中</li>
+<li>今天是否有错误日志</li>
+</ol></section></section><section><h2 id="claude-mem-架构回顾">claude-mem 架构回顾<a class="anchor" href="#claude-mem-架构回顾"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">用户操作 → Claude Code Hooks → pending_messages (队列)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">↓</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                           </span></span><span style="--0:#abb2bf;--1:#383a42">Worker Service (处理)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">↓</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                           </span></span><span style="--0:#abb2bf;--1:#383a42">AI 总结 (@anthropic-ai/claude-agent-sdk)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">↓</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                           </span></span><span style="--0:#abb2bf;--1:#383a42">observations (结构化记录)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">↓</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                           </span></span><span style="--0:#abb2bf;--1:#383a42">SQLite + FTS5 + ChromaDB (存储)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">↓</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                           </span></span><span style="--0:#abb2bf;--1:#383a42">MCP 搜索工具 (检索)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="用户操作 → Claude Code Hooks → pending_messages (队列)                                    ↓                           Worker Service (处理)                                    ↓                           AI 总结 (@anthropic-ai/claude-agent-sdk)                                    ↓                           observations (结构化记录)                                    ↓                           SQLite + FTS5 + ChromaDB (存储)                                    ↓                           MCP 搜索工具 (检索)"><div></div></button></div></figure></div><section><h3 id="核心组件">核心组件<a class="anchor" href="#核心组件"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>组件</th><th>作用</th><th>技术栈</th></tr></thead><tbody><tr><td>Hooks</td><td>捕获生命周期事件</td><td>Claude Code settings.json</td></tr><tr><td>Worker</td><td>处理 observation 队列</td><td>Node.js + bun</td></tr><tr><td>SDK</td><td>AI 总结 observation</td><td>@anthropic-ai/claude-agent-sdk</td></tr><tr><td>数据库</td><td>存储结构化记录</td><td>SQLite + FTS5 + ChromaDB</td></tr><tr><td>MCP Server</td><td>语义搜索工具</td><td>Express.js + SSE</td></tr></tbody></table></section><section><h3 id="6-个生命周期-hooks">6 个生命周期 Hooks<a class="anchor" href="#6-个生命周期-hooks"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Hook</th><th>触发时机</th><th>作用</th></tr></thead><tbody><tr><td><code>SessionStart</code></td><td>会话开始</td><td>启动 Worker，加载上下文</td></tr><tr><td><code>UserPromptSubmit</code></td><td>用户输入时</td><td>初始化会话</td></tr><tr><td><code>PostToolUse</code></td><td>工具调用后</td><td>记录 observation</td></tr><tr><td><code>Stop</code></td><td>会话停止</td><td>总结会话</td></tr><tr><td><code>SessionEnd</code></td><td>会话结束</td><td>清理资源</td></tr><tr><td><code>TeammateIdle</code></td><td>空闲时</td><td>可选的通知</td></tr></tbody></table></section></section><section><h2 id="踩坑记录">踩坑记录<a class="anchor" href="#踩坑记录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="1-数据丢失不是没收集是-api-调用失败">1. 数据丢失不是没收集，是 API 调用失败<a class="anchor" href="#1-数据丢失不是没收集是-api-调用失败"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>一开始以为是 hooks 丢失，后来发现 <code>pending_messages</code> 表有 166 条 failed 记录。logs 里有 4429 条 observation 相关日志，说明 hooks 一直在工作。</p><p><strong>教训</strong>：收集和处理是两个阶段，要分别检查。</p></section><section><h3 id="2-模型配置是硬编码默认值">2. 模型配置是硬编码默认值<a class="anchor" href="#2-模型配置是硬编码默认值"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>worker-service.cjs</code> 中有硬编码：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="javascript"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E6888F">static</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#E5C07B;--1:#875D01">DEFAULTS</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">=</span><span style="--0:#ABB2BF;--1:#383A42"> {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">CLAUDE_MEM_MODEL</span><span style="--0:#ABB2BF;--1:#016C9A">:</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"claude-sonnet-4-5"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent"><span style="--0:#ABB2BF">  </span></span><span style="--0:#ABB2BF;--1:#016C9A">...</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="static DEFAULTS = {  CLAUDE_MEM_MODEL: &#x22;claude-sonnet-4-5&#x22;,  ...}"><div></div></button></div></figure></div><p>当 <code>~/.claude-mem/settings.json</code> 中没有配置或配置不生效时，就会用这个默认值。</p></section><section><h3 id="3-claude-mem-是按项目隔离的">3. claude-mem 是按项目隔离的<a class="anchor" href="#3-claude-mem-是按项目隔离的"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>每个项目有自己独立的 <code>.claude/settings.json</code> 和 hooks。<code>claudecode</code> 项目没有 hooks，但其他项目有，所以看起来”部分工作”。</p></section><section><h3 id="4-daily-recap-是基于-observations-表的">4. <code>daily-recap</code> 是基于 observations 表的<a class="anchor" href="#4-daily-recap-是基于-observations-表的"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>/daily-recap</code> skill 查询的是已总结的 observations，不是原始对话。如果 observation 处理失败，daily-recap 就会显示空。</p></section><section><h3 id="5-claude_plugin_root-在-settingsjson-中不可用">5. <code>${CLAUDE_PLUGIN_ROOT}</code> 在 settings.json 中不可用<a class="anchor" href="#5-claude_plugin_root-在-settingsjson-中不可用"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>claude-mem 的 hook 命令用了 <code>${CLAUDE_PLUGIN_ROOT}</code>，但这个变量只在插件的 <code>hooks.json</code> 中可用，在 <code>settings.json</code> 中会报错。需要改成绝对路径。</p></section></section><section><h2 id="总结">总结<a class="anchor" href="#总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><ol>
+<li><strong>claude-mem 的核心是 hooks + worker + 数据库</strong>，任何一环出问题都会导致记录丢失</li>
+<li><strong>日志是最好的诊断工具</strong>，<code>~/.claude-mem/logs/</code> 记录了所有处理过程</li>
+<li><strong>环境变量隔离是一把双刃剑</strong>，既能避免 API 冲突，也会导致配置不同步</li>
+<li><strong>自动化监控很重要</strong>，状态栏 + 启动检查 + 诊断脚本，让你不再靠”猜”来判断系统状态</li>
+</ol><hr><p>**最后修改: 2026-05-14</p></section><section><h2 id="第二次故障2026-05-13-大规模-observations-丢失">第二次故障：2026-05-13 大规模 observations 丢失<a class="anchor" href="#第二次故障2026-05-13-大规模-observations-丢失"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="现象">现象<a class="anchor" href="#现象"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>5 月 13 日生成 daily-recap 时发现当天 0 条 observations。检查数据库：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">sqlite3</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/claude-mem.db</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#98C379;--1:#387138">SELECT strftime('%Y-%m-%d', created_at) as day, COUNT(*)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#98C379;--1:#387138">FROM observations</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#98C379;--1:#387138">GROUP BY day</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#98C379;--1:#387138">ORDER BY day DESC</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#98C379;--1:#387138">LIMIT 10;</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sqlite3 ~/.claude-mem/claude-mem.db &#x22;SELECT strftime(&#x27;%Y-%m-%d&#x27;, created_at) as day, COUNT(*)FROM observationsGROUP BY dayORDER BY day DESCLIMIT 10;&#x22;"><div></div></button></div></figure></div><p>结果：observations 最后记录在 <strong>2026-05-09</strong>，之后 4 天全部空白。</p></section><section><h3 id="排查过程-1">排查过程<a class="anchor" href="#排查过程-1"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>第一步：确认 session 和 prompts 正常</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">sqlite3</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/claude-mem.db</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#98C379;--1:#387138">SELECT strftime('%Y-%m-%d', started_at) as day, COUNT(*)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#98C379;--1:#387138">FROM sdk_sessions</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#98C379;--1:#387138">GROUP BY day</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#98C379;--1:#387138">ORDER BY day DESC</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#98C379;--1:#387138">LIMIT 10;</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sqlite3 ~/.claude-mem/claude-mem.db &#x22;SELECT strftime(&#x27;%Y-%m-%d&#x27;, started_at) as day, COUNT(*)FROM sdk_sessionsGROUP BY dayORDER BY day DESCLIMIT 10;&#x22;"><div></div></button></div></figure></div><p>5 月 13 日有 <strong>55 个 session、316 条 prompts</strong>，说明 hooks 正常工作，问题出在 observation 处理阶段。</p><p><strong>第二步：查看 pending_messages</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">sqlite3</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/claude-mem.db</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#98C379;--1:#387138">SELECT message_type, status, COUNT(*)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#98C379;--1:#387138">FROM pending_messages</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#98C379;--1:#387138">GROUP BY message_type, status;</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sqlite3 ~/.claude-mem/claude-mem.db &#x22;SELECT message_type, status, COUNT(*)FROM pending_messagesGROUP BY message_type, status;&#x22;"><div></div></button></div></figure></div><p>结果：<strong>580 条 failed</strong>（523 observation + 57 summarize）。</p><p><strong>第三步：查日志找根因</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">grep</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"qwen3.6-plus\|Response received"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/logs/claude-mem-2026-05-13.log</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="grep &#x22;qwen3.6-plus\|Response received&#x22; ~/.claude-mem/logs/claude-mem-2026-05-13.log"><div></div></button></div></figure></div><p>关键错误：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">[INFO ] [SDK   ] [session-343] ← Response received (146 chars)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">There's an issue with the selected model (qwen3.6-plus).</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">It may not exist or you may not have access...</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[INFO ] [SDK   ] [session-343] ← Response received (146 chars)  There&#x27;s an issue with the selected model (qwen3.6-plus).  It may not exist or you may not have access..."><div></div></button></div></figure></div><p><strong>根因</strong>：<code>qwen3.6-plus</code> 模型在 DashScope 上短暂不可用，所有 SDK 子进程的 API 调用都返回 146 字符的错误信息。observation 处理失败后被标记为 <code>failed</code>，最终丢弃。</p><p><strong>为什么主会话能用？</strong></p><ul>
+<li>主会话（你直接交互的 Claude Code）可能因连接复用避开了错误窗口</li>
+<li>SDK 子进程（claude-mem 启动的 agent）每次都是新请求，直接命中模型不可用状态</li>
+</ul></section><section><h3 id="修复过程-1">修复过程<a class="anchor" href="#修复过程-1"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>修复 1：切换 claude-mem 模型</strong></p><div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">~/.claude-mem/settings.json</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">"CLAUDE_MEM_MODEL"</span><span style="--0:#56B6C2;--1:#016C9A">:</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"qwen3-coder-plus"</span><span style="--0:#ABB2BF;--1:#383A42">  </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 临时切换</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="&#x22;CLAUDE_MEM_MODEL&#x22;: &#x22;qwen3-coder-plus&#x22;  # 临时切换"><div></div></button></div></figure></div><p><strong>修复 2：重启 worker</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#56B6C2;--1:#016C9A">kill</span><span style="--0:#ABB2BF;--1:#383A42"> $(</span><span style="--0:#61AFEF;--1:#3360C1">cat</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/worker.pid</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">nohup</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">bun</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">--daemon</span><span style="--0:#ABB2BF;--1:#383A42"> > </span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1 &#x26;</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="kill $(cat ~/.claude-mem/worker.pid)nohup bun ~/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs --daemon > /dev/null 2>&#x26;1 &#x26;"><div></div></button></div></figure></div><p><strong>修复 3：清理 failed messages</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">sqlite3</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/claude-mem.db</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#98C379;--1:#387138">DELETE FROM pending_messages WHERE failed_at_epoch IS NOT NULL;</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sqlite3 ~/.claude-mem/claude-mem.db &#x22;DELETE FROM pending_messages WHERE failed_at_epoch IS NOT NULL;&#x22;"><div></div></button></div></figure></div><p><strong>修复 4：验证恢复</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">sqlite3</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude-mem/claude-mem.db</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#98C379;--1:#387138">SELECT id, title, project, created_at</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#98C379;--1:#387138">FROM observations ORDER BY created_at_epoch DESC LIMIT 5;</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#98C379;--1:#387138">"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sqlite3 ~/.claude-mem/claude-mem.db &#x22;SELECT id, title, project, created_atFROM observations ORDER BY created_at_epoch DESC LIMIT 5;&#x22;"><div></div></button></div></figure></div><p>新 observations 正常写入，确认修复成功。</p></section><section><h3 id="关键发现claude-mem-模型配置独立">关键发现：claude-mem 模型配置独立<a class="anchor" href="#关键发现claude-mem-模型配置独立"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="javascript"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// worker-service.cjs 中的 getModelId()</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">getModelId</span><span style="--0:#ABB2BF;--1:#383A42">() {</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#CD89E1;--1:#A626A4">let</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#E6888F">e</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#56B6C2;--1:#016C9A">=</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#E5C07B">path</span><span style="--0:#ABB2BF">.</span></span><span style="--0:#61AFEF;--1:#3360C1">join</span><span style="--0:#ABB2BF;--1:#383A42">(</span><span style="--0:#61AFEF;--1:#3360C1">homedir</span><span style="--0:#ABB2BF;--1:#383A42">(), </span><span style="--0:#98C379;--1:#387138">".claude-mem"</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#98C379;--1:#387138">"settings.json"</span><span style="--0:#ABB2BF;--1:#383A42">);</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#CD89E1;--1:#A626A4">return</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#E5C07B">Ee</span><span style="--0:#ABB2BF">.</span></span><span style="--0:#61AFEF;--1:#3360C1">loadFromFile</span><span style="--1:#383A42"><span style="--0:#ABB2BF">(</span><span style="--0:#E6888F">e</span><span style="--0:#ABB2BF">).</span></span><span style="--0:#E6888F;--1:#875D01">CLAUDE_MEM_MODEL</span><span style="--0:#ABB2BF;--1:#383A42">;  </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 只读 claude-mem 配置！</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="// worker-service.cjs 中的 getModelId()getModelId() {  let e = path.join(homedir(), &#x22;.claude-mem&#x22;, &#x22;settings.json&#x22;);  return Ee.loadFromFile(e).CLAUDE_MEM_MODEL;  // 只读 claude-mem 配置！}"><div></div></button></div></figure></div><p><strong>问题</strong>：<code>CLAUDE_MEM_MODEL</code> 和 Claude Code 主会话的 <code>ANTHROPIC_MODEL</code> 是两套独立配置。切换 <code>/model</code> 或 <code>switch-model.sh</code> 时，claude-mem 不会自动跟随。</p></section><section><h3 id="预防方案hook-自动同步">预防方案：Hook 自动同步<a class="anchor" href="#预防方案hook-自动同步"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>方案 1：SessionStart hook 自动同步</strong></p><p>创建 <code>~/.claude/hooks/sync-mem-model.sh</code>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">#!/bin/bash</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">CLAUDE_SETTINGS</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$HOME</span><span style="--0:#98C379;--1:#387138">/.claude/settings.json"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">MEM_SETTINGS</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$HOME</span><span style="--0:#98C379;--1:#387138">/.claude-mem/settings.json"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">CLAUDE_MODEL</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-r</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.env.ANTHROPIC_MODEL // .model // empty'</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_SETTINGS</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">MEM_MODEL</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-r</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.CLAUDE_MEM_MODEL // empty'</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$MEM_SETTINGS</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> [ </span><span style="--0:#56B6C2">-n</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_MODEL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ] &#x26;&#x26; [ </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_MODEL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#56B6C2">!=</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$MEM_MODEL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ]; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span class="indent">  </span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">--arg</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">model</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_MODEL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.CLAUDE_MEM_MODEL = $model'</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">\</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span class="indent">     </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$MEM_SETTINGS</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> > </span><span style="--0:#98C379;--1:#387138">"</span><span style="--1:#AF4238"><span style="--0:#98C379">${</span><span style="--0:#E6888F">MEM_SETTINGS</span><span style="--0:#98C379">}</span></span><span style="--0:#98C379;--1:#387138">.tmp"</span><span style="--0:#ABB2BF;--1:#383A42"> &#x26;&#x26; </span><span style="--0:#61AFEF;--1:#3360C1">mv</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--1:#AF4238"><span style="--0:#98C379">${</span><span style="--0:#E6888F">MEM_SETTINGS</span><span style="--0:#98C379">}</span></span><span style="--0:#98C379;--1:#387138">.tmp"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$MEM_SETTINGS</span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span class="indent">  </span><span style="--0:#56B6C2;--1:#016C9A">echo</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'{"systemMessage": "🔄 已同步 claude-mem 模型: '"</span><span style="--0:#E6888F;--1:#AF4238">$MEM_MODEL</span><span style="--0:#98C379;--1:#387138">"' → '"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_MODEL</span><span style="--0:#98C379;--1:#387138">"'"}'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="#!/bin/bashCLAUDE_SETTINGS=&#x22;$HOME/.claude/settings.json&#x22;MEM_SETTINGS=&#x22;$HOME/.claude-mem/settings.json&#x22;CLAUDE_MODEL=$(jq -r &#x27;.env.ANTHROPIC_MODEL // .model // empty&#x27; &#x22;$CLAUDE_SETTINGS&#x22;)MEM_MODEL=$(jq -r &#x27;.CLAUDE_MEM_MODEL // empty&#x27; &#x22;$MEM_SETTINGS&#x22;)if [ -n &#x22;$CLAUDE_MODEL&#x22; ] &#x26;&#x26; [ &#x22;$CLAUDE_MODEL&#x22; != &#x22;$MEM_MODEL&#x22; ]; then  jq --arg model &#x22;$CLAUDE_MODEL&#x22; &#x27;.CLAUDE_MEM_MODEL = $model&#x27; \     &#x22;$MEM_SETTINGS&#x22; > &#x22;${MEM_SETTINGS}.tmp&#x22; &#x26;&#x26; mv &#x22;${MEM_SETTINGS}.tmp&#x22; &#x22;$MEM_SETTINGS&#x22;  echo &#x27;{&#x22;systemMessage&#x22;: &#x22;🔄 已同步 claude-mem 模型: &#x27;&#x22;$MEM_MODEL&#x22;&#x27; → &#x27;&#x22;$CLAUDE_MODEL&#x22;&#x27;&#x22;}&#x27;fi"><div></div></button></div></figure></div><p>在 <code>~/.claude/settings.json</code> 的 <code>SessionStart</code> hook 中添加：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"type"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"command"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"command"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"bash </span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">$HOME/.claude/hooks/sync-mem-model.sh</span><span style="--0:#56B6C2;--1:#016C9A">\"</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"statusMessage"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"🔄 同步 claude-mem 模型..."</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"timeout"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">5</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;type&#x22;: &#x22;command&#x22;,  &#x22;command&#x22;: &#x22;bash \&#x22;$HOME/.claude/hooks/sync-mem-model.sh\&#x22;&#x22;,  &#x22;statusMessage&#x22;: &#x22;🔄 同步 claude-mem 模型...&#x22;,  &#x22;timeout&#x22;: 5}"><div></div></button></div></figure></div><p><strong>方案 2：增强 switch-model.sh</strong></p><p>在 <code>~/.claude/switch-model.sh</code> 的 <code>switch_channel_model()</code> 函数末尾添加：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 同步到 claude-mem</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> [ </span><span style="--0:#56B6C2">-f</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$HOME</span><span style="--0:#98C379;--1:#387138">/.claude/hooks/sync-mem-model.sh"</span><span style="--0:#ABB2BF;--1:#383A42"> ]; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#61AFEF;--1:#3360C1">bash</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$HOME</span><span style="--0:#98C379;--1:#387138">/.claude/hooks/sync-mem-model.sh"</span><span style="--0:#ABB2BF;--1:#383A42"> > </span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="if [ -f &#x22;$HOME/.claude/hooks/sync-mem-model.sh&#x22; ]; then  bash &#x22;$HOME/.claude/hooks/sync-mem-model.sh&#x22; > /dev/null 2>&#x26;1fi"><div></div></button></div></figure></div><p>这样每次切换模型时，claude-mem 自动跟随，避免两套配置不一致导致的故障。</p></section></section><section><h2 id="新增踩坑记录">新增踩坑记录<a class="anchor" href="#新增踩坑记录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="6-sdk-子进程和主会话的模型调用路径不同">6. SDK 子进程和主会话的模型调用路径不同<a class="anchor" href="#6-sdk-子进程和主会话的模型调用路径不同"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>主会话直接调用 Claude Code CLI，SDK 子进程通过 <code>@anthropic-ai/claude-agent-sdk</code> 启动。两者读取配置的时机和方式不同，可能出现主会话正常但 SDK 报错的情况。</p></section><section><h3 id="7-retryallstuck-不处理-failed-状态">7. <code>retryAllStuck()</code> 不处理 failed 状态<a class="anchor" href="#7-retryallstuck-不处理-failed-状态"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="javascript"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">retryAllStuck</span><span style="--1:#383A42"><span style="--0:#ABB2BF">(</span><span style="--0:#E6888F">e</span><span style="--0:#ABB2BF">) {</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#CD89E1;--1:#A626A4">let</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#E6888F">r</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#56B6C2;--1:#016C9A">=</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#E5C07B">Date</span><span style="--0:#ABB2BF">.</span></span><span style="--0:#61AFEF;--1:#3360C1">now</span><span style="--0:#ABB2BF;--1:#383A42">() </span><span style="--0:#56B6C2;--1:#016C9A">-</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#E6888F">e</span><span style="--0:#ABB2BF">;</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#CD89E1;--1:#A626A4">return</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E5C07B;--1:#AF4238">this</span><span style="--0:#ABB2BF;--1:#383A42">.</span><span style="--0:#E5C07B;--1:#AF4238">db</span><span style="--0:#ABB2BF;--1:#383A42">.</span><span style="--0:#61AFEF;--1:#3360C1">prepare</span><span style="--0:#ABB2BF;--1:#383A42">(</span><span style="--0:#98C379;--1:#387138">`</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent"><span style="--0:#98C379;--1:#387138">    </span></span><span style="--0:#98C379;--1:#387138">UPDATE pending_messages</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent"><span style="--0:#98C379;--1:#387138">    </span></span><span style="--0:#98C379;--1:#387138">SET status = 'pending', started_processing_at_epoch = NULL</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent"><span style="--0:#98C379;--1:#387138">    </span></span><span style="--0:#98C379;--1:#387138">WHERE status = 'processing' AND started_processing_at_epoch &#x3C; ?</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent"><span style="--0:#98C379;--1:#387138">  </span></span><span style="--0:#98C379;--1:#387138">`</span><span style="--0:#ABB2BF;--1:#383A42">).</span><span style="--0:#61AFEF;--1:#3360C1">run</span><span style="--1:#383A42"><span style="--0:#ABB2BF">(</span><span style="--0:#E6888F">r</span><span style="--0:#ABB2BF">).</span></span><span style="--0:#E6888F;--1:#AF4238">changes</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="retryAllStuck(e) {  let r = Date.now() - e;  return this.db.prepare(&#x60;    UPDATE pending_messages    SET status = &#x27;pending&#x27;, started_processing_at_epoch = NULL    WHERE status = &#x27;processing&#x27; AND started_processing_at_epoch < ?  &#x60;).run(r).changes}"><div></div></button></div></figure></div><p>只重置 <code>processing</code> 状态的消息，不重置 <code>failed</code> 状态。模型恢复后，旧消息不会自动重试，需要手动清理或删除。</p></section><section><h3 id="8-worker-重启不会扫描历史-pending-messages">8. Worker 重启不会扫描历史 pending messages<a class="anchor" href="#8-worker-重启不会扫描历史-pending-messages"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Worker 采用事件驱动处理新消息（<code>events.on('message')</code>），启动时不会扫描数据库中积压的 pending messages。这意味着即使模型恢复了，旧消息也会永远卡在队列里。</p></section></section><section><h2 id="总结-1">总结<a class="anchor" href="#总结-1"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><ol>
+<li><strong>claude-mem 的核心是 hooks + worker + 数据库</strong>，任何一环出问题都会导致记录丢失</li>
+<li><strong>日志是最好的诊断工具</strong>，<code>~/.claude-mem/logs/</code> 记录了所有处理过程</li>
+<li><strong>环境变量隔离是一把双刃剑</strong>，既能避免 API 冲突，也会导致配置不同步</li>
+<li><strong>自动化监控很重要</strong>，状态栏 + 启动检查 + 诊断脚本，让你不再靠”猜”来判断系统状态</li>
+<li><strong>模型配置要同步</strong>，claude-mem 的 <code>CLAUDE_MEM_MODEL</code> 和 Claude Code 的 <code>ANTHROPIC_MODEL</code> 必须保持一致，否则 SDK 子进程会失败</li>
+<li><strong>模型短暂不可用是常态</strong>，API 维护、限流、下线都可能发生，要有备用模型和自动切换机制</li>
+</ol><hr><p><strong>最后修改</strong>: 2026-05-14</p></section><section><h2 id="第三次故障2026-05-19-活僵尸--api-400-错误">第三次故障：2026-05-19 活僵尸 + API 400 错误<a class="anchor" href="#第三次故障2026-05-19-活僵尸--api-400-错误"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="现象-1">现象<a class="anchor" href="#现象-1"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><code>daily-recap 2026-05-19</code> 显示 0 条 observations</li>
+<li>但 <code>user_prompts</code> 有 104 条、<code>sdk_sessions</code> 有 5 个会话、git 有提交 → 当天确实工作了</li>
+<li>今天（5/20）worker 恢复后 API 报 <code>400 model 'kimi-k2.6' is not supported</code></li>
+</ul></section><section><h3 id="排查关键步骤">排查关键步骤<a class="anchor" href="#排查关键步骤"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li>
+<p><strong>observations 0 条但 prompts 正常</strong> → 问题不在 hooks，在 worker 处理阶段</p>
+</li>
+<li>
+<p><strong>对比日志模块分布</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>日期</th><th>WORKER</th><th>SYSTEM</th><th>状态</th></tr></thead><tbody><tr><td>5/18</td><td>3872</td><td>1824</td><td>✅ 正常</td></tr><tr><td><strong>5/19</strong></td><td><strong>0</strong></td><td>749</td><td>❌ Worker 未执行</td></tr></tbody></table>
+</li>
+<li>
+<p><strong>worker 进程存活但无 observation 处理</strong> → 活僵尸</p>
+</li>
+<li>
+<p><strong>检查环境变量</strong>：worker（PID 11776，5/18 启动）的 <code>ANTHROPIC_BASE_URL=https://coding.dashscope.aliyuncs.com/apps/anthropic</code>，但 <code>settings.json</code> 已切换为 <code>https://ark.cn-beijing.volces.com/api/coding</code></p>
+</li>
+<li>
+<p><strong>bun-runner.js 第 160 行</strong>：<code>env: process.env</code> → worker 继承启动时的环境变量，之后不再更新</p>
+</li>
+</ol></section><section><h3 id="根因">根因<a class="anchor" href="#根因"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>worker 是 5/18 凌晨启动的，当时环境变量是 DashScope + qwen3.6-plus。之后切换模型到火山引擎 + kimi-k2.6，<code>settings.json</code> 更新了，但<strong>worker 进程内的环境变量冻结</strong>。今天 worker 恢复消费队列后，用 DashScope endpoint 传 <code>kimi-k2.6</code> → 400。</p></section><section><h3 id="修复">修复<a class="anchor" href="#修复"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li><strong>Kill 旧 worker + 导出正确环境变量重启</strong></li>
+<li><strong>升级 <code>sync-mem-model.sh</code></strong>：同步模型时同时导出环境变量并重启 worker</li>
+<li><strong>新建 <code>check-claude-mem.sh</code></strong>：深度健康检查
+<ul>
+<li>worker 环境变量与 <code>settings.json</code> 一致性</li>
+<li>最近 API 错误次数</li>
+<li>worker 活动状态（是否长期无日志）</li>
+</ul>
+</li>
+<li><strong>更新 <code>settings.json</code> SessionStart hook</strong>：从简单端口检查替换为深度检查</li>
+</ol></section><section><h3 id="新增踩坑记录-1">新增踩坑记录<a class="anchor" href="#新增踩坑记录-1"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><section><h4 id="9-worker-环境变量冻结活僵尸">9. worker 环境变量冻结（活僵尸）<a class="anchor" href="#9-worker-环境变量冻结活僵尸"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p><code>bun-runner.js</code> 启动 worker 时通过 <code>env: process.env</code> 继承环境变量，之后不再更新。切换模型后 worker 进程成了”活僵尸”——活着但不干活。</p></section><section><h4 id="10-sessionstart-hook-只检查端口不够">10. SessionStart hook 只检查端口不够<a class="anchor" href="#10-sessionstart-hook-只检查端口不够"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>之前的检查：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">lsof</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-i</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">:37777</span><span style="--0:#ABB2BF;--1:#383A42"> ></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="lsof -i :37777 >/dev/null 2>&#x26;1"><div></div></button></div></figure></div><p>只能验证进程在监听端口，无法发现环境变量过期、API 错误、worker 卡死等问题。</p><hr><p><strong>最后修改</strong>: 2026-05-22</p></section></section></section><section><h2 id="第四次故障2026-05-22--sync-mem-modelsh-环境变量传递失败--check-claude-memsh-竞态">第四次故障：2026-05-22 — sync-mem-model.sh 环境变量传递失败 + check-claude-mem.sh 竞态<a class="anchor" href="#第四次故障2026-05-22--sync-mem-modelsh-环境变量传递失败--check-claude-memsh-竞态"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="现象-2">现象<a class="anchor" href="#现象-2"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>每次启动 Claude Code，<code>check-claude-mem.sh</code> 深度检查告警：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">🚨 claude-mem 异常:</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">⚠️ BASE_URL 不一致: settings.json=https://coding.dashscope.aliyuncs.com/apps/anthropic, worker=https://ark.cn-beijing.volces.com/api/coding</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">⚠️ MODEL 不一致: settings.json=qwen3.6-plus, worker=kimi-k2.6</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="🚨 claude-mem 异常:⚠️ BASE_URL 不一致: settings.json=https://coding.dashscope.aliyuncs.com/apps/anthropic, worker=https://ark.cn-beijing.volces.com/api/coding⚠️ MODEL 不一致: settings.json=qwen3.6-plus, worker=kimi-k2.6"><div></div></button></div></figure></div></section><section><h3 id="排查">排查<a class="anchor" href="#排查"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><code>settings.json</code> 配置是 DashScope + qwen3.6-plus，但 worker 进程的环境变量是旧的火山引擎 + kimi-k2.6。</p><p>根因在 <code>sync-mem-model.sh</code> 里：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 旧代码</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">export</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">ANTHROPIC_MODEL</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_MODEL</span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#ABB2BF">[ </span><span style="--0:#56B6C2">-n</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_BASE_URL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ] &#x26;&#x26; </span><span style="--0:#CD89E1;--1:#A626A4">export</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">ANTHROPIC_BASE_URL</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_BASE_URL</span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#ABB2BF">[ </span><span style="--0:#56B6C2">-n</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_AUTH_TOKEN</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ] &#x26;&#x26; </span><span style="--0:#CD89E1;--1:#A626A4">export</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">ANTHROPIC_AUTH_TOKEN</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_AUTH_TOKEN</span><span style="--0:#98C379;--1:#387138">"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># ...之后</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">nohup</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">node</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$_P</span><span style="--0:#98C379;--1:#387138">/scripts/bun-runner.js"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$_P</span><span style="--0:#98C379;--1:#387138">/scripts/worker-service.cjs"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">start</span><span style="--0:#ABB2BF;--1:#383A42"> > </span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1 &#x26;</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="export ANTHROPIC_MODEL=&#x22;$CLAUDE_MODEL&#x22;[ -n &#x22;$CLAUDE_BASE_URL&#x22; ] &#x26;&#x26; export ANTHROPIC_BASE_URL=&#x22;$CLAUDE_BASE_URL&#x22;[ -n &#x22;$CLAUDE_AUTH_TOKEN&#x22; ] &#x26;&#x26; export ANTHROPIC_AUTH_TOKEN=&#x22;$CLAUDE_AUTH_TOKEN&#x22;nohup node &#x22;$_P/scripts/bun-runner.js&#x22; &#x22;$_P/scripts/worker-service.cjs&#x22; start > /dev/null 2>&#x26;1 &#x26;"><div></div></button></div></figure></div><p><code>export</code> 只对当前 shell 进程生效，<code>nohup</code> 启动的子进程在 Claude Code hook 环境下<strong>不一定能继承</strong>这些 export 的变量。所以新 worker 继承的还是旧的环境变量。</p><p>同时 <code>check-claude-mem.sh</code> 通过 <code>ps e -p PID</code> 检查 running process 的环境变量，存在<strong>竞态条件</strong>：<code>sync-mem-model.sh</code> 刚 kill 旧 worker 就启动新 worker，但 hook 间没有等待机制，检查脚本可能在 worker 重启完成前就读了旧进程。</p></section><section><h3 id="修复-1">修复<a class="anchor" href="#修复-1"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>修复 1：sync-mem-model.sh 用 <code>env</code> 显式传递</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 新代码 — 不再依赖 export 继承</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">env</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">ANTHROPIC_MODEL="</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_MODEL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">\</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">    </span><span style="--0:#98C379;--1:#387138">ANTHROPIC_BASE_URL="</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_BASE_URL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">\</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">    </span><span style="--0:#98C379;--1:#387138">ANTHROPIC_AUTH_TOKEN="</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_AUTH_TOKEN</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">\</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">    </span><span style="--0:#98C379;--1:#387138">nohup</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">node</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$_P</span><span style="--0:#98C379;--1:#387138">/scripts/bun-runner.js"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$_P</span><span style="--0:#98C379;--1:#387138">/scripts/worker-service.cjs"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">start</span><span style="--0:#ABB2BF;--1:#383A42"> > </span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1 &#x26;</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="env ANTHROPIC_MODEL=&#x22;$CLAUDE_MODEL&#x22; \    ANTHROPIC_BASE_URL=&#x22;$CLAUDE_BASE_URL&#x22; \    ANTHROPIC_AUTH_TOKEN=&#x22;$CLAUDE_AUTH_TOKEN&#x22; \    nohup node &#x22;$_P/scripts/bun-runner.js&#x22; &#x22;$_P/scripts/worker-service.cjs&#x22; start > /dev/null 2>&#x26;1 &#x26;"><div></div></button></div></figure></div><p><code>env</code> 会把这些变量直接注入到新进程的初始环境，不依赖 shell 的 export 传播。</p><p><strong>修复 2：check-claude-mem.sh 不再检查 running process env</strong></p><p>改为检查 <code>claude-mem/settings.json</code> 是否与 Claude Code 配置同步——这才是真正可靠的配置来源。对 running process 环境变量的检查降级为静默跳过（不告警），避免竞态误报。</p></section><section><h3 id="新增踩坑记录-2">新增踩坑记录<a class="anchor" href="#新增踩坑记录-2"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><section><h4 id="11-export--nohup-在-hook-环境下不继承">11. <code>export</code> + <code>nohup</code> 在 hook 环境下不继承<a class="anchor" href="#11-export--nohup-在-hook-环境下不继承"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>Claude Code hook 的执行环境中，<code>export</code> 的变量不一定能传递给 <code>nohup</code> 启动的子进程。要用 <code>env VAR=value command</code> 显式传递。</p></section><section><h4 id="12-hook-间存在竞态不要用-running-process-状态做判断">12. Hook 间存在竞态，不要用 running process 状态做判断<a class="anchor" href="#12-hook-间存在竞态不要用-running-process-状态做判断"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p><code>SessionStart</code> 下的多个 hook 按顺序触发，但没有等待机制。一个 hook 重启了进程，下一个 hook 立刻检查，可能读到中间状态。应该检查<strong>持久化配置</strong>（settings.json）而不是<strong>运行时状态</strong>（ps env）。</p><hr></section></section></section><section><h2 id="2026-05-26-二次修复上一次没修干净">2026-05-26 二次修复：上一次没修干净<a class="anchor" href="#2026-05-26-二次修复上一次没修干净"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>上一次（05-22）已经改了 <code>sync-mem-model.sh</code> 用 <code>env</code> 显式传递变量，按理说切模型后 worker 应该拿到正确 env。但 05-25 触发 <code>/daily-recap</code> 时发现：<strong>今日 observations 表 0 条，已经 4 天没落库了</strong>。</p><section><h3 id="真正的根因">真正的根因<a class="anchor" href="#真正的根因"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><section><h4 id="根因-aworkerpid-是-jsonhook-一直在-kill-失败">根因 A：worker.pid 是 JSON，hook 一直在 kill 失败<a class="anchor" href="#根因-aworkerpid-是-jsonhook-一直在-kill-失败"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p><code>~/.claude-mem/worker.pid</code> 的实际格式是：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"pid"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">22601</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"port"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">37777</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"startedAt"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"2026-05-26T01:18:03.637Z"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"version"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"unknown"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;pid&#x22;: 22601,  &#x22;port&#x22;: 37777,  &#x22;startedAt&#x22;: &#x22;2026-05-26T01:18:03.637Z&#x22;,  &#x22;version&#x22;: &#x22;unknown&#x22;}"><div></div></button></div></figure></div><p>但 05-22 修复后的 hook 仍然这么写：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">OLD_PID</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">cat</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$WORKER_PID_FILE</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#56B6C2;--1:#016C9A">kill</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$OLD_PID</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="OLD_PID=$(cat &#x22;$WORKER_PID_FILE&#x22; 2>/dev/null)kill &#x22;$OLD_PID&#x22; 2>/dev/null"><div></div></button></div></figure></div><p><code>cat</code> 出来的是整段 JSON，<code>kill</code> 拿到非法 PID 就静默退出（<code>2>/dev/null</code> 把错也吞了）。结果<strong>每次切模型，旧 worker 都没被 kill</strong>，新 worker 启动后端口被占，启动失败也没人报。</p></section><section><h4 id="根因-bdaemon-内-fork-sdk-子进程会再丢一次-env">根因 B：daemon 内 fork SDK 子进程会再丢一次 env<a class="anchor" href="#根因-bdaemon-内-fork-sdk-子进程会再丢一次-env"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>worker-service.cjs 是 daemon，它内部还会按 session 数量再 fork SDK 子进程处理消息。<code>env VAR=value nohup node ...</code> 只能保证 daemon 自己拿到 env，daemon 启动后再 fork 出的 SDK 子进程是否继承——取决于 daemon 代码怎么写 spawn。实测一段时间后 SDK 子进程的 env 与 daemon 不一致，旧的 BASE_URL/MODEL 又回来了。</p></section><section><h4 id="根因-c健康自检漏了全静默-0-落库信号">根因 C：健康自检漏了”全静默 0 落库”信号<a class="anchor" href="#根因-c健康自检漏了全静默-0-落库信号"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>05-22 写的 <code>check-claude-mem.sh</code> 检测：端口监听、worker PID 存在、settings 模型同步、最近 100 行日志的 API 错误数、worker 是否 15 分钟无日志活动。但这次故障是<strong>端口在监听、PID 在、settings 一致、日志正常滚（全是 400 错误也算”有活动”）</strong>，唯独 observations 表一条没写。健康自检报”健康”，用户 4 天后才发现。</p></section></section><section><h3 id="这次的修复">这次的修复<a class="anchor" href="#这次的修复"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>修复 1：<code>sync-mem-model.sh</code> 用 jq 解析 JSON pid + 用官方 worker-cli.js 启动</strong></p><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-8mc3mjnw5" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span><button class="ec-collapse__header-toggle" type="button" aria-expanded="false" aria-controls="collapse-8mc3mjnw5"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__header-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 拿 PID：先试 worker.pid 的 JSON.pid 字段，fallback 到 supervisor.json</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">OLD_PID</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">""</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> [ </span><span style="--0:#56B6C2">-f</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$WORKER_PID_FILE</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ]; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">OLD_PID</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-r</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.pid // empty'</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$WORKER_PID_FILE</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> [ </span><span style="--0:#56B6C2">-z</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$OLD_PID</span><span style="--0:#98C379;--1:#387138">"</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> ] &#x26;&#x26; [ </span><span style="--0:#56B6C2">-f</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$SUPERVISOR_FILE</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ]; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">OLD_PID</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-r</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.processes.worker.pid // empty'</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$SUPERVISOR_FILE</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 等进程真退出（最多 5 秒）— 避免端口竞态</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> [ </span><span style="--0:#56B6C2">-n</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$OLD_PID</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ] &#x26;&#x26; </span><span style="--0:#56B6C2;--1:#016C9A">kill</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-0</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$OLD_PID</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42">; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span class="indent">    </span><span style="--0:#56B6C2;--1:#016C9A">kill</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$OLD_PID</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span class="indent">    </span><span style="--0:#CD89E1;--1:#A626A4">for</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E6888F;--1:#AF4238">i</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#CD89E1;--1:#A626A4">in</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">1</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">2</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">3</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">4</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">5</span><span style="--0:#ABB2BF;--1:#383A42">; </span><span style="--0:#CD89E1;--1:#A626A4">do</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span class="indent">        </span><span style="--0:#56B6C2;--1:#016C9A">kill</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-0</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$OLD_PID</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> || </span><span style="--0:#CD89E1;--1:#A626A4">break</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code"><span class="indent">        </span><span style="--0:#61AFEF;--1:#3360C1">sleep</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">1</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span class="indent">    </span><span style="--0:#CD89E1;--1:#A626A4">done</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 用官方 worker-cli.js 启动（它内部走 supervisor，会把 env 注入所有 fork 子进程）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">CLI</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$HOME</span><span style="--0:#98C379;--1:#387138">/.claude/plugins/cache/thedotmack/claude-mem/10.6.2/scripts/worker-cli.js"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">21</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">env</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">ANTHROPIC_MODEL="</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_MODEL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">\</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">22</div></div><div class="code"><span class="indent">    </span><span style="--0:#98C379;--1:#387138">ANTHROPIC_BASE_URL="</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_BASE_URL</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">\</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">23</div></div><div class="code"><span class="indent">    </span><span style="--0:#98C379;--1:#387138">ANTHROPIC_AUTH_TOKEN="</span><span style="--0:#E6888F;--1:#AF4238">$CLAUDE_AUTH_TOKEN</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">\</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">24</div></div><div class="code"><span class="indent">    </span><span style="--0:#98C379;--1:#387138">node</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$CLI</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">start</span><span style="--0:#ABB2BF;--1:#383A42"> > </span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="OLD_PID=&#x22;&#x22;if [ -f &#x22;$WORKER_PID_FILE&#x22; ]; then    OLD_PID=$(jq -r &#x27;.pid // empty&#x27; &#x22;$WORKER_PID_FILE&#x22; 2>/dev/null)fiif [ -z &#x22;$OLD_PID&#x22; ] &#x26;&#x26; [ -f &#x22;$SUPERVISOR_FILE&#x22; ]; then    OLD_PID=$(jq -r &#x27;.processes.worker.pid // empty&#x27; &#x22;$SUPERVISOR_FILE&#x22; 2>/dev/null)fiif [ -n &#x22;$OLD_PID&#x22; ] &#x26;&#x26; kill -0 &#x22;$OLD_PID&#x22; 2>/dev/null; then    kill &#x22;$OLD_PID&#x22; 2>/dev/null    for i in 1 2 3 4 5; do        kill -0 &#x22;$OLD_PID&#x22; 2>/dev/null || break        sleep 1    donefiCLI=&#x22;$HOME/.claude/plugins/cache/thedotmack/claude-mem/10.6.2/scripts/worker-cli.js&#x22;env ANTHROPIC_MODEL=&#x22;$CLAUDE_MODEL&#x22; \    ANTHROPIC_BASE_URL=&#x22;$CLAUDE_BASE_URL&#x22; \    ANTHROPIC_AUTH_TOKEN=&#x22;$CLAUDE_AUTH_TOKEN&#x22; \    node &#x22;$CLI&#x22; start > /dev/null 2>&#x26;1"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-8mc3mjnw5"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div><p>放弃自己手撸 <code>nohup node bun-runner.js worker-service.cjs start &#x26;</code> 的启动方式——走官方 CLI，让它去处理 supervisor 注册、子进程 env 注入、端口绑定。</p><p><strong>修复 2：<code>check-claude-mem.sh</code> 加”今日 obs = 0 且过 10 点”告警</strong></p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">DB</span><span style="--0:#56B6C2;--1:#383A42">=</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$HOME</span><span style="--0:#98C379;--1:#387138">/.claude-mem/claude-mem.db"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> [ </span><span style="--0:#56B6C2">-f</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$DB</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ] &#x26;&#x26; </span><span style="--0:#56B6C2;--1:#016C9A">command</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-v</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">sqlite3</span><span style="--0:#ABB2BF;--1:#383A42"> ></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42"> 2>&#x26;1; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">TODAY_OBS</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">sqlite3</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$DB</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"SELECT COUNT(*) FROM observations WHERE date(created_at)=date('now','localtime');"</span><span style="--0:#ABB2BF;--1:#383A42"> 2></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">HOUR</span><span style="--1:#383A42"><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF">$(</span></span><span style="--0:#61AFEF;--1:#3360C1">date</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">+%H</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">    </span><span style="--0:#CD89E1;--1:#A626A4">if</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> [ </span><span style="--0:#56B6C2">-n</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$TODAY_OBS</span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#ABB2BF;--1:#383A42"> ] &#x26;&#x26; [ </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$TODAY_OBS</span><span style="--0:#98C379;--1:#387138">"</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#56B6C2">=</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#98C379;--1:#387138">"0"</span><span style="--0:#ABB2BF;--1:#383A42"> ] &#x26;&#x26; [ </span><span style="--0:#98C379;--1:#387138">"</span><span style="--0:#E6888F;--1:#AF4238">$HOUR</span><span style="--0:#98C379;--1:#387138">"</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#56B6C2">-ge</span><span style="--0:#ABB2BF"> </span></span><span style="--0:#D19A66;--1:#875D01">10</span><span style="--0:#ABB2BF;--1:#383A42"> ] </span><span style="--0:#61AFEF;--1:#3360C1">2</span><span style="--0:#ABB2BF;--1:#383A42">></span><span style="--0:#98C379;--1:#387138">/dev/null</span><span style="--0:#ABB2BF;--1:#383A42">; </span><span style="--0:#CD89E1;--1:#A626A4">then</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent">        </span><span style="--0:#E6888F;--1:#AF4238">ISSUES</span><span style="--1:#383A42"><span style="--0:#CD89E1">+=</span><span style="--0:#ABB2BF">(</span></span><span style="--0:#98C379;--1:#387138">"🚨 今日 observations 落库数 = 0（已过 10 点）— 可能 worker env 失效或队列卡死"</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent">    </span><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">fi</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="DB=&#x22;$HOME/.claude-mem/claude-mem.db&#x22;if [ -f &#x22;$DB&#x22; ] &#x26;&#x26; command -v sqlite3 >/dev/null 2>&#x26;1; then    TODAY_OBS=$(sqlite3 &#x22;$DB&#x22; &#x22;SELECT COUNT(*) FROM observations WHERE date(created_at)=date(&#x27;now&#x27;,&#x27;localtime&#x27;);&#x22; 2>/dev/null)    HOUR=$(date +%H)    if [ -n &#x22;$TODAY_OBS&#x22; ] &#x26;&#x26; [ &#x22;$TODAY_OBS&#x22; = &#x22;0&#x22; ] &#x26;&#x26; [ &#x22;$HOUR&#x22; -ge 10 ] 2>/dev/null; then        ISSUES+=(&#x22;🚨 今日 observations 落库数 = 0（已过 10 点）— 可能 worker env 失效或队列卡死&#x22;)    fifi"><div></div></button></div></figure></div><p>避开清晨误报，10 点后还 0 条就是真坏了。直接查 SQLite 落地结果比看进程/端口/日志都可靠——<strong>它就是 claude-mem 唯一要做的事</strong>。</p></section><section><h3 id="验证">验证<a class="anchor" href="#验证"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>切模型触发 <code>sync-mem-model.sh</code> 后：</p><ul>
+<li>worker PID 从 2563（旧 daemon）→ 22682（新 daemon）</li>
+<li><code>supervisor.json</code> 的 <code>processes.worker.pid</code> 同步更新</li>
+<li>19 秒后新 SDK session（id 479）启动并处理积压队列</li>
+<li><code>observations</code> 表当天从 0 → 18 条</li>
+</ul></section><section><h3 id="新增踩坑记录-3">新增踩坑记录<a class="anchor" href="#新增踩坑记录-3"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><section><h4 id="13-nohup--启动-daemon-时-env-只能保证-daemon-自己fork-出的子进程未必继承">13. <code>nohup &#x26;</code> 启动 daemon 时 env 只能保证 daemon 自己，fork 出的子进程未必继承<a class="anchor" href="#13-nohup--启动-daemon-时-env-只能保证-daemon-自己fork-出的子进程未必继承"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>如果 daemon 内部还要 fork（spawn 子进程处理任务），靠 shell 层的 <code>env VAR=value</code> 只能传一层。彻底的办法是用项目自带的 CLI/supervisor 启动，让它自己处理子进程 env 注入。</p></section><section><h4 id="14-健康自检要查结果不要只查过程">14. 健康自检要查”结果”，不要只查”过程”<a class="anchor" href="#14-健康自检要查结果不要只查过程"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>“端口在监听 / 进程在 / 日志在滚”都是过程指标，全绿不等于结果对。对 claude-mem 来说<strong>唯一的结果指标是 observations 表今天有没有新增</strong>——直接查 SQLite，比任何进程/日志检查都准。这条对所有”幂等型后台 worker”通用。</p></section><section><h4 id="15-2devnull-吞错的代价">15. <code>2>/dev/null</code> 吞错的代价<a class="anchor" href="#15-2devnull-吞错的代价"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>05-22 修复后 hook 实际每次都 kill 失败，但 <code>kill "$OLD_PID" 2>/dev/null</code> 把”kill: illegal pid”吞了，没人发现。<strong>所有”已知会有噪音”的命令，吞错前先想清楚是不是把”应该被发现的失败”也一并吞了</strong>。这次教训：宁可写 <code>2>>/tmp/sync-mem-model.err</code> 留个证据，也别 <code>2>/dev/null</code>。</p><hr><p><strong>最后修改</strong>: 2026-05-26</p></section></section></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/其他/项目调研/07-项目调研/minicpm5-1b-本地部署实录/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">MiniCPM5-1B-本地部署实录</span> </a> <a class="post-nav-link post-nav-next " href="/posts/ai工具/skill开发/04-skill-dev/skill-cleaner-开发与首轮审计/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">skill-cleaner-开发与首轮审计</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

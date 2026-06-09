@@ -1,0 +1,1815 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>claude-mem完整工作原理调研 - 翔子的博客</title><meta name="description" content="一句话定位：为 Claude Code 构建的持久化内存压缩系统，让 AI 跨会话保持上下文连续性。"><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/claude-code/%E8%AE%B0%E5%BF%86%E7%B3%BB%E7%BB%9F/claude-mem%E5%AE%8C%E6%95%B4%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%E8%B0%83%E7%A0%94/"><meta property="og:title" content="claude-mem完整工作原理调研 - 翔子的博客"><meta property="og:description" content="一句话定位：为 Claude Code 构建的持久化内存压缩系统，让 AI 跨会话保持上下文连续性。"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/claude-code/%E8%AE%B0%E5%BF%86%E7%B3%BB%E7%BB%9F/claude-mem%E5%AE%8C%E6%95%B4%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%E8%B0%83%E7%A0%94/"><meta name="twitter:title" content="claude-mem完整工作原理调研 - 翔子的博客"><meta name="twitter:description" content="一句话定位：为 Claude Code 构建的持久化内存压缩系统，让 AI 跨会话保持上下文连续性。"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"claude-mem完整工作原理调研","description":"一句话定位：为 Claude Code 构建的持久化内存压缩系统，让 AI 跨会话保持上下文连续性。","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-06-05T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>claude-mem完整工作原理调研</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=AI%E5%B7%A5%E5%85%B7">AI工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">claude-mem完整工作原理调研</h1> <p class="post-subtitle">一句话定位：为 Claude Code 构建的持久化内存压缩系统，让 AI 跨会话保持上下文连续性。</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-06-05 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 6,004 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 30 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#Claude Code</span><span class="post-tag">#记忆系统</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="claude-mem-完整工作原理调研">claude-mem 完整工作原理调研<a class="anchor" href="#claude-mem-完整工作原理调研"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><section><h2 id="一introduction--claude-mem-是什么">一、Introduction — claude-mem 是什么<a class="anchor" href="#一introduction--claude-mem-是什么"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>一句话定位</strong>：为 Claude Code 构建的持久化内存压缩系统，让 AI 跨会话保持上下文连续性。</p><section><h3 id="核心能力">核心能力<a class="anchor" href="#核心能力"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li><strong>自动记录</strong> — 通过 6 个生命周期钩子，自动捕获每次工具调用，生成语义摘要存入 SQLite</li>
+<li><strong>自动注入</strong> — 新会话启动时，自动把跟当前项目相关的记忆加载到 system prompt</li>
+<li><strong>主动查询</strong> — 自然语言提问即可搜索历史，如”上次修了什么 bug？“</li>
+</ol></section><section><h3 id="与-claudemd-的关系">与 CLAUDE.md 的关系<a class="anchor" href="#与-claudemd-的关系"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th></th><th>CLAUDE.md</th><th>claude-mem</th></tr></thead><tbody><tr><td><strong>写入方式</strong></td><td>手动维护</td><td>AI 自动提取</td></tr><tr><td><strong>内容性质</strong></td><td>”应该怎么做”（规则、约定）</td><td>“实际做过什么”（历史事实）</td></tr><tr><td><strong>更新频率</strong></td><td>低频</td><td>每次工具调用后</td></tr><tr><td><strong>互补关系</strong></td><td>项目级”宪法”</td><td>跨项目的”长期记忆”</td></tr></tbody></table></section><section><h3 id="自动化联动folder-context-files">自动化联动：Folder Context Files<a class="anchor" href="#自动化联动folder-context-files"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>claude-mem 不仅是本地数据库存储，还能<strong>自动为项目文件夹生成 CLAUDE.md</strong>，实现与手动维护文件的联动。</p><p><strong>工作机制</strong>：每次 observation 保存后，claude-mem 自动识别被修改文件所在的文件夹，查询近期相关 observation，生成活动时间线，写入该文件夹下的 <code>CLAUDE.md</code>（包裹在 <code>&#x3C;claude-mem-context></code> 标签中）。</p><p><strong>生成内容示例</strong>：</p><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238"># Authentication Module</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">这里是手动写的模块说明，会被保留。</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">&#x3C;</span><span style="--0:#E6888F;--1:#AF4238">claude-mem-context</span><span style="--0:#ABB2BF;--1:#383A42">></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">### Jan 4, 2026</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| ID | Time | T | Title | Read |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| #1234 | 4:30 PM | 🔵 | Implemented user authentication | ~250 |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">| #1235 | " | 🔴 | Fixed login redirect bug | ~180 |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">&#x3C;/</span><span style="--0:#E6888F;--1:#AF4238">claude-mem-context</span><span style="--0:#ABB2BF;--1:#383A42">></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# Authentication Module这里是手动写的模块说明，会被保留。<claude-mem-context>### Jan 4, 2026| ID | Time | T | Title | Read || #1234 | 4:30 PM | 🔵 | Implemented user authentication | ~250 || #1235 | &#x22; | 🔴 | Fixed login redirect bug | ~180 |</claude-mem-context>"><div></div></button></div></figure></div><p><strong>关键设计</strong>：</p><ul>
+<li><code>&#x3C;claude-mem-context></code> 标签外的手动内容<strong>始终保留</strong>，再生时只替换标签内部分</li>
+<li>项目根目录（含 <code>.git</code> 的目录）<strong>不自动生成</strong>，避免覆盖根 CLAUDE.md</li>
+<li>默认关闭，通过 <code>CLAUDE_MEM_FOLDER_CLAUDEMD_ENABLED: "true"</code> 开启</li>
+</ul><p><strong>闭环价值</strong>：团队中即使没有安装 claude-mem 的成员，拉取代码后也能通过自动生成的文件夹级 <code>CLAUDE.md</code> 看到活动时间线，快速了解最近做了什么。可通过 <code>--clean</code> 模式在 PR 合并前清理自动生成的内容。</p><hr></section></section><section><h2 id="二architecture--架构">二、Architecture — 架构<a class="anchor" href="#二architecture--架构"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="21-架构总览">2.1 架构总览<a class="anchor" href="#21-架构总览"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>5 大核心组件</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">钩子收集 → SQLite 存储 → Worker 处理 → AI 压缩 → 下次会话注入</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="钩子收集 → SQLite 存储 → Worker 处理 → AI 压缩 → 下次会话注入"><div></div></button></div></figure></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>组件</th><th>作用</th></tr></thead><tbody><tr><td><strong>Plugin Hooks</strong></td><td>6 个生命周期钩子，捕获 Claude Code 的事件</td></tr><tr><td><strong>Worker Service</strong></td><td>Express HTTP 服务，管理数据处理和搜索 API</td></tr><tr><td><strong>Database Layer</strong></td><td>SQLite + FTS5 全文索引 + 可选 Chroma 向量搜索</td></tr><tr><td><strong>mem-search 技能</strong></td><td>自然语言搜索接口，三层渐进式披露</td></tr><tr><td><strong>Viewer UI</strong></td><td>React 实时查看器，<code>http://localhost:37777</code></td></tr></tbody></table><p><strong>技术栈</strong>：TypeScript / Node.js 20+ + Bun / SQLite 3 + Express.js 5 / SSE / React / @anthropic-ai/claude-agent-sdk</p><p><strong>两条数据管线</strong>：</p><ul>
+<li><strong>记忆管线（写入）</strong>：Hook (stdin) → SQLite → Worker → Claude Agent SDK 压缩 → 写回数据库 → 下次注入</li>
+<li><strong>搜索管线（读取）</strong>：用户自然语言提问 → mem-search 触发 → HTTP API → FTS5 查询 → 返回结果</li>
+</ul></section><section><h3 id="22-hook-lifecycle--6-个生命周期钩子">2.2 Hook Lifecycle — 6 个生命周期钩子<a class="anchor" href="#22-hook-lifecycle--6-个生命周期钩子"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>每次 Claude Code 运行，按此顺序触发：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>阶段</th><th>触发时机</th><th>做什么</th></tr></thead><tbody><tr><td><strong>0. Setup</strong></td><td>Claude 启动</td><td>版本检查（亚毫秒级），不匹配提示 <code>npx claude-mem repair</code></td></tr><tr><td><strong>1. SessionStart</strong></td><td>会话开始</td><td>启动 Worker + 从数据库注入上次会话上下文</td></tr><tr><td><strong>2. UserPromptSubmit</strong></td><td>用户输入问题时</td><td>创建会话记录，保存原始 prompt 供后续搜索</td></tr><tr><td><strong>3. PreToolUse</strong></td><td>使用 Read 工具前</td><td>捕获文件读取上下文</td></tr><tr><td><strong>4. PostToolUse</strong></td><td>每次工具调用后</td><td>最忙的钩子——捕获工具执行数据，发给 Worker 做 AI 压缩</td></tr><tr><td><strong>5. Stop</strong></td><td>Claude 停止时</td><td>生成会话摘要（Request/Investigated/Learned/Completed/Next Steps）</td></tr><tr><td><strong>6. SessionEnd</strong></td><td>会话结束</td><td>标记会话完成（不删除数据），为下次注入做准备。<code>/clear</code> 时跳过</td></tr></tbody></table><p><strong>PostToolUse</strong> 一次会话可能触发 100+ 次，每次读文件、改代码、跑命令都会被记录。</p></section><section><h3 id="23-claude-agent-sdk-的角色">2.3 Claude Agent SDK 的角色<a class="anchor" href="#23-claude-agent-sdk-的角色"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>为什么需要它</strong>：PostToolUse 钩子捕获的是原始工具调用数据（如 <code>{"tool": "Edit", "file": "src/auth.ts"}</code>），本身没有语义价值。SDK 的作用是把原始记录变成结构化洞察（如 <code>{"type": "bugfix", "title": "修复 JWT token 验证"}</code>）。</p><p><strong>工作流程</strong>：原始观察堆积 → 批量发给 Claude Agent SDK → 调用配置的模型（默认 <code>claude-haiku</code>，我们实际配置为 <code>qwen3.6-plus</code>） → 解析 XML 响应 → 结构化数据写回 SQLite</p><p><strong>可配置模型</strong>（通过 <code>CLAUDE_MEM_MODEL</code> 指定，由 Claude Agent SDK 调用）：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>模型</th><th>用途</th></tr></thead><tbody><tr><td><code>claude-haiku-4-5-20251001</code></td><td>默认，快速便宜，适合批量压缩</td></tr><tr><td><code>claude-sonnet-4-6</code></td><td>平衡质量和成本</td></tr><tr><td><code>claude-opus-4-7</code></td><td>最高质量，最贵</td></tr></tbody></table></section><section><h3 id="24-worker-service">2.4 Worker Service<a class="anchor" href="#24-worker-service"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>端口分配</strong>：默认 <code>37700 + (uid % 100)</code>（多用户不冲突），可用 <code>CLAUDE_MEM_WORKER_PORT</code> 覆盖</p><p><strong>主要 HTTP 端点</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>端点</th><th>用途</th></tr></thead><tbody><tr><td><code>GET /api/observations</code></td><td>分页获取观察记录</td></tr><tr><td><code>GET /api/observation/:id</code></td><td>按 ID 获取单条</td></tr><tr><td><code>POST /api/observations/batch</code></td><td>批量获取多条</td></tr><tr><td><code>GET /api/summaries</code></td><td>分页获取会话摘要</td></tr><tr><td><code>GET /api/stats</code></td><td>按项目统计数据</td></tr><tr><td><code>GET /api/pending-queue</code></td><td>查看处理队列状态</td></tr><tr><td><code>POST /api/pending-queue/process</code></td><td>手动触发处理</td></tr><tr><td><code>GET /stream</code></td><td>SSE 实时推送</td></tr></tbody></table><p><strong>数据存储</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">~/.claude-mem/</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── claude-mem.db           # SQLite 数据库</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── .env                    # gateway 凭证（BASE_URL + AUTH_TOKEN）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── .install-version        # 版本标记</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── settings.json           # 用户配置</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── supervisor.json         # 进程管理</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── worker.pid              # PID 文件</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── chroma/                 # 可选向量索引</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── corpora/                # Knowledge Agent 语料库</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">└── logs/</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">    </span></span><span style="--0:#abb2bf;--1:#383a42">├── worker-out.log      # 输出日志</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">    </span></span><span style="--0:#abb2bf;--1:#383a42">└── worker-error.log    # 错误日志</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="~/.claude-mem/├── claude-mem.db           # SQLite 数据库├── .env                    # gateway 凭证（BASE_URL + AUTH_TOKEN）├── .install-version        # 版本标记├── settings.json           # 用户配置├── supervisor.json         # 进程管理├── worker.pid              # PID 文件├── chroma/                 # 可选向量索引├── corpora/                # Knowledge Agent 语料库└── logs/    ├── worker-out.log      # 输出日志    └── worker-error.log    # 错误日志"><div></div></button></div></figure></div><p><strong>管理命令</strong>：<code>npm run worker:start</code> / <code>stop</code> / <code>restart</code> / <code>logs</code> / <code>status</code></p><hr></section></section><section><h2 id="三usage--使用">三、Usage — 使用<a class="anchor" href="#三usage--使用"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="31-observation观察记录">3.1 Observation（观察记录）<a class="anchor" href="#31-observation观察记录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>最小信息单元</strong>——每次 Claude 调用工具后，被 AI 压缩提取的一条”工作记录”。</p><p><strong>完整结构</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"id"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">123</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"type"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"bugfix"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"title"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"修复 JWT token 验证中的竞态条件"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"subtitle"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"高并发下读取过期 session"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"narrative"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"用户反馈登录后偶发 401..."</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"facts"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span><span style="--0:#98C379;--1:#387138">"401 是竞态条件导致的"</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#98C379;--1:#387138">"同步验证方案有效"</span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"concepts"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span><span style="--0:#98C379;--1:#387138">"authentication"</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#98C379;--1:#387138">"concurrency"</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#98C379;--1:#387138">"jwt"</span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"files_read"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span><span style="--0:#98C379;--1:#387138">"src/auth.ts"</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#98C379;--1:#387138">"src/session.ts"</span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"files_modified"</span><span style="--0:#ABB2BF;--1:#383A42">: [</span><span style="--0:#98C379;--1:#387138">"src/auth.ts"</span><span style="--0:#ABB2BF;--1:#383A42">],</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"created_at"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"2026-06-04T10:30:00Z"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"project"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"claudecode"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;id&#x22;: 123,  &#x22;type&#x22;: &#x22;bugfix&#x22;,  &#x22;title&#x22;: &#x22;修复 JWT token 验证中的竞态条件&#x22;,  &#x22;subtitle&#x22;: &#x22;高并发下读取过期 session&#x22;,  &#x22;narrative&#x22;: &#x22;用户反馈登录后偶发 401...&#x22;,  &#x22;facts&#x22;: [&#x22;401 是竞态条件导致的&#x22;, &#x22;同步验证方案有效&#x22;],  &#x22;concepts&#x22;: [&#x22;authentication&#x22;, &#x22;concurrency&#x22;, &#x22;jwt&#x22;],  &#x22;files_read&#x22;: [&#x22;src/auth.ts&#x22;, &#x22;src/session.ts&#x22;],  &#x22;files_modified&#x22;: [&#x22;src/auth.ts&#x22;],  &#x22;created_at&#x22;: &#x22;2026-06-04T10:30:00Z&#x22;,  &#x22;project&#x22;: &#x22;claudecode&#x22;}"><div></div></button></div></figure></div><p><strong>6 种类型</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Type</th><th>含义</th><th>例子</th></tr></thead><tbody><tr><td><code>bugfix</code></td><td>修复 bug</td><td>”修复了 401 偶发问题”</td></tr><tr><td><code>feature</code></td><td>新增功能</td><td>”添加了 dark mode 切换”</td></tr><tr><td><code>decision</code></td><td>技术决策</td><td>”选用 SQLite 而非 PostgreSQL”</td></tr><tr><td><code>discovery</code></td><td>发现/认知</td><td>”发现 API 限流是 100 RPM”</td></tr><tr><td><code>refactor</code></td><td>重构</td><td>”提取了 useAuth composable”</td></tr><tr><td><code>change</code></td><td>一般变更</td><td>”更新了依赖版本”</td></tr></tbody></table><p><strong>与 Session、Summary 的关系</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Session（会话容器）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">├── 包含多个 Observation（工作记录条目）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">└── 结束时生成一条 Summary（会话总结）</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Session（会话容器）  ├── 包含多个 Observation（工作记录条目）  └── 结束时生成一条 Summary（会话总结）"><div></div></button></div></figure></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>概念</th><th>粒度</th><th>什么时候产生</th></tr></thead><tbody><tr><td><strong>Observation</strong></td><td>一次工具调用</td><td>PostToolUse 钩子触发时</td></tr><tr><td><strong>Session</strong></td><td>一次 Claude 会话</td><td>打开到关闭的完整生命周期</td></tr><tr><td><strong>Summary</strong></td><td>整个会话的总结</td><td>Stop 钩子触发时</td></tr></tbody></table></section><section><h3 id="32-context-injection--上下文注入">3.2 Context Injection — 上下文注入<a class="anchor" href="#32-context-injection--上下文注入"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>SessionStart 钩子干 4 件事：
+<strong>核心问题</strong>：每次新会话启动都无脑灌入历史数据，会不会是 Token 刺客？</p><ol>
+<li>查数据库，拉取当前项目最近的 observation（默认 50 条）</li>
+<li>拉取最近的 session summaries</li>
+<li>按时间线展示，带会话标记</li>
+<li><strong>智能显示摘要</strong>：只有当摘要是在最后一条观察之后生成的，才显示完整详情</li>
+</ol><p><strong>核心问题</strong>：每次新会话启动都无脑灌入历史数据，会不会是 Token 刺客？</p><p><strong>答案：不会。实际开销不到传统 RAG 的 1/10。</strong></p><section><h4 id="token-算账">Token 算账<a class="anchor" href="#token-算账"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>SessionStart 钩子注入的 <strong>不是详情</strong>，而是 <strong>高密索引</strong>（Index List）。</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">### Oct 26, 2025</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">| ID | Time | T | Title | Tokens |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">| #2591 | 1:15 AM | ⚖️ | Stderr messaging abandoned | ~155 |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">| #2592 | 1:16 AM | 🟡 | Web UI strategy redesigned | ~193 |</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="### Oct 26, 2025| ID | Time | T | Title | Tokens || #2591 | 1:15 AM | ⚖️ | Stderr messaging abandoned | ~155 || #2592 | 1:16 AM | 🟡 | Web UI strategy redesigned | ~193 |"><div></div></button></div></figure></div><ul>
+<li><strong>每条成本</strong>：平均 20-30 tokens</li>
+<li><strong>50 条总成本</strong>：50 × 30 ≈ <strong>1,500 tokens</strong></li>
+<li><strong>占上下文窗口</strong>：&#x3C; 1%（Claude Code 通常 200k+）</li>
+</ul><p><strong>用 1,500 tokens 买了一张”项目历史地图”，换来 AI 跨越 50 次历史事件的上帝视角。</strong></p></section><section><h4 id="智能显示摘要heuristic-summary-injection">智能显示摘要（Heuristic Summary Injection）<a class="anchor" href="#智能显示摘要heuristic-summary-injection"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>SessionStart 用 <strong>时间戳做卡点</strong>，决定注入哪些内容：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">场景</th><th align="left">触发条件</th><th align="left">注入内容</th></tr></thead><tbody><tr><td align="left"><strong>A：项目未变更</strong></td><td align="left">上次会话的 Summary 在最后一条 Observation 之后生成</td><td align="left">只注入 Summary 详情 + 50 条轻量索引</td></tr><tr><td align="left"><strong>B：需要看详情</strong></td><td align="left">用户主动提问或 AI 判断需要上下文</td><td align="left">通过三层搜索工具按需拉取特定 ID 的详情</td></tr></tbody></table><p><strong>场景 A 示例</strong>：上次会话结束时，Stop 钩子已把操作提炼为 “修复了 JWT 竞态条件，验证了同步方案”。本次启动只注入这条 Summary + 索引——AI 瞬间了解上次收尾进度，没加载任何 Observation 原始细节。</p><p><strong>场景 B 示例</strong>：AI 启动时只有”目录”。当用户问”上次重构 worker-service.ts 的细节是什么？“，它才通过三层工作流（<code>search</code> → <code>timeline</code> → <code>get_observations</code>）主动拉取特定 ID 的详情。</p></section><section><h4 id="clear-行为"><code>/clear</code> 行为<a class="anchor" href="#clear-行为"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p><code>/clear</code> 对 claude-mem 只是”换了个 prompt 编号”——SessionStart 仍触发并重新注入，观察记录继续捕获，结束时仍会生成摘要。底层会话连续性不受影响。</p></section><section><h4 id="传统-rag-vs-claude-mem-启动成本对比">传统 RAG vs claude-mem 启动成本对比<a class="anchor" href="#传统-rag-vs-claude-mem-启动成本对比"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">维度</th><th align="left">传统向量 RAG（Top-20 Chunk）</th><th align="left">claude-mem（SessionStart 注入）</th></tr></thead><tbody><tr><td align="left"><strong>注入内容</strong></td><td align="left">20 个包含大量代码和上下文的原始文本块</td><td align="left">50 条高密索引 + 1 条上阶段 Summary</td></tr><tr><td align="left"><strong>启动 Token</strong></td><td align="left">15,000-30,000（高污染）</td><td align="left">~1,500（极度干净）</td></tr><tr><td align="left"><strong>上下文噪声</strong></td><td align="left">高（大量与当前意图无关的废代码）</td><td align="left">零（AI 仅知道”存在什么”，按需调取）</td></tr><tr><td align="left"><strong>Token 利用率</strong></td><td align="left">&#x3C; 10%</td><td align="left">接近 100%</td></tr></tbody></table><p><strong>一句话总结</strong>：给 LLM 一个目录，而不是把书全铺在桌上。</p></section><section><h4 id="会话中的-token-复用">会话中的 Token 复用<a class="anchor" href="#会话中的-token-复用"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p>新会话启动注入的 ~1,500 tokens 索引和 Summary，在后续对话中会怎样？</p><p><strong>标准模式（Append）</strong>：索引被固定在 System Prompt 或最顶层历史记录中，每次用户发送消息时，这 ~1,500 tokens 会随请求一起重复发送（因为 LLM 无状态，必须重新阅读完整上下文）。</p><p>算一笔账（以 10 轮对话为例）：</p><ul>
+<li>重复计算：1,500 × 10 = <strong>15,000 tokens</strong></li>
+<li>成本：极低（输入 token 价格远低于输出）</li>
+<li>收益：AI 在这 10 轮中随时随地能秒回跨会话问题（“前天那个组件是怎么设计的？”）</li>
+</ul><p><strong>架构师视角</strong>：这比每次发现 AI 忘了历史、不得不人工复制粘贴几万字代码要划算得多。1.5 万 tokens 的成本换来的是会话级别的上下文连续性，完全在可接受预算内。</p></section></section><section><h3 id="33-memory-search--三层搜索工作流">3.3 Memory Search — 三层搜索工作流<a class="anchor" href="#33-memory-search--三层搜索工作流"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>不一次性灌入所有历史，而是分三层，按需展开：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Layer 1: search()           → 轻量索引（ID + 标题 + 分类，~50-100 tokens/条）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Layer 2: timeline()         → 某条记录前后的时间线上下文（~100-200 tokens/条）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Layer 3: get_observations() → 只对筛选后的 ID 拉完整详情（500-1,000 tokens/条）</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Layer 1: search()           → 轻量索引（ID + 标题 + 分类，~50-100 tokens/条）Layer 2: timeline()         → 某条记录前后的时间线上下文（~100-200 tokens/条）Layer 3: get_observations() → 只对筛选后的 ID 拉完整详情（500-1,000 tokens/条）"><div></div></button></div></figure></div><p><strong>Token 对比</strong>：传统 RAG 一次拉 20 条 = 10,000-20,000 tokens（10% 有用）vs 三层搜索 = 2,500-4,000 tokens（接近 100% 有用）。<strong>省了约 10 倍 token。</strong></p><p><strong>三个搜索工具</strong>：</p><ul>
+<li><strong><code>search</code></strong> — 全文搜索，支持 <code>AND</code>/<code>OR</code>/<code>NOT</code>/短语，按 type/project/date 过滤</li>
+<li><strong><code>timeline</code></strong> — 按 ID 或关键词定位锚点，展开前后 N 条上下文</li>
+<li><strong><code>get_observations</code></strong> — 批量拉取完整详情（必须传数组 <code>ids=[123, 456, 789]</code>）</li>
+</ul><p><strong>6 个常见场景</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>场景</th><th>搜索策略</th></tr></thead><tbody><tr><td><strong>Debug</strong></td><td><code>search("error database", type="bugfix")</code> → timeline → 拉详情</td></tr><tr><td><strong>回顾决策</strong></td><td><code>search("authentication", type="decision")</code> → 直接拉详情</td></tr><tr><td><strong>代码考古</strong></td><td><code>search("worker-service.ts")</code> → timeline → 拉详情</td></tr><tr><td><strong>功能演进</strong></td><td><code>search("dark mode", orderBy="date_asc")</code> → timeline → 拉详情</td></tr><tr><td><strong>学习模式</strong></td><td><code>search(type="refactor")</code> → 拉详情研究模式</td></tr><tr><td><strong>重新接手项目</strong></td><td><code>search(project, orderBy="date_desc")</code> → timeline → 拉关键决策</td></tr></tbody></table></section><section><h3 id="34-knowledge-agents--知识代理">3.4 Knowledge Agents — 知识代理<a class="anchor" href="#34-knowledge-agents--知识代理"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>把 observation 历史编译成一个<strong>可对话的”大脑”</strong>——不是返回原始搜索结果，而是综合回答。</p><p><strong>核心流程：Build → Prime → Query</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">BUILD（编译语料库）──>  PRIME（加载到 Claude 会话）──>  QUERY（对话提问）</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="BUILD（编译语料库）──>  PRIME（加载到 Claude 会话）──>  QUERY（对话提问）"><div></div></button></div></figure></div><ol>
+<li><strong>Build</strong> — 从 observation 历史中按条件筛选，保存为 corpus 文件（<code>~/.claude-mem/corpora/*.corpus.json</code>）</li>
+<li><strong>Prime</strong> — 把整个 corpus 加载到 Claude Agent SDK 的会话中，返回 <code>session_id</code> 就是 agent</li>
+<li><strong>Query</strong> — 对话提问，每次追问自然累加到会话中</li>
+<li><strong>Rebuild/Reprime</strong> — 新 observation 加入后重新编译和加载</li>
+</ol><p><strong>vs Mem-Search</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>维度</th><th>mem-search</th><th>knowledge-agent</th></tr></thead><tbody><tr><td><strong>返回</strong></td><td>原始 observation 记录</td><td>综合回答</td></tr><tr><td><strong>适用</strong></td><td>找具体的东西（ID、时间线）</td><td>理解模式、决策、架构</td></tr><tr><td><strong>Token 模型</strong></td><td>按次付费（三层渐进）</td><td>Prime 一次付，后续便宜</td></tr><tr><td><strong>数据新鲜度</strong></td><td>实时查库</td><td>编译快照（需 rebuild）</td></tr></tbody></table><p><strong>经验法则</strong>：要找到<strong>具体的某件事</strong>用 mem-search；要<strong>理解全局</strong>用 knowledge-agent。</p><p><strong>大白话类比</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>工具</th><th>像什么</th><th>典型问法</th></tr></thead><tbody><tr><td><strong>mem-search</strong></td><td><code>git log -S</code></td><td>”上次修 auth.ts 那个 bug 的 ID 是多少？” → 返回那条记录</td></tr><tr><td><strong>knowledge-agent</strong></td><td>架构师分身</td><td>”过去三个月我们在重构路由上踩了哪些坑？未来怎么规避？” → 读完所有语料，吐出一篇复盘报告</td></tr></tbody></table></section><section><h3 id="35-progressive-disclosure--渐进式披露">3.5 Progressive Disclosure — 渐进式披露<a class="anchor" href="#35-progressive-disclosure--渐进式披露"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>核心原则</strong>：先展示存在什么 + 获取成本。让 agent 自己决定要不要拉取。</p><p>传统 RAG 启动注入 35,000 tokens 历史（6% 有用），claude-mem 只注入 ~800 tokens 索引（100% 有用）。</p><p><strong>索引格式</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">### Oct 26, 2025</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">**src/hooks/context-hook.ts**</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">| ID | Time | T | Title | Tokens |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">| #2591 | 1:15 AM | ⚖️ | Stderr messaging abandoned | ~155 |</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">| #2592 | 1:16 AM | 🟡 | Web UI strategy redesigned | ~193 |</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="### Oct 26, 2025**src/hooks/context-hook.ts**| ID | Time | T | Title | Tokens || #2591 | 1:15 AM | ⚖️ | Stderr messaging abandoned | ~155 || #2592 | 1:16 AM | 🟡 | Web UI strategy redesigned | ~193 |"><div></div></button></div></figure></div><p><strong>Legend 图标</strong>：🔴 gotcha | 🟡 problem-solution | 🔵 how-it-works | 🟢 what-changed | 🟣 discovery | 🟠 why-it-exists | 🟤 decision | ⚖️ trade-off</p><hr></section></section><section><h2 id="四configuration--配置">四、Configuration — 配置<a class="anchor" href="#四configuration--配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="41-核心配置项">4.1 核心配置项<a class="anchor" href="#41-核心配置项"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>配置文件：<code>~/.claude-mem/settings.json</code>（首次运行自动创建）</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>环境变量</th><th>默认值</th><th>用途</th></tr></thead><tbody><tr><td><code>CLAUDE_MEM_MODEL</code></td><td><code>claude-haiku-4-5-20251001</code></td><td>压缩 observation 用的模型</td></tr><tr><td><code>CLAUDE_MEM_PROVIDER</code></td><td><code>claude</code></td><td>AI provider：<code>claude</code>/<code>gemini</code>/<code>openrouter</code></td></tr><tr><td><code>CLAUDE_MEM_CLAUDE_AUTH_METHOD</code></td><td><code>cli</code></td><td>认证方式：<code>cli</code>/<code>gateway</code>/<code>api-key</code></td></tr><tr><td><code>CLAUDE_MEM_MODE</code></td><td><code>code</code></td><td>工作模式（如 <code>code--zh</code> 中文）</td></tr><tr><td><code>CLAUDE_MEM_CONTEXT_OBSERVATIONS</code></td><td>50</td><td>新会话注入的 observation 数量</td></tr><tr><td><code>CLAUDE_MEM_WORKER_PORT</code></td><td><code>37700 + (uid % 100)</code></td><td>Worker 端口</td></tr><tr><td><code>CLAUDE_MEM_DATA_DIR</code></td><td><code>~/.claude-mem</code></td><td>数据根目录</td></tr><tr><td><code>CLAUDE_MEM_SKIP_TOOLS</code></td><td>逗号分隔列表</td><td>不记录这些工具调用</td></tr><tr><td><code>CLAUDE_MEM_LOG_LEVEL</code></td><td><code>INFO</code></td><td>日志级别</td></tr></tbody></table></section><section><h3 id="42-gateway-配置anthropic_base_url">4.2 Gateway 配置（ANTHROPIC_BASE_URL）<a class="anchor" href="#42-gateway-配置anthropic_base_url"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>当使用非 Anthropic 模型（如 qwen3.6-plus 通过 DashScope gateway）时，需要配置 gateway：</p><p><strong><code>~/.claude-mem/.env</code></strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">ANTHROPIC_BASE_URL=https://coding.dashscope.aliyuncs.com/apps/anthropic</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">ANTHROPIC_AUTH_TOKEN=sk-sp-xxxxx</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="ANTHROPIC_BASE_URL=https://coding.dashscope.aliyuncs.com/apps/anthropicANTHROPIC_AUTH_TOKEN=sk-sp-xxxxx"><div></div></button></div></figure></div><p><strong><code>~/.claude-mem/settings.json</code></strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"CLAUDE_MEM_PROVIDER"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"claude"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"CLAUDE_MEM_CLAUDE_AUTH_METHOD"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"gateway"</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"CLAUDE_MEM_MODEL"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"qwen3.6-plus"</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{  &#x22;CLAUDE_MEM_PROVIDER&#x22;: &#x22;claude&#x22;,  &#x22;CLAUDE_MEM_CLAUDE_AUTH_METHOD&#x22;: &#x22;gateway&#x22;,  &#x22;CLAUDE_MEM_MODEL&#x22;: &#x22;qwen3.6-plus&#x22;}"><div></div></button></div></figure></div><p><strong>关键点</strong>：</p><ul>
+<li><code>CLAUDE_MEM_MODEL</code> 原样传给 SDK，gateway 必须认识这个名字</li>
+<li>凭证必须在 <code>~/.claude-mem/.env</code>，shell export 不可靠</li>
+<li>claude-mem 不自动检测 Claude Code 本身的 <code>ANTHROPIC_BASE_URL</code>，必须镜像到 <code>.env</code></li>
+</ul></section><section><h3 id="43-modes--languages">4.3 Modes &#x26; Languages<a class="anchor" href="#43-modes--languages"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>Mode 定义了 Observer Role、Observation Types、Concepts、Language。通过 <code>CLAUDE_MEM_MODE</code> 配置：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Mode</th><th>说明</th></tr></thead><tbody><tr><td><code>code</code></td><td>默认 Code 模式</td></tr><tr><td><code>code--chill</code></td><td>只记录”重新发现很痛苦”的东西</td></tr><tr><td><code>code--zh</code></td><td>中文 Code 模式（observation 用中文生成）</td></tr><tr><td><code>email-investigation</code></td><td>邮件分析模式</td></tr></tbody></table></section><section><h3 id="44-hook-超时时间">4.4 Hook 超时时间<a class="anchor" href="#44-hook-超时时间"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>钩子</th><th>超时</th><th>原因</th></tr></thead><tbody><tr><td>Setup (version-check)</td><td>300s（实际 &#x3C;100ms）</td><td>只读版本标记</td></tr><tr><td>SessionStart</td><td>60s</td><td>启动 worker + 注入上下文</td></tr><tr><td>UserPromptSubmit</td><td>60s</td><td>创建会话记录</td></tr><tr><td>PreToolUse (Read)</td><td>60s</td><td>捕获文件读取</td></tr><tr><td>PostToolUse</td><td>120s</td><td>最忙，AI 压缩</td></tr><tr><td>Stop (summary)</td><td>120s</td><td>生成会话摘要</td></tr></tbody></table><hr></section></section><section><h2 id="五best-practices--最佳实践">五、Best Practices — 最佳实践<a class="anchor" href="#五best-practices--最佳实践"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="51-context-engineering上下文工程">5.1 Context Engineering（上下文工程）<a class="anchor" href="#51-context-engineering上下文工程"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>核心原则</strong>：找到最小的、信号最强的 token 集合，最大化期望结果的概率。</p><p><strong>与 Prompt Engineering 的区别</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Prompt Engineering</th><th>Context Engineering</th></tr></thead><tbody><tr><td>写 LLM 指令（一次性任务）</td><td>持续管理上下文（迭代过程）</td></tr><tr><td>管好 prompt 怎么写</td><td>管好 system prompt + 工具 + MCP + 外部数据 + 消息历史</td></tr></tbody></table><p><strong>Context Rot</strong>：LLM 有”注意力预算”，上下文增长时会消耗殆尽。每个 token attend 所有其他 token（n² 关系），上下文越长准确率越低。</p><p><strong>System Prompt 正确高度</strong>：足够具体引导行为 + 足够灵活提供启发式 + 最小信息集完整描述期望行为。从最小 prompt 开始，根据失败模式逐步补充。</p><p><strong>长任务三技术</strong>：</p><ol>
+<li><strong>Compaction</strong> — 压缩对话历史，保留关键决策</li>
+<li><strong>结构化笔记（Agentic Memory）</strong> — Agent 写 NOTES.md 等外部文件</li>
+<li><strong>Sub-Agent 架构</strong> — 主 agent 管高层计划，子 agent 返回 1000-2000 token 压缩摘要</li>
+</ol></section><section><h3 id="52-progressive-disclosure渐进式披露">5.2 Progressive Disclosure（渐进式披露）<a class="anchor" href="#52-progressive-disclosure渐进式披露"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>核心原则</strong>：先展示存在什么 + 获取成本。让 agent 自己决定要不要拉取。</p><p><strong>四层设计原则</strong>：</p><ol>
+<li><strong>让成本可见</strong> — 每条显示 token 数（~50 便宜直接拉，~500 要慎重）</li>
+<li><strong>语义压缩</strong> — 标题用 ~10 字说清楚</li>
+<li><strong>按上下文分组</strong> — 按日期、文件路径、项目分组</li>
+<li><strong>提供检索工具</strong> — 索引 + search → timeline → get_observations</li>
+</ol><p><strong>成功指标</strong>：</p><ul>
+<li>✅ 有用 token / 总上下文 > 80%</li>
+<li>✅ 显示 50 条索引，只拉 2-3 条详情</li>
+<li>✅ 有索引 30 秒找到相关内容，无索引 90 秒扫描</li>
+</ul></section><section><h3 id="53-两篇最佳实践的关系">5.3 两篇最佳实践的关系<a class="anchor" href="#53-两篇最佳实践的关系"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>Context Engineering 是指导思想</strong>——怎么管理有限注意力预算。
+<strong>Progressive Disclosure 是具体实现</strong>——claude-mem 把上下文工程原则落地为三层搜索架构。</p><p><strong>共同核心</strong>：上下文是货币，要省着花。</p></section><section><h3 id="54-记忆垃圾回收memory-gc">5.4 记忆垃圾回收（Memory GC）<a class="anchor" href="#54-记忆垃圾回收memory-gc"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>长期使用后（1000+ 会话），SQLite 的 FTS5 索引和 Chroma 向量库会膨胀，且早期的某些观察认知会在后续重构中被废弃，导致 <strong>Context Rot（上下文腐化）</strong>——新会话被过时的历史数据干扰。</p><p><strong>常见腐化场景</strong>：</p><ul>
+<li>“发现 A 库版本不兼容” → 后续升级后已不再适用</li>
+<li>“选用了方案 X” → 后续重构中已切换为方案 Y</li>
+<li>早期临时方案被当作”决策”持久化，误导新会话</li>
+</ul><p><strong>对策</strong>：</p><ul>
+<li><strong>定期审查</strong>：用 <code>search(type="decision", orderBy="date_asc")</code> 按时间线扫描早期决策，确认哪些已固化到 CLAUDE.md 或文档中</li>
+<li><strong>标记归档</strong>：利用 Knowledge Agent 的 Build 机制，定期把已固化的内容从活跃数据中标记为 archived</li>
+<li><strong>控制注入量</strong>：<code>CLAUDE_MEM_CONTEXT_OBSERVATIONS</code> 不要设太高（默认 50 足够），避免注入过多陈旧上下文</li>
+<li><strong>按类型过滤</strong>：注入时只保留高价值类型（<code>decision</code>、<code>gotcha</code>、<code>discovery</code>），跳过 <code>change</code> 类琐碎记录</li>
+</ul><p><strong>经验法则</strong>：每 3-6 个月做一次记忆审查，把已写入文档的内容从 SQLite 中剥离。记忆系统不是越多越好，<strong>相关性 > 完整性</strong>。</p><hr></section></section><section><h2 id="六custom-maintenance-scripts--自定义维护脚本">六、Custom Maintenance Scripts — 自定义维护脚本<a class="anchor" href="#六custom-maintenance-scripts--自定义维护脚本"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="sync-mem-modelsh--模型同步--worker-重启"><code>sync-mem-model.sh</code> — 模型同步 + Worker 重启<a class="anchor" href="#sync-mem-modelsh--模型同步--worker-重启"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>位置</strong>：<code>~/.claude/hooks/sync-mem-model.sh</code></p><p><strong>做 3 件事</strong>：</p><ol>
+<li>读取 Claude Code 当前模型（<code>~/.claude/settings.json</code>）</li>
+<li>写入 <code>~/.claude-mem/settings.json</code> 的 <code>CLAUDE_MEM_MODEL</code></li>
+<li>重启 worker 进程</li>
+</ol><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Claude Code settings.json ──读──▶ 当前模型</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">│</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">▼</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                            </span></span><span style="--0:#abb2bf;--1:#383a42">──写──▶ claude-mem/settings.json</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">│</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                                    </span></span><span style="--0:#abb2bf;--1:#383a42">▼</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">                            </span></span><span style="--0:#abb2bf;--1:#383a42">──重启──▶ worker 进程</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Claude Code settings.json ──读──▶ 当前模型                                    │                                    ▼                            ──写──▶ claude-mem/settings.json                                    │                                    ▼                            ──重启──▶ worker 进程"><div></div></button></div></figure></div></section><section><h3 id="check-claude-memsh--深度健康检查"><code>check-claude-mem.sh</code> — 深度健康检查<a class="anchor" href="#check-claude-memsh--深度健康检查"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>位置</strong>：<code>~/.claude/hooks/check-claude-mem.sh</code></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>检查项</th><th>告警条件</th></tr></thead><tbody><tr><td>端口监听</td><td>37777 端口未监听（等待 5 秒后）</td></tr><tr><td>Worker 进程</td><td>找不到 PID 或进程已死</td></tr><tr><td>模型一致性</td><td><code>ANTHROPIC_MODEL != CLAUDE_MEM_MODEL</code></td></tr><tr><td>API 错误</td><td>最近 100 行日志中 > 5 次 API Error</td></tr><tr><td>日志活跃度</td><td>> 900 秒（15 分钟）无活动</td></tr><tr><td>今日落库数</td><td>10 点后今日 observations = 0</td></tr></tbody></table></section><section><h3 id="switch-modelsh-自动同步-env"><code>switch-model.sh</code> 自动同步 <code>.env</code><a class="anchor" href="#switch-modelsh-自动同步-env"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>每次切换 provider 时，<code>~/.claude/switch-model.sh</code> 自动把新 gateway 的 URL 和 key 写入 <code>~/.claude-mem/.env</code>，避免 worker 自动重启后丢失凭证。</p><hr></section></section><section><h2 id="七actual-configuration--实际配置记录">七、Actual Configuration — 实际配置记录<a class="anchor" href="#七actual-configuration--实际配置记录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p><strong>变更时间</strong>：2026-06-04</p><section><h3 id="最终配置">最终配置<a class="anchor" href="#最终配置"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>配置项</th><th>值</th><th>说明</th></tr></thead><tbody><tr><td><code>CLAUDE_MEM_MODEL</code></td><td><code>qwen3.6-plus</code></td><td>通过 DashScope gateway 转发</td></tr><tr><td><code>CLAUDE_MEM_MODE</code></td><td><code>code--zh</code></td><td>中文 Code 模式，observation 用中文生成</td></tr><tr><td><code>CLAUDE_MEM_CLAUDE_AUTH_METHOD</code></td><td><code>gateway</code></td><td>从 <code>.env</code> 读取凭证</td></tr><tr><td><code>CLAUDE_MEM_CONTEXT_OBSERVATIONS</code></td><td>50（默认）</td><td>新会话注入 50 条最近 observation</td></tr></tbody></table></section><section><h3 id="env-凭证持久化"><code>.env</code> 凭证持久化<a class="anchor" href="#env-凭证持久化"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>问题</strong>：之前 gateway 凭证（<code>ANTHROPIC_BASE_URL</code> + <code>ANTHROPIC_AUTH_TOKEN</code>）只存在于 <code>~/.claude/settings.json</code> 中，由 <code>sync-mem-model.sh</code> 临时 export 给 worker。脆弱性：Worker 崩溃后 Bun 自动重启、系统重启、手动 restart 都可能导致变量丢失。</p><p><strong>解决</strong>：创建 <code>~/.claude-mem/.env</code>（权限 0600），Worker 每次启动时 <code>EnvManager.loadClaudeMemEnv()</code> 自动读取。</p><p><strong>职责分工</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>文件</th><th>存什么</th><th>什么时候改</th></tr></thead><tbody><tr><td><code>~/.claude-mem/.env</code></td><td>gateway URL + API key（通道）</td><td>切换 provider 时（switch-model.sh 自动同步）</td></tr><tr><td><code>~/.claude-mem/settings.json</code></td><td><code>CLAUDE_MEM_MODEL</code>（走哪个模型）</td><td>切模型时（sync-mem-model.sh 同步）</td></tr><tr><td><code>sync-mem-model.sh</code></td><td>同步模型名 + 重启 worker</td><td>每次切模型</td></tr></tbody></table><p><code>.env</code> 修的是路，<code>settings.json</code> 选的是车。换车型不用重新修路。</p><p><strong>为什么保留 <code>sync-mem-model.sh</code></strong>：即使有了 <code>.env</code> 兜底凭证，模型名的同步和 worker 重启仍然需要它。除了 <code>switch-model.sh</code>，用户还可能通过 <code>/model</code> 命令切模型——那时 sync 脚本是唯一的同步路径。</p><hr></section></section><section><h2 id="八人类开发者专属玩法">八、人类开发者专属玩法<a class="anchor" href="#八人类开发者专属玩法"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>不要只把 claude-mem 当成 AI 的”补丁”。对人类开发者而言，它本质上是一个 <strong>全自动无感知运行的、带语义分析的研发行为白盒子</strong>。SQLite 数据库是跨项目共享的，沉淀的数据完全可以直接为人所用。</p><section><h3 id="81-代码考古取代无意义的-git-log">8.1 代码考古：取代无意义的 git log<a class="anchor" href="#81-代码考古取代无意义的-git-log"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>痛点</strong>：接手半年前的旧模块，看到一行诡异的兼容代码，git blame 显示是自己写的，但完全想不起来当时遇到了什么坑。</p><p><strong>玩法</strong>：直接搜索文件名或模块名：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 通过 HTTP API 搜索</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">curl</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-s</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"http://localhost:37700/api/observations?limit=100"</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.[] | select(.files_modified[] | contains("auth"))'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 或通过 mem-search 技能</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">search(</span><span style="--0:#61AFEF;--1:#3360C1">"worker-service.ts"</span><span style="--0:#ABB2BF;--1:#383A42">)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="curl -s &#x22;http://localhost:37700/api/observations?limit=100&#x22; | jq &#x27;.[] | select(.files_modified[] | contains(&#x22;auth&#x22;))&#x27;search(&#x22;worker-service.ts&#x22;)"><div></div></button></div></figure></div><p><strong>你能看到什么</strong>：完整的 Observation 链路——“发现 API 高并发下偶发 401（事实） → 判定为 JWT 验证中的竞态条件（技术决策） → 提取并重构了 useAuth 组件（重构事实）”。</p><p><strong>价值</strong>：相当于一个自动生成的 “代码心理活动日志”，比 git log 多了一层 “为什么这么改”。</p></section><section><h3 id="82-自动化生成周报--release-notes">8.2 自动化生成周报 / Release Notes<a class="anchor" href="#82-自动化生成周报--release-notes"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>痛点</strong>：每周五花半小时凭记忆写周报、交付文档。</p><p><strong>玩法</strong>：用 HTTP API 拉取本周 observation，喂给任意大模型润色：</p><div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">get-my-weekly.ts</span></figcaption><pre data-language="typescript"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">const</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E5C07B;--1:#875D01">res</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">=</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#CD89E1;--1:#A626A4">await</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#61AFEF;--1:#3360C1">fetch</span><span style="--0:#ABB2BF;--1:#383A42">(</span><span style="--0:#98C379;--1:#387138">"http://localhost:37700/api/observations?limit=100"</span><span style="--0:#ABB2BF;--1:#383A42">);</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#CD89E1;--1:#A626A4">const</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#E5C07B;--1:#875D01">data</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#56B6C2;--1:#016C9A">=</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#CD89E1;--1:#A626A4">await</span><span style="--1:#383A42"><span style="--0:#ABB2BF"> </span><span style="--0:#E5C07B">res</span><span style="--0:#ABB2BF">.</span></span><span style="--0:#61AFEF;--1:#3360C1">json</span><span style="--0:#ABB2BF;--1:#383A42">();</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 筛选出本周的 type === 'feature' 或 'bugfix'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic">// 喂给大模型："帮我把这些开发事实润色成一份本周的周报交付文档"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="const res = await fetch(&#x22;http://localhost:37700/api/observations?limit=100&#x22;);const data = await res.json();// 筛选出本周的 type === &#x27;feature&#x27; 或 &#x27;bugfix&#x27;// 喂给大模型：&#x22;帮我把这些开发事实润色成一份本周的周报交付文档&#x22;"><div></div></button></div></figure></div><p><strong>价值</strong>：由于 observation 精准记录了改了哪些文件（<code>files_modified</code>）、解决了什么 Bug，生成的周报比凭记忆写的要精准、详实得多。</p></section><section><h3 id="83-跨项目技术决策库adr">8.3 跨项目技术决策库（ADR）<a class="anchor" href="#83-跨项目技术决策库adr"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>痛点</strong>：在 A 项目封装了大文件分片上传的 Hooks，三个月后在 B 项目又遇到了，只记得”我以前做过”，但不记得细节。</p><p><strong>玩法</strong>：claude-mem 的 SQLite 数据库是 <strong>跨项目共享</strong> 的（带 <code>project</code> 字段），直接在终端搜索：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">search("slice upload", type="decision")</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="search(&#x22;slice upload&#x22;, type=&#x22;decision&#x22;)"><div></div></button></div></figure></div><p>一秒钟找回三个月前在另一个项目里做出的架构决策和核心思路。</p></section><section><h3 id="84-打通桌面工具链mcp-集成">8.4 打通桌面工具链（MCP 集成）<a class="anchor" href="#84-打通桌面工具链mcp-集成"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>claude-mem 原生支持 Claude Desktop MCP。这意味着它的记忆不仅能给终端的 Claude Code 用，还能赋能整个桌面生态：</p><ul>
+<li><strong>Cursor / VS Code</strong>：接入本地 claude-mem MCP 服务后，编辑器内的 AI 辅助面板可以直接调用 <code>search</code> 和 <code>timeline</code> 工具，读取你在终端用 Claude Code 调试出来的排错历史。</li>
+<li><strong>个人 RAG 知识库</strong>：将 <code>~/.claude-mem/corpora/</code> 下的 <code>.corpus.json</code> 语料库导入 Obsidian 或 Notion，作为个人的 AI 辅助编程知识库。</li>
+</ul></section><section><h3 id="85-团队新人的项目上下文">8.5 团队新人的项目上下文<a class="anchor" href="#85-团队新人的项目上下文"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>传统做法</strong>：丢一个过时的 README.md，花两小时口述项目架构。</p><p><strong>优雅做法</strong>：开启 Folder Context Files 自动化后，claude-mem 自动为每个模块文件夹增量生成 <code>CLAUDE.md</code>，连同代码一起推送到 Git。新人拉下代码后，不需要装任何工具，光是读这个实时更新的 <code>CLAUDE.md</code> 里的活动时间线，就能摸清项目过去两周都在发生什么、怎么提交、规避了哪些坑。</p><hr></section></section><section><h2 id="九高频排查与维护-cheatsheet">九、高频排查与维护 Cheatsheet<a class="anchor" href="#九高频排查与维护-cheatsheet"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">遇到问题</th><th align="left">排查原因</th><th align="left">解决手段 / 命令</th></tr></thead><tbody><tr><td align="left"><strong>切换模型后，记忆压缩没生效</strong></td><td align="left">Worker 没感知到新模型或网关凭证</td><td align="left">运行 <code>sync-mem-model.sh</code> 并检查 <code>~/.claude-mem/.env</code> 是否已同步</td></tr><tr><td align="left"><strong>明明刚做完的操作，新会话搜不到</strong></td><td align="left">后台 AI 压缩队列（Pending Queue）积压</td><td align="left">访问 <code>http://localhost:37700/api/pending-queue</code> 查看队列状态，或重启 worker</td></tr><tr><td align="left"><strong>不小心把敏感信息漏给 AI 压缩了</strong></td><td align="left">触发了敏感数据录入</td><td align="left">1. 用 SQLite 工具直接删除 <code>~/.claude-mem/claude-mem.db</code> 中对应 ID 的记录<br>2. 后续在 prompt 中用 <code>&#x3C;private></code> 标签包裹敏感内容</td></tr><tr><td align="left"><strong>Worker 进程死锁或端口冲突</strong></td><td align="left">多实例运行或 PID 文件的端口未释放</td><td align="left"><code>npx claude-mem repair</code> 或手动 <code>kill -9 $(cat ~/.claude-mem/worker.pid | jq -r '.pid')</code></td></tr><tr><td align="left"><strong>新会话注入的上下文全是旧内容</strong></td><td align="left"><code>CLAUDE_MEM_CONTEXT_OBSERVATIONS</code> 设得过高，或早期 observation 已腐化</td><td align="left">降低 <code>CLAUDE_MEM_CONTEXT_OBSERVATIONS</code>（默认 50 足够），定期用 <code>search(type="decision", orderBy="date_asc")</code> 审查早期决策</td></tr><tr><td align="left"><strong>健康检查报 MODEL 未同步</strong></td><td align="left"><code>settings.json</code> 的模型已改，但 <code>claude-mem/settings.json</code> 未同步</td><td align="left">运行 <code>sync-mem-model.sh</code>，或手动 <code>jq --arg model "qwen3.6-plus" '.CLAUDE_MEM_MODEL = $model' ~/.claude-mem/settings.json > tmp &#x26;&#x26; mv tmp ~/.claude-mem/settings.json</code></td></tr><tr><td align="left"><strong>Worker 日志正常但今日 observations = 0</strong></td><td align="left">Worker env 中 <code>ANTHROPIC_AUTH_TOKEN</code> 失效或队列卡死</td><td align="left">1. <code>cat ~/.claude-mem/.env</code> 确认凭证<br>2. <code>curl -s http://localhost:37700/api/stats</code> 检查项目数据<br>3. 重启 worker</td></tr><tr><td align="left"><strong>Folder Context Files 没自动生成</strong></td><td align="left"><code>CLAUDE_MEM_FOLDER_CLAUDEMD_ENABLED</code> 未设为 <code>"true"</code>，或修改发生在项目根目录</td><td align="left">1. <code>jq '.CLAUDE_MEM_FOLDER_CLAUDEMD_ENABLED' ~/.claude-mem/settings.json</code> 确认<br>2. 根目录（含 <code>.git</code>）不生成，这是设计行为</td></tr></tbody></table><section><h3 id="常用维护命令">常用维护命令<a class="anchor" href="#常用维护命令"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><div class="expressive-code"><div class="ec-collapse ec-collapse--collapsed" id="collapse-f8ee98ugd" data-collapse-preview-lines="8" data-expanded-announcement="代码块已展开" data-collapsed-announcement="代码块已折叠"><div class="ec-collapse__content"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span><button class="ec-collapse__header-toggle" type="button" aria-expanded="false" aria-controls="collapse-f8ee98ugd"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__header-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 查看 worker 状态</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">curl</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-s</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">http://localhost:37700/api/stats</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 查看待处理队列</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">curl</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-s</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">http://localhost:37700/api/pending-queue</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 手动触发队列处理</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">curl</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-s</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-X</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">POST</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">http://localhost:37700/api/pending-queue/process</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">10</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 查看最近的 observation</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">11</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">curl</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-s</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">"http://localhost:37700/api/observations?limit=5"</span><span style="--0:#ABB2BF;--1:#383A42"> | </span><span style="--0:#61AFEF;--1:#3360C1">jq</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">'.'</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">12</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">13</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 健康检查</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">14</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">bash</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude/hooks/check-claude-mem.sh</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">15</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">16</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 同步模型 + 重启 worker</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">17</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">bash</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">~/.claude/hooks/sync-mem-model.sh</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">18</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">19</div></div><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 修复 claude-mem（版本不匹配、端口冲突）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">20</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">npx</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">claude-mem</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">repair</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="curl -s http://localhost:37700/api/stats | jq &#x27;.&#x27;curl -s http://localhost:37700/api/pending-queue | jq &#x27;.&#x27;curl -s -X POST http://localhost:37700/api/pending-queue/processcurl -s &#x22;http://localhost:37700/api/observations?limit=5&#x22; | jq &#x27;.&#x27;bash ~/.claude/hooks/check-claude-mem.shbash ~/.claude/hooks/sync-mem-model.shnpx claude-mem repair"><div></div></button></div></figure><div class="ec-collapse__gradient" aria-hidden="true"></div></div><button class="ec-collapse__toggle" type="button" aria-expanded="false" aria-controls="collapse-f8ee98ugd"><span class="ec-collapse__text-expand">展开</span><span class="ec-collapse__text-collapse">收起</span><svg class="ec-collapse__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"></path></svg></button></div></div></section></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/ai工具/claude-code/token与缓存机制/claude-code-token-缓存机制解读/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">Claude-Code-Token-缓存机制解读</span> </a> <a class="post-nav-link post-nav-next " href="/posts/其他/项目调研/07-项目调研/kimi-code打包与配置记录/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">kimi-code打包与配置记录</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

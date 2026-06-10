@@ -1,0 +1,1189 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>我做了一个 Skill，让本地Gemma4模型也能用上大厂 UI设计技巧 - 翔子的博客</title><meta name="description" content="把本地部署的 Gemma 4、开源的 design.md 设计参考体系，以及我自己做的 Skill 调用链路，真正串成了一套能日常使用的工作流。本地模型负责高频执行，design.md 负责提供 UI 设计约束，Skill 负责把整个过程自动化"><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/skill%E5%BC%80%E5%8F%91/04-skill-dev/%E6%88%91%E5%81%9A%E4%BA%86%E4%B8%80%E4%B8%AA-skill%E8%AE%A9%E6%9C%AC%E5%9C%B0gemma4%E6%A8%A1%E5%9E%8B%E4%B9%9F%E8%83%BD%E7%94%A8%E4%B8%8A%E5%A4%A7%E5%8E%82-ui%E8%AE%BE%E8%AE%A1%E6%8A%80%E5%B7%A7/"><meta property="og:title" content="我做了一个 Skill，让本地Gemma4模型也能用上大厂 UI设计技巧 - 翔子的博客"><meta property="og:description" content="把本地部署的 Gemma 4、开源的 design.md 设计参考体系，以及我自己做的 Skill 调用链路，真正串成了一套能日常使用的工作流。本地模型负责高频执行，design.md 负责提供 UI 设计约束，Skill 负责把整个过程自动化"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/skill%E5%BC%80%E5%8F%91/04-skill-dev/%E6%88%91%E5%81%9A%E4%BA%86%E4%B8%80%E4%B8%AA-skill%E8%AE%A9%E6%9C%AC%E5%9C%B0gemma4%E6%A8%A1%E5%9E%8B%E4%B9%9F%E8%83%BD%E7%94%A8%E4%B8%8A%E5%A4%A7%E5%8E%82-ui%E8%AE%BE%E8%AE%A1%E6%8A%80%E5%B7%A7/"><meta name="twitter:title" content="我做了一个 Skill，让本地Gemma4模型也能用上大厂 UI设计技巧 - 翔子的博客"><meta name="twitter:description" content="把本地部署的 Gemma 4、开源的 design.md 设计参考体系，以及我自己做的 Skill 调用链路，真正串成了一套能日常使用的工作流。本地模型负责高频执行，design.md 负责提供 UI 设计约束，Skill 负责把整个过程自动化"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"我做了一个 Skill，让本地Gemma4模型也能用上大厂 UI设计技巧","description":"把本地部署的 Gemma 4、开源的 design.md 设计参考体系，以及我自己做的 Skill 调用链路，真正串成了一套能日常使用的工作流。本地模型负责高频执行，design.md 负责提供 UI 设计约束，Skill 负责把整个过程自动化","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-05-20T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>我做了一个 Skill，让本地Gemma4模型也能用上大厂 UI设计技巧</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=AI%E5%B7%A5%E5%85%B7">AI工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">我做了一个 Skill，让本地Gemma4模型也能用上大厂 UI设计技巧</h1> <p class="post-subtitle">把本地部署的 Gemma 4、开源的 design.md 设计参考体系，以及我自己做的 Skill 调用链路，真正串成了一套能日常使用的工作流。本地模型负责高频执行，design.md 负责提供 UI 设计约束，Skill 负责把整个过程自动化</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-05-20 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 4,019 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 20 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#Skill开发</span><span class="post-tag">#04-skill-dev</span><span class="post-tag">#clippings</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <p>原创 超级猛 <em>2026年4月9日 13:12</em></p>
+<p>最近我把几样比较火的技术真正接到了一起，也把它们落成了一条能日常使用的 AI 页面生成工作流。</p>
+<p>简单说，就是把本地部署的 Gemma 4、开源的 <code>design.md</code> 设计参考体系，以及我自己做的 Skill 调用链路，真正串成了一套能日常使用的工作流。</p>
+<p>它最让我满意的地方，不是又跑出了一个 demo，而是这次三层能力终于接上了：本地模型负责高频执行， <code>design.md</code> 负责提供 UI 设计约束，Skill 负责把整个过程自动化。页面生成这件事，也第一次从“试试看”慢慢变成了“可以稳定复用”。</p>
+<p>这篇文章我想重点讲的，也正是这三层价值：</p>
+<ul>
+<li>本地模型</li>
+<li>UI生成能力</li>
+<li>自动化调用。</li>
+</ul>
+<p>它们单独看都不新鲜，但真正接起来之后，整个工作流的效率、稳定性和 token 使用方式都会不一样。</p>
+<hr>
+<section><h2 id="先把-ai-做页面那股通用模板味解决掉">先把 AI 做页面那股“通用模板味”解决掉<a class="anchor" href="#先把-ai-做页面那股通用模板味解决掉"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>我一直觉得，AI 生成页面最大的问题，从来不是不会写 HTML，而是太容易写出一份“完整但普通”的东西：结构都有，模块也齐，但就是不像一个真实品牌会发出来的页面。</p><p>后来我看到 VoltAgent/awesome-design-md 这个开源项目，感觉一下就对了。它把很多品牌和厂商的设计语言整理成可供 AI 参考的 <code>DESIGN.md</code> ，这比一句“做高级一点”“做得像大厂官网一点”有效得多。</p><p>但它也有一个很现实的问题： <strong>流程偏手动</strong> 。</p><p>你还是要自己挑风格、找厂商、看设计描述，再把这些内容塞回当前任务里。做一次没问题，做多了就会发现，这一步很打断节奏。</p><p>所以我后来没有重新发明什么方法，而是把这套能力做成了自己的 <code>Design System Picker</code> Skill。</p><p>它做的事情很简单：把“我想要更像 Stripe 的开发者产品感”、“我想要 Claude 那种克制、温和的表达”、“我想要更偏 Apple 的简洁科技感”这种模糊要求，先映射到对应的设计系统参考，再自动送进后面的生成链路。</p><p>这一步一旦 Skill 化，意义就变了。</p><p><code>design.md</code> 不再只是一个临时查阅的资料库，而是一个可以稳定调用、反复复用的 UI 生成能力。</p><blockquote><p>这套 Skill 我也准备在下一篇文章里免费放出来，等我把跨平台兼容性再测稳一点、确认不同环境下都没问题之后，就会整理出来分享。</p></blockquote><p>下面是用这套流程生成的3个Demo页面</p><section><h3 id="1claude风格的网站首页">1、Claude风格的网站首页<a class="anchor" href="#1claude风格的网站首页"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p></p><center><figure><img src="https://mmbiz.qpic.cn/mmbiz_png/oy5PAjuNnAicg7JML5TXBaPI314NhAxLk2Pf2tXx7MtdjP9bHBjybZOxibmAreuPmgT17WYAUCIIbhgRQZ4DcLaTZgvn56N25H3Te8mmEiaAcQ/640?wx_fmt=png&#x26;from=appmsg&#x26;watermark=1#imgIndex=1" alt="图片"><figcaption>图片</figcaption></figure></center><p></p></section><section><h3 id="2stripe风格的网站首页">2、Stripe风格的网站首页<a class="anchor" href="#2stripe风格的网站首页"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p></p><center><figure><img src="https://mmbiz.qpic.cn/mmbiz_png/oy5PAjuNnA9TXKKakrb2YURdTF2VUl8icsqjo4qhc4pv1jkzXckxKY5K7zE7BqfcdEdYHlUtj6w3icda3NS8yiaFgaaDm09MwjtSdaDUQcqJXY/640?wx_fmt=png&#x26;from=appmsg&#x26;watermark=1&#x26;tp=webp&#x26;wxfrom=5&#x26;wx_lazy=1#imgIndex=3" alt="图片"><figcaption>图片</figcaption></figure></center><p></p></section><section><h3 id="3苹果风格的超级猛个人网站首页">3、苹果风格的【超级猛】个人网站首页<a class="anchor" href="#3苹果风格的超级猛个人网站首页"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p></p><center><figure><img src="https://mmbiz.qpic.cn/sz_mmbiz_png/oy5PAjuNnA9ZKAibnuibzaQqe0jqoImQ6I30td82czeTUia92IzpicliaNer33BWdEGgXwMOa5LhMn00UX6npMiaPiayFiaub7JpAspe3QPiaGXVHLUE/640?wx_fmt=png&#x26;from=appmsg&#x26;watermark=1&#x26;tp=webp&#x26;wxfrom=5&#x26;wx_lazy=1#imgIndex=5" alt="图片"><figcaption>图片</figcaption></figure></center><p></p><hr></section></section>
+<section><h2 id="为什么-gemma-4-是我现在最满意的本地模型">为什么 Gemma 4 是我现在最满意的本地模型<a class="anchor" href="#为什么-gemma-4-是我现在最满意的本地模型"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这次我的环境很直接： <code>Mac Studio M3 Ultra 96G</code></p><p>模型用的是 <code>google/gemma-4-26b-a4b</code> 。</p><p>根据 Google 在 2026 年 4 月 2 日公开发布 Gemma 4 时给出的信息，这一代强调的是多模态、长上下文和开发者可集成性。官方资料提到，Gemma 4 的大模型支持最高 <code>256K</code> 上下文，覆盖 <code>140+</code> 种语言；而 <code>26B A4B</code> 这个版本是 MoE 结构，模型卡给出的信息是总参数约 <code>25.2B</code> ，每个 token 推理时激活约 <code>3.8B</code> 参数。</p><p>对我来说，参数不是最重要的。更重要的是，它在本地可用性和结果质量之间找到了一个很实用的平衡。</p><p>至少到目前为止，Gemma 4 是我在这台 Mac Studio 上跑出来最满意的模型。它不是那种“演示一下很惊艳，真正做事就不稳定”的类型，而是真的能接住日常任务：结构化输出比较稳，页面生成不会太飘，配合设计约束之后也能产出更像样的结果。</p><p>运行时我看了一下机器状态，GPU 基本能冲到接近满载，这也说明本地模型一旦进入实战，硬件压力是很真实的。</p><p></p><center><figure><img src="https://mmbiz.qpic.cn/mmbiz_jpg/oy5PAjuNnAic0uJgp1mzuvLGeOctpbPYibdZe1MX3j4oibSHdhOg7IDiaczScmIWBDwia6z9QiaOZsVM5CGkbpjxibZENPp8v2AQUP66A7xUJGguPE/640?wx_fmt=jpeg&#x26;from=appmsg&#x26;watermark=1&#x26;tp=webp&#x26;wxfrom=5&#x26;wx_lazy=1#imgIndex=6" alt="图片"><figcaption>图片</figcaption></figure></center><p></p><hr></section>
+<section><h2 id="本地模型的边界也很清楚长会话更吃力">本地模型的边界也很清楚：长会话更吃力<a class="anchor" href="#本地模型的边界也很清楚长会话更吃力"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>如果会话太长、上下文塞得太多、分支太杂，本地模型的问题就会慢慢出来：更吃性能，也更容易出现幻觉、漂移和“前面说过，后面又忘了”的情况。</p><p>所以我现在对 Gemma 4 的定位很明确：</p><p>它更适合处理较短上下文、边界清晰、可拆解的任务，而不是硬扛一整个超长会话。</p><p>这也是我现在更推荐的工作方式：先用 API 模型把复杂任务的大方向跑通，把目标、结构和关键约束理清；然后把那些高频、小块、重复但又要求不能太差的任务，尽量交给 Gemma 4 去处理。</p><p>这样做其实非常划算。复杂推理留给更适合的模型，日常执行交给本地模型，既能把成本压下来，也能把工作流跑顺。</p><hr></section>
+<section><h2 id="真正有价值的是三层能力终于接成了一条线">真正有价值的，是三层能力终于接成了一条线<a class="anchor" href="#真正有价值的是三层能力终于接成了一条线"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这次我确实也跑了3个单页面 demo，说明这套流程已经不只是概念，而是能产出结果。</p><p>但 demo 不是重点。</p><p>重点在于，这次我终于把三层能力接成了一条线。</p><ul>
+<li>第一层是本地模型，也就是 Gemma 4。它解决的是“不是所有任务都值得联网、都值得烧昂贵 token”这个问题。</li>
+<li>第二层是 UI 生成能力，也就是 <code>design.md</code> 。它解决的是“为什么 AI 能写完整页面，却总写不出真实产品感”的问题，因为真正缺的往往不是代码，而是设计约束。</li>
+<li>第三层是自动化调用，也就是 Skill 体系。它解决的是“明明知道正确方法，但每次都要手工重复一遍”的问题。只有把这部分固化下来，它才可能真正进入日常生产流。</li>
+</ul><p>当这三层接起来之后，页面生成才真正从“让 AI 帮我写一份 HTML”，变成“让 AI 按一套设计语言替我跑出第一版可用结果”。</p><hr></section>
+<section><h2 id="这段时间我越来越在意高效使用-token">这段时间我越来越在意：高效使用 token<a class="anchor" href="#这段时间我越来越在意高效使用-token"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这段时间我最大的体会是，模型不一定非得只靠一个，关键是能不能把它们配合起来，把一件事情用更少的 token 做完。</p><p>我现在越来越在意的，不是“这次我用了哪个最强模型”，而是“这个任务有没有被拆到最合理，每一步有没有交给最合适的模型”。</p><p>复杂规划、长上下文、高稳定性任务，先交给 API 模型；本地 Gemma 4 则去承接那些短链路、可拆解、日常高频的工作。</p><p>这样用下来，我越来越确认一件事：高效使用 token，本身就是一项非常重要的技能。</p><p>最少的 token，实现最佳的效果。我知道token会越来越便宜，但我要表达的是一种精准制导，而非狂轰乱炸一顿乱问。</p><p>谁越早形成这种意识，谁就越容易把模型真正接进长期工作流，而不是停留在“今天试一个新模型、明天试一个新提示词”的热闹阶段。</p><hr></section>
+<section><h2 id="最后想说">最后想说<a class="anchor" href="#最后想说"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>如果要我用一句话总结这次实践，那就是：真正产生价值的，不是 Gemma 4、 <code>design.md</code> 或 Skill 中的任何一个单点，而是本地模型、UI 生成能力和自动化调用这三层能力接起来之后，开始稳定地服务真实工作。</p><p>这比单独跑出几个好看的 demo 更重要。</p><hr><p>关注我，下一篇文章邀请你体验这个skill</p><p>作者提示: 个人观点，仅供参考</p><p>继续滑动看下一个</p><p>超级猛</p><p>向上滑动看下一个</p><hr></section>
+<section><h2 id="ai-总结">AI 总结<a class="anchor" href="#ai-总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2></section>
+<section><h1 id="我做了一个-skill让本地gemma4模型也能用上大厂-ui设计技巧">我做了一个 Skill，让本地Gemma4模型也能用上大厂 UI设计技巧<a class="anchor" href="#我做了一个-skill让本地gemma4模型也能用上大厂-ui设计技巧"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><section><h2 id="核心思想">核心思想<a class="anchor" href="#核心思想"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这篇文章介绍了作者将本地部署的 Gemma 4 模型、开源的 <code>design.md</code> 设计参考体系和自定义的 Skill 调用链路整合为一套可日常使用的 AI 页面生成工作流。通过三层能力的协同——本地模型负责高频执行、design.md 提供设计约束、Skill 实现自动化——页面生成从”试试看”变成了”可以稳定复用”的生产工具。</p><hr></section><section><h2 id="我的理解">我的理解<a class="anchor" href="#我的理解"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这篇文章最有价值的地方，不在于展示了一个新的技术demo，而在于它提出了一种非常务实的 AI 工作流思路：不追求用一个模型解决所有问题，而是通过组合不同层级的能力（本地模型 + 设计知识 + 自动化），形成一个既高效又可控的生产 pipeline。这种分层协作的思路，其实比单纯追求”最强模型”更有实际意义。</p><hr></section><section><h2 id="主要内容">主要内容<a class="anchor" href="#主要内容"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="问题背景ai-生成页面的通用模板味">问题背景：AI 生成页面的”通用模板味”<a class="anchor" href="#问题背景ai-生成页面的通用模板味"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>AI 生成页面最大的问题不是不会写 HTML，而是太容易写出”完整但普通”的页面：结构都有，模块也齐，但就是不像真实品牌会发布的页面。缺的不是代码能力，而是具体的设计约束。</p></section><section><h3 id="解决方案三层能力整合">解决方案：三层能力整合<a class="anchor" href="#解决方案三层能力整合"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><section><h4 id="第一层designmd-设计参考体系">第一层：design.md 设计参考体系<a class="anchor" href="#第一层designmd-设计参考体系"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><ul>
+<li>来自 VoltAgent/awesome-design-md 开源项目</li>
+<li>将各大品牌和厂商的设计语言整理成可供 AI 参考的 DESIGN.md</li>
+<li>比”做高级一点”这种模糊提示有效得多</li>
+<li>但原项目流程偏手动，需要自己挑风格、找厂商、看描述</li>
+</ul></section><section><h4 id="第二层design-system-picker-skill">第二层：Design System Picker Skill<a class="anchor" href="#第二层design-system-picker-skill"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><ul>
+<li>作者自己开发的 Skill，将手动流程自动化</li>
+<li>把模糊需求（“更像 Stripe 的开发者产品感”、“Claude 那种克制温和的表达”、“Apple 的简洁科技感”）映射到对应的设计系统参考</li>
+<li>自动送入后续生成链路</li>
+<li>让 design.md 从临时查阅的资料库变成可稳定调用、反复复用的 UI 生成能力</li>
+</ul></section><section><h4 id="第三层本地-gemma-4-模型">第三层：本地 Gemma 4 模型<a class="anchor" href="#第三层本地-gemma-4-模型"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h4><p><strong>硬件环境：</strong></p><ul>
+<li>Mac Studio M3 Ultra 96G</li>
+<li>使用 google/gemma-4-26b-a4b 模型</li>
+</ul><p><strong>Gemma 4 的特点：</strong></p><ul>
+<li>MoE 结构，总参数约 25.2B，每个 token 推理时激活约 3.8B 参数</li>
+<li>支持最高 256K 上下文，覆盖 140+ 种语言</li>
+<li>在本地可用性和结果质量之间找到了实用平衡</li>
+<li>结构化输出稳定，页面生成不会太飘</li>
+<li>配合设计约束后能产出像样的结果</li>
+<li>GPU 基本能冲到接近满载</li>
+</ul><p><strong>Gemma 4 的边界：</strong></p><ul>
+<li>长会话更吃力，上下文太多、分支太杂时容易出现幻觉、漂移</li>
+<li>更适合处理较短上下文、边界清晰、可拆解的任务</li>
+</ul></section></section><section><h3 id="推荐的工作方式">推荐的工作方式<a class="anchor" href="#推荐的工作方式"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li><strong>先用 API 模型</strong>：把复杂任务的大方向跑通，理清目标、结构和关键约束</li>
+<li><strong>再用本地模型</strong>：把高频、小块、重复但要求不能太差的任务交给 Gemma 4</li>
+<li><strong>收益</strong>：复杂推理留给更适合的模型，日常执行交给本地模型，既能压低成本，也能跑顺工作流</li>
+</ol></section><section><h3 id="三层能力的价值">三层能力的价值<a class="anchor" href="#三层能力的价值"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>层级</th><th>作用</th><th>解决的问题</th></tr></thead><tbody><tr><td>本地模型 Gemma 4</td><td>高频执行</td><td>不是所有任务都值得联网、都值得烧昂贵 token</td></tr><tr><td>UI 生成能力 design.md</td><td>提供设计约束</td><td>为什么 AI 能写完整页面，却总写不出真实产品感</td></tr><tr><td>自动化调用 Skill 体系</td><td>固化流程</td><td>明明知道正确方法，但每次都要手工重复一遍</td></tr></tbody></table><hr></section></section><section><h2 id="我的理解-1">我的理解<a class="anchor" href="#我的理解-1"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这篇文章提出的”三层架构”思路非常值得借鉴。它不是在追求某个单一维度的最优（比如最强的模型、最全的设计库），而是在构建一个系统：</p><ol>
+<li><strong>分层决策</strong>：把”做什么”（设计约束）和”怎么做”（代码生成）分开，把”想清楚”（API模型）和”勤动手”（本地模型）分开</li>
+<li><strong>能力固化</strong>：通过 Skill 把最佳实践固化下来，避免每次都要重新思考流程</li>
+<li><strong>成本意识</strong>：明确意识到 token 也是成本，高效使用 token 本身就是一项重要技能</li>
+</ol><p>这种思路其实可以泛化到很多 AI 应用场景，而不仅仅是页面生成。</p><hr></section><section><h2 id="总结">总结<a class="anchor" href="#总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>这篇文章展示了一个非常务实的 AI 工作流实践：通过整合本地 Gemma 4 模型、design.md 设计约束和自定义 Skill 自动化，形成了一套可日常使用的页面生成 pipeline。作者强调真正有价值的不是任何一个单点技术，而是三层能力接起来之后能稳定服务真实工作的系统。</p><hr></section><section><h2 id="我的扩展总结">我的扩展总结<a class="anchor" href="#我的扩展总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="从模型优先到系统优先的范式转变">从”模型优先”到”系统优先”的范式转变<a class="anchor" href="#从模型优先到系统优先的范式转变"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>这篇文章最让我认同的是它体现了一种从”模型优先”到”系统优先”的思维转变。很多人在做 AI 应用时，第一反应是”我要找一个最强的模型”，但这篇文章告诉我们：<strong>比单个模型更重要的是系统设计</strong>。</p><p>这让我想到软件工程的发展历史：早期我们追求单个程序员的能力，后来发现真正能规模化产出高质量软件的，是好的架构设计、开发流程和协作机制。AI 应用的发展可能也在走类似的路径。</p></section><section><h3 id="关于高效使用-token的深层思考">关于”高效使用 token”的深层思考<a class="anchor" href="#关于高效使用-token的深层思考"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>作者提到”高效使用 token，本身就是一项非常重要的技能”，这个观点非常有启发性。这里的”高效”其实有几层含义：</p><ol>
+<li><strong>经济效率</strong>：用更少的钱办成事</li>
+<li><strong>时间效率</strong>：本地模型可能更快，不用排队等 API</li>
+<li><strong>隐私安全</strong>：敏感数据不需要上传到第三方</li>
+<li><strong>可靠性</strong>：不依赖网络连接，不会因为 API 故障而中断</li>
+</ol><p>但更深层的是，这是一种”精准制导”vs”狂轰乱炸”的思维差异。当我们习惯了”有问题就问大模型”时，往往会忘记思考：这个问题真的需要大模型吗？有没有更轻量的解决方案？</p></section><section><h3 id="skill-作为知识载体的价值">Skill 作为”知识载体”的价值<a class="anchor" href="#skill-作为知识载体的价值"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>作者把 design.md 从一个”资料库”变成一个”可调用的能力”，这个转变很关键。这让我想到：Skill 不仅仅是自动化脚本，它更是一种<strong>知识载体</strong>。</p><p>当我们把”如何挑选设计风格”、“如何应用设计约束”这些知识编码到 Skill 中时，这些知识就从”某个人的经验”变成了”可复用的系统能力”。这可能是 Skill 体系最有价值的地方——它让知识可以被固化、被传播、被迭代。</p></section><section><h3 id="对未来工作流的想象">对未来工作流的想象<a class="anchor" href="#对未来工作流的想象"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p>沿着这个思路，我们可以想象未来的 AI 工作流可能是这样的：</p><ol>
+<li><strong>任务分解层</strong>：用大模型把复杂任务拆成小任务</li>
+<li><strong>能力选择层</strong>：根据任务特点选择最合适的模型/工具</li>
+<li><strong>知识约束层</strong>：注入领域知识、设计规范、质量标准</li>
+<li><strong>执行层</strong>：用本地或云端模型执行具体任务</li>
+<li><strong>验收层</strong>：用另一套 Skill 检查输出质量</li>
+</ol><p>这篇文章其实已经在做这样的尝试，只是还比较初步。</p><hr><p><em>本文档基于 <a href="https://mp.weixin.qq.com/s/7tctB4Iubfrg3dbPFKmiwQ" target="_blank" rel="noopener noreferrer">https://mp.weixin.qq.com/s/7tctB4Iubfrg3dbPFKmiwQ</a> 整理总结，并加入了扩展理解</em></p><hr><p>原文链接：<a href="https://mp.weixin.qq.com/s/7tctB4Iubfrg3dbPFKmiwQ" target="_blank" rel="noopener noreferrer">https://mp.weixin.qq.com/s/7tctB4Iubfrg3dbPFKmiwQ</a></p></section></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/ai工具/skill开发/04-skill-dev/web-access-技能安装与claude周报实践记录/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">Web-Access Skill 安装与 Claude 周报实践记录</span> </a> <a class="post-nav-link post-nav-next " href="/posts/ai工具/skill开发/04-skill-dev/技能清单-2026-04-21/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">技能清单-2026-04-21</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

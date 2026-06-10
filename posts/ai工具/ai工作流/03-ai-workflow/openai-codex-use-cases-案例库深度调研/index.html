@@ -1,0 +1,1452 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>OpenAI-Codex-Use-Cases-案例库深度调研 - 翔子的博客</title><meta name="description" content="OpenAI 三步走的内容布局："><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/ai%E5%B7%A5%E4%BD%9C%E6%B5%81/03-ai-workflow/openai-codex-use-cases-%E6%A1%88%E4%BE%8B%E5%BA%93%E6%B7%B1%E5%BA%A6%E8%B0%83%E7%A0%94/"><meta property="og:title" content="OpenAI-Codex-Use-Cases-案例库深度调研 - 翔子的博客"><meta property="og:description" content="OpenAI 三步走的内容布局："><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/ai%E5%B7%A5%E4%BD%9C%E6%B5%81/03-ai-workflow/openai-codex-use-cases-%E6%A1%88%E4%BE%8B%E5%BA%93%E6%B7%B1%E5%BA%A6%E8%B0%83%E7%A0%94/"><meta name="twitter:title" content="OpenAI-Codex-Use-Cases-案例库深度调研 - 翔子的博客"><meta name="twitter:description" content="OpenAI 三步走的内容布局："><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"OpenAI-Codex-Use-Cases-案例库深度调研","description":"OpenAI 三步走的内容布局：","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-06-08T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>OpenAI-Codex-Use-Cases-案例库深度调研</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=AI%E5%B7%A5%E5%85%B7">AI工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">OpenAI-Codex-Use-Cases-案例库深度调研</h1> <p class="post-subtitle">OpenAI 三步走的内容布局：</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-06-08 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 2,938 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 15 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#AI工作流</span><span class="post-tag">#03-ai-workflow</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="openai-codex-use-cases-案例库深度调研">OpenAI Codex Use Cases 案例库深度调研<a class="anchor" href="#openai-codex-use-cases-案例库深度调研"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><blockquote><p>起点：<a href="https://x.com/suraj_sharma14/status/2063589795813785841" target="_blank" rel="noopener noreferrer">Suraj Sharma 推文</a>（2026/06/07，13.5 万阅读）
+核心：<a href="https://developers.openai.com/codex/use-cases" target="_blank" rel="noopener noreferrer">https://developers.openai.com/codex/use-cases</a>
+时间：2026/06/08</p></blockquote><section><h2 id="1-战略定位从方法论到执行手册">1. 战略定位：从「方法论」到「执行手册」<a class="anchor" href="#1-战略定位从方法论到执行手册"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>OpenAI 三步走的内容布局：</p><div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.e7lib.css"><script type="module" src="/_astro/ec.xb3ii.js"></script><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">《Harness Engineering》理论文章（2026/02）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">↓ 讲清楚「为什么」</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">《Build iterative repair loops》Cookbook（2026/05）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">↓ 给出「核心模式」的标准实现</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Codex Use Cases 案例库（2026/06）</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">↓ 把「怎么做」打包成 59 个开箱即用的工作流</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="《Harness Engineering》理论文章（2026/02）  ↓ 讲清楚「为什么」《Build iterative repair loops》Cookbook（2026/05）  ↓ 给出「核心模式」的标准实现Codex Use Cases 案例库（2026/06）  ↓ 把「怎么做」打包成 59 个开箱即用的工作流"><div></div></button></div></figure></div><p><strong>潜台词</strong>：OpenAI 不再让用户自己摸索 prompt 工程，而是给出菜单，照抄就行。</p></section><section><h2 id="2-anthropic-vs-openai-的产品策略分野">2. Anthropic vs OpenAI 的产品策略分野<a class="anchor" href="#2-anthropic-vs-openai-的产品策略分野"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">维度</th><th align="left">Anthropic Claude Code</th><th align="left">OpenAI Codex</th></tr></thead><tbody><tr><td align="left"><strong>核心形态</strong></td><td align="left">CLI / IDE 中的对话式 AI</td><td align="left">持久化、可观察、支持 Computer Use 的 agent</td></tr><tr><td align="left"><strong>生态策略</strong></td><td align="left">Skills + Plugins，<strong>社区驱动</strong></td><td align="left">官方 use case 目录，<strong>集中策展</strong></td></tr><tr><td align="left"><strong>新手门槛</strong></td><td align="left">”自己探索 / 看 Skills 市场"</td><td align="left">"查菜单 → 照抄 prompt”</td></tr><tr><td align="left"><strong>典型用户</strong></td><td align="left">工程师 + 高级用户</td><td align="left">开发者 + 知识工作者 + 团队</td></tr><tr><td align="left"><strong>官方背书度</strong></td><td align="left">低（去中心化）</td><td align="left">高（每个案例都有 OpenAI 官方标签）</td></tr></tbody></table><p>两条不同的扩展路径：Anthropic 像 npm，OpenAI 像 Apple App Store。</p></section><section><h2 id="3-案例分类体系5-维度">3. 案例分类体系（5 维度）<a class="anchor" href="#3-案例分类体系5-维度"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">维度</th><th align="left">标签</th></tr></thead><tbody><tr><td align="left"><strong>Category</strong></td><td align="left">Engineering / Evaluation / Front-end / Quality / Sciences</td></tr><tr><td align="left"><strong>Native</strong></td><td align="left">iOS / Mobile / macOS</td></tr><tr><td align="left"><strong>Workflows</strong></td><td align="left">Automation / Data / Integrations / Knowledge Work</td></tr><tr><td align="left"><strong>Team</strong></td><td align="left">Design / Engineering / Finance / Operations / Product / QA / Research / Sales</td></tr><tr><td align="left"><strong>Task type</strong></td><td align="left">Analysis / Code / Design / Testing / Workflow</td></tr></tbody></table></section><section><h2 id="4-7-个主题合集collections">4. 7 个主题合集（Collections）<a class="anchor" href="#4-7-个主题合集collections"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">合集</th><th align="left">定位</th></tr></thead><tbody><tr><td align="left"><strong>Productivity &#x26; Collaboration</strong></td><td align="left">跨 App / 数据 / 团队的协同工作流</td></tr><tr><td align="left"><strong>Web Development</strong></td><td align="left">设计稿与 prompt 直接生成响应式 UI</td></tr><tr><td align="left"><strong>Game Development</strong></td><td align="left">游戏循环 / UI / 玩法的原型快速搭建</td></tr><tr><td align="left"><strong>Native Development</strong></td><td align="left">iOS / macOS 应用开发与调试</td></tr><tr><td align="left"><strong>Production Systems</strong></td><td align="left">真实代码库的导航 / 重构 / 审查</td></tr><tr><td align="left"><strong>Security</strong></td><td align="left">代码评估 / 安全审查 / 漏洞修复</td></tr><tr><td align="left"><strong>Life Sciences</strong></td><td align="left">用 GPT-Rosalind 加速科研与药物发现</td></tr></tbody></table></section><section><h2 id="5-四个关键案例深度拆解">5. 四个关键案例深度拆解<a class="anchor" href="#5-四个关键案例深度拆解"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="51--save-workflows-as-skills最具战略意义">5.1 ⭐⭐⭐ Save workflows as skills（最具战略意义）<a class="anchor" href="#51--save-workflows-as-skills最具战略意义"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>URL</strong>：<code>/codex/use-cases/reusable-codex-skills</code>
+<strong>难度</strong>：Easy · 5 分钟</p><p><strong>核心信号</strong>：<strong>OpenAI 完整复刻了 Anthropic 的 Skills 体系</strong>——证明 skill 化是 agent 工作流的事实标准方向。</p><p><strong>机制</strong>：</p><ul>
+<li>用内置 <code>$skill-creator</code> skill 创建新 skill</li>
+<li>skill 存放位置：<code>~/.codex/skills</code>（用户级，全 repo 可用）或 repo 内（团队共享，提交到 git）</li>
+<li>文件结构（和 Anthropic 几乎一致）：
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">my-skill/</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── SKILL.md         # 必需，指令 + metadata</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── references/      # 可选，长文档</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">├── scripts/         # 可选，可复用脚本</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">└── assets/          # 可选，模板与启动文件</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="my-skill/├── SKILL.md         # 必需，指令 + metadata├── references/      # 可选，长文档├── scripts/         # 可选，可复用脚本└── assets/          # 可选，模板与启动文件"><div></div></button></div></figure></div>
+</li>
+</ul><p><strong>Starter prompt 模板</strong>（直接复用）：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Use $skill-creator to create a Codex skill that [描述目的，如 "fixes failing</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Buildkite checks on a GitHub PR"]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Use these sources when creating the skill:</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">- Working example: [说 "use this thread" 或链接一个 merged PR]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">- Source: [Slack thread / PR review / runbook / docs / ticket URL]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">- Repo: [repo 路径，如果 skill 依赖某个 repo]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">8</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">- Scripts or commands to reuse: [test 命令], [preview 命令], [release 命令]</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">9</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">- Good output: [粘贴期望的最终产物——Slack update / changelog / 评论 / 答案]</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Use $skill-creator to create a Codex skill that [描述目的，如 &#x22;fixes failingBuildkite checks on a GitHub PR&#x22;]Use these sources when creating the skill:- Working example: [说 &#x22;use this thread&#x22; 或链接一个 merged PR]- Source: [Slack thread / PR review / runbook / docs / ticket URL]- Repo: [repo 路径，如果 skill 依赖某个 repo]- Scripts or commands to reuse: [test 命令], [preview 命令], [release 命令]- Good output: [粘贴期望的最终产物——Slack update / changelog / 评论 / 答案]"><div></div></button></div></figure></div><p><strong>官方给的 5 个 skill 灵感</strong>：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">Skill 名</th><th align="left">功能</th></tr></thead><tbody><tr><td align="left"><code>$buildkite-fix-ci</code></td><td align="left">下载失败日志、诊断错误、提出最小代码修复</td></tr><tr><td align="left"><code>$fix-merge-conflicts</code></td><td align="left">检出 PR、对 base 分支更新、解决冲突、返回 push 命令</td></tr><tr><td align="left"><code>$frontend-skill</code></td><td align="left">保持 Codex 贴近 UI 品味、复用现有组件、screenshot QA 循环</td></tr><tr><td align="left"><code>$pr-review-comments</code></td><td align="left">把 review notes 转成简洁的 inline comments</td></tr><tr><td align="left"><code>$web-game-prototyper</code></td><td align="left">范围化首个可玩循环、选资产、调游戏感、截图、浏览器打磨</td></tr></tbody></table><p><strong>对你的启发</strong>：你的 <code>.claude/skills/</code> 体系跟 OpenAI 的 <code>~/.codex/skills</code> 几乎同构，<strong>跨平台迁移成本很低</strong>。同一个 skill 可以适配两边——可以考虑用一份模板生成两个变体。</p></section><section><h3 id="52--turn-figma-designs-into-code前端核心">5.2 ⭐⭐⭐ Turn Figma designs into code（前端核心）<a class="anchor" href="#52--turn-figma-designs-into-code前端核心"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>URL</strong>：<code>/codex/use-cases/figma-designs-to-code</code>
+<strong>难度</strong>：Intermediate · 1 小时</p><p><strong>核心机制</strong>：双 MCP 协作</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">Figma MCP（提取设计上下文）→ Codex 实现 → Playwright MCP（视觉校验循环）</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Figma MCP（提取设计上下文）→ Codex 实现 → Playwright MCP（视觉校验循环）"><div></div></button></div></figure></div><p><strong>Figma MCP 调用规范</strong>（值得抄）：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">1. 先 get_design_context 拿目标 node/frame</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">2. 如果响应被截断，先 get_metadata 映射文件结构，再选择性 get_design_context</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">3. get_screenshot 拿目标变体的截图</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">4. 只有当设计上下文和变体截图都拿到后，才开始下载资产和实现</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">5. 翻译 Figma 输出到 repo 约定：复用组件、替换原始 utility 类、对齐间距/层级/响应式</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">6. 如果 Figma 返回 localhost 图片/SVG，直接用，不要生成占位符</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="1. 先 get_design_context 拿目标 node/frame2. 如果响应被截断，先 get_metadata 映射文件结构，再选择性 get_design_context3. get_screenshot 拿目标变体的截图4. 只有当设计上下文和变体截图都拿到后，才开始下载资产和实现5. 翻译 Figma 输出到 repo 约定：复用组件、替换原始 utility 类、对齐间距/层级/响应式6. 如果 Figma 返回 localhost 图片/SVG，直接用，不要生成占位符"><div></div></button></div></figure></div><p><strong>关键洞察</strong>：</p><blockquote><p>Treat the Figma MCP output（often React + Tailwind）as a structural reference rather than final code style.</p></blockquote><p>Figma 的输出是<strong>结构参考</strong>，不是<strong>最终代码</strong>。要让 Codex 翻译成 repo 自己的工具类、组件包装、color system、typography scale、spacing tokens、routing、state management、data-fetch 模式。</p><p><strong>对 Figma 文件的要求</strong>（强约束）：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">要求</th><th align="left">原因</th></tr></thead><tbody><tr><td align="left">用 variables / design tokens，特别是颜色、字体、间距</td><td align="left">Codex 直接映射到 repo 的 token</td></tr><tr><td align="left">用 components 而非重复的 detached layers</td><td align="left">复用现有组件</td></tr><tr><td align="left">用 auto layout 而非手动定位</td><td align="left">响应式行为可预测</td></tr><tr><td align="left">清晰的 frame / layer 命名</td><td align="left">主屏幕、状态、变体一眼可辨</td></tr><tr><td align="left">保留真实图标和图片</td><td align="left">Codex 不用猜</td></tr></tbody></table><p><strong>对你的启发</strong>：你做前端 + 设计的串联，可以直接把这套 prompt 适配到 Claude Code（Figma MCP 同样支持）。验证循环用 Playwright，符合你已有的工具栈。</p></section><section><h3 id="53--build-iterative-repair-loops-with-codex最具方法论价值">5.3 ⭐⭐⭐⭐ Build iterative repair loops with Codex（最具方法论价值）<a class="anchor" href="#53--build-iterative-repair-loops-with-codex最具方法论价值"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>URL</strong>：<code>/cookbook/examples/codex/build_iterative_repair_loops_with_codex</code>
+<strong>作者</strong>：Shreekant Agrawal · 2026/05/11</p><p><strong>核心定义</strong>：</p><blockquote><p><strong>Closed-loop agent workflows</strong>：agent 产生输出 → 验证 → 用反馈改进下一遍。</p></blockquote><p><strong>三阶段架构</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">┌─────────┐    ┌─────────┐    ┌─────────┐</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│ Review  │ →  │ Repair  │ →  │Validate │</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│ 结构化  │    │ 应用聚焦│    │ 跑相关  │</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">│ findings│    │ 编辑    │    │ 检查    │</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">└─────────┘    └─────────┘    └────┬────┘</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">6</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">     </span></span><span style="--0:#abb2bf;--1:#383a42">↑                              │</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">7</div></div><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">     </span></span><span style="--0:#abb2bf;--1:#383a42">└──────  反馈作为下一轮输入  ───┘</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="┌─────────┐    ┌─────────┐    ┌─────────┐│ Review  │ →  │ Repair  │ →  │Validate ││ 结构化  │    │ 应用聚焦│    │ 跑相关  ││ findings│    │ 编辑    │    │ 检查    │└─────────┘    └─────────┘    └────┬────┘     ↑                              │     └──────  反馈作为下一轮输入  ───┘"><div></div></button></div></figure></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">阶段</th><th align="left">职责</th><th align="left">输出</th></tr></thead><tbody><tr><td align="left"><strong>Review</strong></td><td align="left">检查当前 artifact，返回结构化 findings，<strong>不编辑文件</strong></td><td align="left"><code>findings[]</code></td></tr><tr><td align="left"><strong>Repair</strong></td><td align="left">基于 findings + 最新 validation 反馈，对副本 artifact 应用聚焦编辑</td><td align="left"><code>change summary</code> + 修改后路径</td></tr><tr><td align="left"><strong>Validate</strong></td><td align="left">跑相关检查，报告还需要修什么</td><td align="left">剩余 delta</td></tr></tbody></table><p><strong>关键设计</strong>：</p><ol>
+<li><strong>业务规则前置</strong>：在让 Codex review 之前，给它一份 contract（business_rules JSON），定义”好”的标准</li>
+<li><strong>结构化输出</strong>：每个阶段输出 JSON schema 数据，下一阶段消费</li>
+<li><strong>Codex CLI Headless 模式</strong>：从 Python cell 调用，不依赖聊天 UI</li>
+</ol><p><strong>Codex CLI 调用</strong>（值得记的 API）：</p><div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#61AFEF;--1:#3360C1">npm</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">install</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">-g</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">@openai/codex@0.130.0</span><span style="--0:#ABB2BF;--1:#383A42">  </span><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 固定版本保证可复现</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="npm install -g @openai/codex@0.130.0  # 固定版本保证可复现"><div></div></button></div></figure></div><p><strong>Validation 范例</strong>：</p><blockquote><p>本例 validation = 跑 notebook 端到端。在其他领域，validation 可以是单元测试、policy check、schema validator、模拟器、人工审批。<strong>重点是失败变成结构化反馈，而非死路</strong>。</p></blockquote><p><strong>对应 Ralph Wiggum 循环</strong>（OpenAI 内部用语）：</p><blockquote><p>Codex reviews the current state, applies focused changes, runs validation, and repeats when the feedback shows remaining issues.</p></blockquote><p>这正是 OpenAI 自己内部 100 万行代码生产中用的核心模式（见《Harness Engineering》笔记）。</p><p><strong>对你的启发</strong>：</p><ul>
+<li>你的 <code>auto-review</code> 项目可以借鉴这个三阶段架构</li>
+<li>你的 <code>superpowers:systematic-debugging</code> skill 已经是手动版的 review-repair-validate，可以再加一层自动循环</li>
+<li>适合在你的 <code>claudecode</code> workspace 里做一个 <code>iterative-repair</code> skill 模板</li>
+</ul></section><section><h3 id="54--review-github-pull-requests最轻量">5.4 ⭐⭐ Review GitHub pull requests（最轻量）<a class="anchor" href="#54--review-github-pull-requests最轻量"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>URL</strong>：<code>/codex/use-cases/github-code-reviews</code>
+<strong>难度</strong>：Easy · 5 秒</p><p><strong>最简模式</strong>：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">1. 在 GitHub org/repo 启用 Codex code review</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">2. 自动 review 每个 PR，或评论 @codex review 手动触发</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">3. 发现问题后 @codex fix it，触发云任务自动修复并更新 PR</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="1. 在 GitHub org/repo 启用 Codex code review2. 自动 review 每个 PR，或评论 @codex review 手动触发3. 发现问题后 @codex fix it，触发云任务自动修复并更新 PR"><div></div></button></div></figure></div><p><strong>自定义 review 规则</strong>（在 <code>AGENTS.md</code> 写）：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="markdown"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#E6888F;--1:#AF4238">## Review guidelines</span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">2</div></div><div class="code">
+</div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">3</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Flag typos and grammar issues as P0 issues.</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">4</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Flag potential missing documentation as P1 issues.</span></span></div></div><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">5</div></div><div class="code"><span style="--1:#383A42"><span style="--0:#E5C07B">-</span><span style="--0:#ABB2BF"> Flag missing tests as P1 issues.</span></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="## Review guidelines- Flag typos and grammar issues as P0 issues.- Flag potential missing documentation as P1 issues.- Flag missing tests as P1 issues."><div></div></button></div></figure></div><p><strong>关键机制</strong>：</p><blockquote><p>Codex applies guidance from the closest AGENTS.md to each changed file.
+不同 package 可以放更具体的 AGENTS.md，按文件路径就近匹配。</p></blockquote><p><strong>Starter prompt</strong>（一句话）：</p><div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="gutter"><div class="ln" aria-hidden="true">1</div></div><div class="code"><span style="--0:#abb2bf;--1:#383a42">@codex review for security regressions, missing tests, and risky behavior changes.</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="@codex review for security regressions, missing tests, and risky behavior changes."><div></div></button></div></figure></div><p><strong>对你的启发</strong>：</p><ul>
+<li>你的 auto-review 项目目标重合度 100%</li>
+<li>AGENTS.md 的”就近规则”机制比 Claude Code 当前的全局 CLAUDE.md 更精细</li>
+<li>可以考虑给你的项目按目录加分层规则文件</li>
+</ul></section></section><section><h2 id="6-完整-59-案例分类索引可作-reference">6. 完整 59 案例分类索引（可作 reference）<a class="anchor" href="#6-完整-59-案例分类索引可作-reference"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="-engineering-工程类">🎯 Engineering 工程类<a class="anchor" href="#-engineering-工程类"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>codebase-onboarding</strong>：理解大型代码库（请求流追踪、模块映射）</li>
+<li><strong>refactor-your-codebase</strong>：重构、移除 dead code、现代化 legacy 模式（不改行为）</li>
+<li><strong>code-migrations</strong>：受控 checkpoint 中迁移 legacy stack</li>
+<li><strong>update-documentation</strong>：基于代码自动同步文档</li>
+<li><strong>api-integration-migrations</strong>：升级到最新 OpenAI API 模型</li>
+<li><strong>iterate-on-difficult-problems</strong>：评分驱动的改进循环</li>
+<li><strong>reusable-codex-skills</strong> ⭐：把工作流沉淀为 skill</li>
+</ul></section><section><h3 id="-front-end-前端">🎯 Front-end 前端<a class="anchor" href="#-front-end-前端"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>frontend-designs</strong>：截图/视觉参考 → 响应式 UI + 视觉校验</li>
+<li><strong>figma-designs-to-code</strong> ⭐：Figma → 代码 + Playwright 视觉校验</li>
+<li><strong>make-granular-ui-changes</strong>：Codex-Spark 用于已有 app 的细粒度 UI 迭代</li>
+<li><strong>idea-to-proof-of-concept</strong>：用 ImageGen 探索概念 + 实现首版</li>
+<li><strong>deploy-app-or-website</strong>：构建 / 更新 web app + 部署预览 + 拿 live URL</li>
+</ul></section><section><h3 id="-integrations-集成">🎯 Integrations 集成<a class="anchor" href="#-integrations-集成"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>manage-your-inbox</strong>：邮件筛选 + 回复草稿</li>
+<li><strong>slack-coding-tasks</strong>：Slack thread → 范围化云任务</li>
+<li><strong>complete-tasks-from-messages</strong>：iMessage thread → 跨 app 执行任务</li>
+<li><strong>chatgpt-apps</strong>：把你的 use case 转成聚焦的 ChatGPT app</li>
+<li><strong>github-code-reviews</strong> ⭐：PR 自动 review</li>
+</ul></section><section><h3 id="-workflow-工作流">🎯 Workflow 工作流<a class="anchor" href="#-workflow-工作流"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>follow-goals</strong>：长跑任务的耐久目标</li>
+<li><strong>proactive-teammate</strong>：给 Codex 持久化工作上下文，让它能察觉变化</li>
+<li><strong>feedback-synthesis</strong>：多源反馈合成可审查 artifact</li>
+<li><strong>use-your-computer-with-codex</strong>：Mac 上 Computer Use</li>
+</ul></section><section><h3 id="-data-数据">🎯 Data 数据<a class="anchor" href="#-data-数据"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>analyze-data-export</strong>：CSV / 数据文件夹的自然语言查询</li>
+<li><strong>clean-messy-data</strong>：处理表格数据不污染原文件</li>
+<li><strong>datasets-and-reports</strong>：脏数据 → 清晰分析与可视化</li>
+<li><strong>cash-flow-forecast</strong>：现金流低点预测工作簿</li>
+<li><strong>dcf-model</strong>：DCF 估值工作簿</li>
+<li><strong>budget-vs-actuals-review</strong>：预算 vs 实际差异工作簿</li>
+</ul></section><section><h3 id="-quality-质量">🎯 Quality 质量<a class="anchor" href="#-quality-质量"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>automation-bug-triage</strong>：日常 bug 报告 → 优先级列表 → 自动 sweep</li>
+<li><strong>qa-your-app-with-computer-use</strong>：Computer Use 跑真实产品流程并记录问题</li>
+<li><strong>ai-app-evals</strong>：用 Codex 把预期行为转成 Promptfoo eval 套件</li>
+</ul></section><section><h3 id="-security-安全">🎯 Security 安全<a class="anchor" href="#-security-安全"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>scan-code-changes-for-security</strong>：PR 或本地 diff 的安全 regression 审查</li>
+<li><strong>deep-security-scan</strong>：授权 repo 的深度漏洞搜索</li>
+<li><strong>remediate-vulnerability-backlog</strong>：findings → 最小修复 + regression evidence</li>
+</ul></section><section><h3 id="-knowledge-work-知识工作">🎯 Knowledge Work 知识工作<a class="anchor" href="#-knowledge-work-知识工作"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>learn-a-new-concept</strong>：密集材料 → 学习报告</li>
+<li><strong>draft-prds-from-sources</strong>：从 Linear/Slack/源文档/会议记录生成 PRD</li>
+<li><strong>user-stories-to-ui-mocks</strong>：产品反馈 → 团队可反应的 mockups</li>
+<li><strong>new-hire-onboarding</strong>：onboarding 跟踪 + 团队总结 + 欢迎空间草稿</li>
+<li><strong>generate-slide-decks</strong>：操控 pptx + 图像生成</li>
+</ul></section><section><h3 id="-native-原生">🎯 Native 原生<a class="anchor" href="#-native-原生"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>native-ios-apps</strong> / <strong>native-macos-apps</strong>：SwiftUI scaffold + 调试</li>
+<li><strong>ios-app-intents</strong>：让 app actions 暴露给 Shortcuts/Siri/Spotlight</li>
+<li><strong>ios-liquid-glass</strong>：SwiftUI app 迁移到 iOS 26 Liquid Glass</li>
+<li><strong>ios-simulator-bug-debugging</strong>：用 XcodeBuildMCP 驱动 iOS Simulator 调试</li>
+<li><strong>ios-swiftui-view-refactor</strong>：拆分超大 SwiftUI 屏幕</li>
+<li><strong>macos-sidebar-detail-inspector</strong>：构建 Mac sidebar/detail/inspector shell</li>
+<li><strong>macos-telemetry-logs</strong>：用 Logger 仪表化一个 Mac feature</li>
+</ul></section><section><h3 id="-cross-platform-跨平台">🎯 Cross-platform 跨平台<a class="anchor" href="#-cross-platform-跨平台"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>react-native-expo-apps</strong>：Expo plugin 从 idea 到工作 app</li>
+<li><strong>browser-games</strong>：定义游戏方案 + 浏览器内构建测试</li>
+</ul></section><section><h3 id="-life-sciences-生命科学gpt-rosalind">🎯 Life Sciences 生命科学（GPT-Rosalind）<a class="anchor" href="#-life-sciences-生命科学gpt-rosalind"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ul>
+<li><strong>discover-protein-folding-architectures</strong>：蛋白质折叠假设 → 基准实验循环</li>
+<li><strong>scrna-seq-post-count-qc</strong>：单细胞 QC / 注释 / UMAP</li>
+<li><strong>target-prioritization</strong>：跨证据通道排序药物靶点</li>
+<li><strong>bulk-rna-seq-fastq-qc</strong>：差异表达分析前的 RNA-seq 验证</li>
+</ul></section></section><section><h2 id="7-对个人工作流的实操建议">7. 对个人工作流的实操建议<a class="anchor" href="#7-对个人工作流的实操建议"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="-必做这周内">🔥 必做（这周内）<a class="anchor" href="#-必做这周内"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol>
+<li>
+<p><strong>复刻 <code>$skill-creator</code> 思路到 Claude Code</strong></p>
+<ul>
+<li>写一个 <code>skill-from-thread</code> skill，把当前 thread + 关联资料一键转 skill</li>
+<li>模板可直接抄 OpenAI 给的 starter prompt 结构</li>
+</ul>
+</li>
+<li>
+<p><strong>建立 Figma → Code 标准 prompt</strong></p>
+<ul>
+<li>抄 5.2 节的 Figma MCP 调用流程</li>
+<li>加上你自己 Vue 项目的 design system 约束</li>
+</ul>
+</li>
+<li>
+<p><strong>auto-review 项目对齐 GitHub Codex review 机制</strong></p>
+<ul>
+<li>评估是否引入 AGENTS.md 分层规则</li>
+<li>对比你当前规则文件的精细度</li>
+</ul>
+</li>
+</ol></section><section><h3 id="-该做这月内">🎯 该做（这月内）<a class="anchor" href="#-该做这月内"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol start="4">
+<li>
+<p><strong>iterative repair loop 落地为 skill</strong></p>
+<ul>
+<li>Review → Repair → Validate 三阶段</li>
+<li>用 JSON schema 强约束阶段间数据交换</li>
+<li>适用场景：单测修复、文档维护、依赖升级</li>
+</ul>
+</li>
+<li>
+<p><strong>观察 Codex skill 体系演化</strong></p>
+<ul>
+<li>跟踪 <code>~/.codex/skills</code> 的最佳实践</li>
+<li>如果 OpenAI 推出 skill marketplace，第一时间评估</li>
+</ul>
+</li>
+</ol></section><section><h3 id="-战略层">💡 战略层<a class="anchor" href="#-战略层"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><ol start="6">
+<li><strong>多 agent 平台并存策略</strong>
+<ul>
+<li>Claude Code 仍是日常主力（编辑器集成更好）</li>
+<li>Codex 作为 cookbook 灵感来源</li>
+<li>关键决策：是否要让自己的 skill 双平台兼容？建议<strong>先单平台精，再考虑迁移</strong></li>
+</ul>
+</li>
+</ol></section></section><section><h2 id="8-关键发现总结">8. 关键发现总结<a class="anchor" href="#8-关键发现总结"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th align="left">发现</th><th align="left">意义</th></tr></thead><tbody><tr><td align="left"><strong>Skill 化已成事实标准</strong></td><td align="left">Anthropic 和 OpenAI 都用同构的 SKILL.md + references/scripts/assets 结构</td></tr><tr><td align="left"><strong>AGENTS.md 分层规则</strong></td><td align="left">比单 CLAUDE.md 更精细，按文件路径就近匹配</td></tr><tr><td align="left"><strong>Closed-loop 是 agent 工作流核心模式</strong></td><td align="left">Review-Repair-Validate 三阶段适用范围远超代码场景</td></tr><tr><td align="left"><strong>MCP 是事实集成层</strong></td><td align="left">Figma MCP + Playwright MCP 组合已是 Figma-to-code 的标准方案</td></tr><tr><td align="left"><strong>Cookbook + Use Cases 双产品线</strong></td><td align="left">OpenAI 用「理论 + 模式 + 案例」三层内容垄断方法论话语权</td></tr></tbody></table></section><section><h2 id="9-关联资料">9. 关联资料<a class="anchor" href="#9-关联资料"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><ul>
+<li>同目录：OpenAI-Harness-Engineering-智能体优先方法论调研（理论基础）</li>
+<li>同目录：Superpowers-给-Agent-加上跳不过去的工作流（个人工作流约束）</li>
+<li>同目录：开发流程skill化（Skill 化方法论）</li>
+<li>原始资料：<a href="https://developers.openai.com/codex/use-cases" target="_blank" rel="noopener noreferrer">https://developers.openai.com/codex/use-cases</a></li>
+</ul></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/其他/项目调研/07-项目调研/open-design-开源版-claude-design-完整调研/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">Open-Design-开源版-Claude-Design-完整调研</span> </a> <a class="post-nav-link post-nav-next " href="/posts/ai工具/ai工作流/03-ai-workflow/openai-harness-engineering-智能体优先方法论调研/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">OpenAI-Harness-Engineering-智能体优先方法论调研</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

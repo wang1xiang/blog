@@ -1,0 +1,1383 @@
+<!DOCTYPE html><html lang="zh-CN" class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode="banner" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <head><meta charset="UTF-8"><title>技能清单-2026-04-21 - 翔子的博客</title><meta name="description" content="本文档整理了当前所有可用的 Claude Code 技能，按功能分类以便快速查找和使用。"><meta name="keywords" content="翔子, 前端, 博客, 技术博客, Astro"><meta name="author" content="翔子"><meta property="og:site_name" content="翔子的博客"><meta property="og:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/skill%E5%BC%80%E5%8F%91/04-skill-dev/%E6%8A%80%E8%83%BD%E6%B8%85%E5%8D%95-2026-04-21/"><meta property="og:title" content="技能清单-2026-04-21 - 翔子的博客"><meta property="og:description" content="本文档整理了当前所有可用的 Claude Code 技能，按功能分类以便快速查找和使用。"><meta property="og:type" content="website"><meta name="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://wangxiang.website/posts/ai%E5%B7%A5%E5%85%B7/skill%E5%BC%80%E5%8F%91/04-skill-dev/%E6%8A%80%E8%83%BD%E6%B8%85%E5%8D%95-2026-04-21/"><meta name="twitter:title" content="技能清单-2026-04-21 - 翔子的博客"><meta name="twitter:description" content="本文档整理了当前所有可用的 Claude Code 技能，按功能分类以便快速查找和使用。"><meta name="viewport" content="width=device-width"><meta name="generator" content="Astro v6.3.5"><link rel="icon" href="/favicon/favicon.ico"><!-- 为特定域名的图片添加 referrerpolicy 以解决 403 问题 --><!-- Set the theme before the page is rendered to avoid a flash --><script>(function(){const BANNER_HEIGHT_EXTEND = 30;
+const PAGE_WIDTH = 100;
+const configHue = 270;
+const defaultMode = "system";
+const defaultWallpaperMode = "banner";
+const isWallpaperSwitchable = true;
+const darkTheme = "one-dark-pro";
+const lightTheme = "one-light";
+const baseUrl = "/";
+const cardTransparentOpacity = 0.5;
+
+      // 主题初始化 - 与setting-utils.ts保持一致
+      const LIGHT_MODE = "light";
+      const DARK_MODE = "dark";
+      const SYSTEM_MODE = "system";
+
+      // 获取存储的主题，如果没有则使用默认值
+      const theme = localStorage.getItem("theme") || defaultMode;
+
+      // 获取系统主题
+      function getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? DARK_MODE
+          : LIGHT_MODE;
+      }
+
+      // 解析主题（如果是system模式，则获取系统主题）
+      function resolveTheme(themeValue) {
+        if (themeValue === SYSTEM_MODE) {
+          return getSystemTheme();
+        }
+        return themeValue;
+      }
+
+      const resolvedTheme = resolveTheme(theme);
+      const isDark = resolvedTheme === DARK_MODE;
+
+      // 应用主题
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Set the theme for Expressive Code
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? darkTheme : lightTheme
+      );
+
+      // Load the hue from local storage
+      const hue = localStorage.getItem("hue") || configHue;
+      document.documentElement.style.setProperty("--hue", hue);
+
+      // 设置卡片透明度（全屏透明模式下使用），优先使用用户自定义值
+      const storedCardOpacity = localStorage.getItem("overlayCardOpacity");
+      const parsedCardOpacity = storedCardOpacity === null ? NaN : Number.parseFloat(storedCardOpacity);
+      const resolvedCardOpacity = Number.isFinite(parsedCardOpacity)
+        ? Math.min(1, Math.max(0, parsedCardOpacity))
+        : cardTransparentOpacity;
+      document.documentElement.style.setProperty("--card-transparent-opacity", String(resolvedCardOpacity));
+
+      // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+      // 使用更准确的窗口高度计算
+      function calculateBannerHeightExtend() {
+        let offset = Math.floor(
+          window.innerHeight * (BANNER_HEIGHT_EXTEND / 100)
+        );
+        offset = offset - (offset % 4);
+        document.documentElement.style.setProperty(
+          "--banner-height-extend",
+          `${offset}px`
+        );
+      }
+
+      // 立即设置初始值
+      calculateBannerHeightExtend();
+
+      // 在下一帧重新计算精确值（仅在值变化时更新，避免闪烁）
+      requestAnimationFrame(() => {
+        const oldValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        calculateBannerHeightExtend();
+        const newValue = parseInt(
+          document.documentElement.style.getPropertyValue(
+            "--banner-height-extend"
+          )
+        );
+        // 如果值变化了，再更新一次确保准确
+        if (Math.abs(oldValue - newValue) > 4) {
+          // 如果有明显变化，延迟一帧再更新，避免闪烁
+          requestAnimationFrame(calculateBannerHeightExtend);
+        }
+      });
+
+      // 初始化壁纸模式 - 在页面渲染前应用
+      const WALLPAPER_BANNER = "banner";
+      const WALLPAPER_FULLSCREEN = "fullscreen";
+      const WALLPAPER_OVERLAY = "overlay";
+      const WALLPAPER_NONE = "none";
+      const wallpaperMode = isWallpaperSwitchable
+        ? localStorage.getItem("wallpaperMode") || defaultWallpaperMode
+        : defaultWallpaperMode;
+
+      // 设置data-wallpaper-mode属性
+      document.documentElement.setAttribute(
+        "data-wallpaper-mode",
+        wallpaperMode
+      );
+
+      // 立即执行函数来处理DOM
+      (function applyWallpaperMode() {
+        // 使用 requestAnimationFrame 确保在下一帧之前执行
+        requestAnimationFrame(function () {
+          // 根据模式隐藏显示对应元素
+          if (
+            wallpaperMode === WALLPAPER_NONE ||
+            wallpaperMode === WALLPAPER_OVERLAY ||
+            wallpaperMode === WALLPAPER_FULLSCREEN
+          ) {
+            // 隐藏横幅
+            if (document.body) {
+              document.body.classList.remove("enable-banner");
+              document.body.classList.add("no-banner-layout");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.add("enable-banner");
+              document.body.classList.remove("no-banner-layout");
+            }
+          }
+
+          // 全屏透明模式
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            if (document.body) {
+              document.body.classList.add("wallpaper-transparent");
+            }
+          } else {
+            if (document.body) {
+              document.body.classList.remove("wallpaper-transparent");
+            }
+          }
+
+          // 处理wallpaper-wrapper的显示
+          const wallpaperWrapper = document.getElementById("wallpaper-wrapper");
+
+          // 检查当前是否为首页
+          const isHomePage =
+            window.location.pathname === baseUrl ||
+            (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+            window.location.pathname === "/";
+
+          if (wallpaperMode === WALLPAPER_OVERLAY) {
+            // 全屏壁纸透明模式：切换为 overlay 显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.add("wallpaper-overlay");
+              wallpaperWrapper.style.display = "block";
+              wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+              wallpaperWrapper.classList.add("opacity-100");
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_FULLSCREEN) {
+            // 全屏壁纸模式：切换为全屏壁纸显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.add("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏壁纸（与横幅模式一致）
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("hidden", "opacity-0", "mobile-hide-banner");
+                wallpaperWrapper.classList.add("opacity-100");
+              }
+              wallpaperWrapper.style.top = "";
+            }
+          } else if (wallpaperMode === WALLPAPER_NONE) {
+            // 纯色背景：隐藏壁纸
+            if (wallpaperWrapper) {
+              wallpaperWrapper.style.display = "none";
+              wallpaperWrapper.classList.add("hidden", "opacity-0");
+            }
+          } else {
+            // banner模式：以 banner 方式显示
+            if (wallpaperWrapper) {
+              wallpaperWrapper.classList.remove("wallpaper-overlay");
+              wallpaperWrapper.classList.remove("wallpaper-fullscreen");
+              const isMobile = window.innerWidth < 1024;
+              // 移动端非首页时隐藏banner（初始状态直接隐藏，不需要动画）
+              // 桌面端始终显示banner
+              if (isMobile && !isHomePage) {
+                wallpaperWrapper.style.display = "none";
+                wallpaperWrapper.classList.add("mobile-hide-banner");
+              } else {
+                wallpaperWrapper.style.display = "block";
+                wallpaperWrapper.classList.remove("mobile-hide-banner");
+              }
+            }
+          }
+
+          // 处理主内容区域位置
+          const mainContentWrapper = document.querySelector(
+            ".w-full.z-30.pointer-events-none"
+          );
+          if (mainContentWrapper) {
+            // 初始化期间禁用过渡动画，防止内容位置跳动
+            mainContentWrapper.style.setProperty("transition", "none", "important");
+            const isMobile = window.innerWidth < 1024;
+            // 只在移动端非首页时调整主内容位置
+            if (isMobile && !isHomePage) {
+              mainContentWrapper.classList.add("mobile-main-no-banner");
+            } else {
+              mainContentWrapper.classList.remove("mobile-main-no-banner");
+            }
+            // 全屏壁纸模式：用 relative 定位让内容紧跟壁纸（移动端非首页除外，壁纸已隐藏）
+            const isMobileNonHome = window.innerWidth < 1024 && !isHomePage;
+            if (wallpaperMode === WALLPAPER_FULLSCREEN && !isMobileNonHome) {
+              mainContentWrapper.style.position = "relative";
+              mainContentWrapper.style.top = "0";
+              mainContentWrapper.style.zIndex = "30";
+              mainContentWrapper.style.setProperty("margin-top", "1rem", "important");
+            } else if (isMobileNonHome) {
+              mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            } else if (wallpaperMode === WALLPAPER_BANNER && !isHomePage) {
+              // 桌面端横幅模式非首页：与首页相同定位（保留grid transform）
+              mainContentWrapper.style.setProperty("top", "calc(var(--banner-height) - 3rem)", "important");
+              mainContentWrapper.style.position = "";
+              mainContentWrapper.style.zIndex = "";
+              mainContentWrapper.style.setProperty("margin-top", "0", "important");
+            }
+            // 定位完成后显示主内容（初始CSS规则会隐藏，防止壁纸初始化前闪烁）
+            mainContentWrapper.style.visibility = "visible";
+            // 延迟恢复过渡动画，确保位置已生效
+            requestAnimationFrame(() => {
+              mainContentWrapper.style.removeProperty("transition");
+            });
+          }
+
+          // 处理banner homeText元素
+          const bannerTextOverlay = document.querySelector(
+            ".banner-home-text-overlay"
+          );
+          if (bannerTextOverlay) {
+            const isHomePage =
+              window.location.pathname === baseUrl || 
+              (baseUrl !== '/' && window.location.pathname === baseUrl.replace(/\/$/, '')) ||
+              window.location.pathname === "/";
+            if ((wallpaperMode === WALLPAPER_BANNER || wallpaperMode === WALLPAPER_FULLSCREEN) && isHomePage) {
+              bannerTextOverlay.classList.remove("hidden");
+            } else {
+              bannerTextOverlay.classList.add("hidden");
+            }
+          }
+        });
+      })();
+
+      // 初始化水波纹动画状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyWavesEnabled() {
+        const wavesEnabled = localStorage.getItem("wavesEnabled");
+        if (wavesEnabled !== null) {
+          document.documentElement.setAttribute("data-waves-enabled", wavesEnabled);
+        }
+      })();
+
+      // 初始化渐变过渡状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyGradientEnabled() {
+        const gradientEnabled = localStorage.getItem("gradientEnabled");
+        if (gradientEnabled !== null) {
+          document.documentElement.setAttribute("data-gradient-enabled", gradientEnabled);
+        }
+      })();
+
+      // 初始化横幅标题显示状态 - 在 html 元素上设置属性，CSS 会立即生效
+      (function applyBannerTitleEnabled() {
+        const bannerTitleEnabled = localStorage.getItem("bannerTitleEnabled");
+        if (bannerTitleEnabled !== null) {
+          document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
+        }
+      })();
+    })();</script><!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"技能清单-2026-04-21","description":"本文档整理了当前所有可用的 Claude Code 技能，按功能分类以便快速查找和使用。","author":{"@type":"Person","name":"翔子","url":"https://wangxiang.website/"},"datePublished":"2026-05-20T00:00:00.000Z","inLanguage":"zh-CN"}</script><link rel="alternate" type="application/rss+xml" title="翔子" href="https://wangxiang.website/rss.xml"><!-- Font Manager --><!-- 字体样式表链接 --><!-- 字体预加载链接 --><!-- 全局字体样式 --><script type="module">document.fonts&&typeof document.fonts.ready<"u"&&document.fonts.ready.then(()=>{console.log("All fonts have been loaded"),document.dispatchEvent(new CustomEvent("fontsLoaded"))}).catch(e=>{console.warn("Font loading failed:",e)});if(typeof PerformanceObserver<"u"){const e=new PerformanceObserver(n=>{n.getEntries().forEach(o=>{o.entryType})});try{e.observe({entryTypes:["resource"]})}catch{}}</script><link rel="stylesheet" href="/_astro/Markdown.CLMvY_Mt.css">
+<link rel="stylesheet" href="/_astro/_..DbX94k4-.css">
+<style>.home-page .home-theme-toggle{position:relative}.home-page .home-theme-toggle .theme-icon-sun,.home-page .home-theme-toggle .theme-icon-moon{width:16px;height:16px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity .15s ease}.home-page .home-theme-toggle .theme-icon-moon,.home-page .home-theme-toggle[data-theme=dark] .theme-icon-sun{opacity:0}.home-page .home-theme-toggle[data-theme=dark] .theme-icon-moon{opacity:1}.sr-only[data-astro-cid-2m2di2aw]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<link rel="stylesheet" href="/_astro/Layout.s029fZmO.css"><script type="module" src="/_astro/page.CiPokonQ.js"></script></head> <body class="min-h-screen enable-banner sticky-navbar enable-card-border" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"> <div id="progress-bar" data-astro-cid-sckkx6r4 style="--configHue: 270;--page-width: 100rem;--banner-height-home: 65vh;--banner-height: 35vh;"></div> <!-- 页面顶部渐变高光效果 - 只在full和semifull模式下显示 -->  <!-- 全局配置载体 --><div id="config-carrier" data-hue="270" data-wallpaper-mode="banner"></div> <script data-swup-ignore-script>(function(){const managerConfigStr = "{\"mode\":\"meting\",\"meting\":{\"api\":\"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r\",\"server\":\"netease\",\"type\":\"playlist\",\"id\":\"10046455237\",\"auth\":\"\",\"fallbackApis\":[\"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id\",\"https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id\"]},\"localPlaylist\":[],\"volume\":0.7,\"playMode\":\"list\",\"showLyrics\":true,\"i18n\":{\"noPlaying\":\"暂未播放\",\"lyrics\":\"歌词\",\"volume\":\"音量\",\"playMode\":\"切换播放模式\",\"prev\":\"上一首\",\"next\":\"下一首\",\"playlist\":\"列表\",\"noLyrics\":\"暂无歌词\",\"loadingLyrics\":\"正在加载歌词...\",\"failedLyrics\":\"歌词加载失败\",\"noSongs\":\"暂无歌曲\",\"error\":\"播放器错误\",\"play\":\"播放\",\"pause\":\"暂停\",\"progress\":\"播放进度\",\"noCover\":\"暂无封面\"}}";
+
+(function () {
+    // Singleton guard – only create once
+    if (window.__fireflyMusic) return;
+
+    var config = JSON.parse(managerConfigStr);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function parseLRC(lrc) {
+        if (!lrc) return [];
+        var lines = lrc.split('\n');
+        var result = [];
+        var timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/g;
+        lines.forEach(function (line) {
+            var matches = Array.from(line.matchAll(timeReg));
+            if (matches.length > 0) {
+                var text = line.replace(timeReg, '').trim();
+                if (text) {
+                    matches.forEach(function (match) {
+                        var m = parseInt(match[1]);
+                        var s = parseInt(match[2]);
+                        var ms = parseInt(match[3]);
+                        var time = m * 60 + s + ms / (match[3].length === 3 ? 1000 : 100);
+                        result.push({ time: time, text: text });
+                    });
+                }
+            }
+        });
+        return result.sort(function (a, b) { return a.time - b.time; });
+    }
+
+    // ── Audio element (persistent, attached to body) ────────
+    var audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.style.display = 'none';
+    document.body.appendChild(audio);
+
+    // ── State ────────────────────────────────────────────────
+    var state = {
+        playlist: [],
+        currentIndex: 0,
+        isPlaying: false,
+        playMode: 0, // 0: list, 1: one, 2: random
+        volume: localStorage.getItem('music-player-volume') !== null
+            ? parseFloat(localStorage.getItem('music-player-volume'))
+            : (config.volume || 0.7),
+        isMuted: false,
+        lyrics: [],
+        currentLrcIndex: -1,
+        initialized: false,
+        initializing: false,
+        error: null
+    };
+
+    // Map config playMode string to number
+    if (config.playMode === 'random') state.playMode = 2;
+    else if (config.playMode === 'one') state.playMode = 1;
+    else state.playMode = 0;
+
+    // ── Event helpers ────────────────────────────────────────
+    function emit(name, detail) {
+        window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
+    // ── Meting fetch ─────────────────────────────────────────
+    async function fetchMetingData() {
+        if (!config.meting) return;
+        var m = config.meting;
+        var apis = [m.api].concat(m.fallbackApis || []);
+
+        for (var i = 0; i < apis.length; i++) {
+            var baseApi = apis[i];
+            if (!baseApi) continue;
+            try {
+                var fetchUrl = baseApi
+                    .replace(':server', m.server)
+                    .replace(':type', m.type)
+                    .replace(':id', m.id)
+                    .replace(':r', Math.random());
+                if (m.auth) fetchUrl += '&auth=' + m.auth;
+
+                var res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                var data = await res.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    state.playlist = data.map(function (item) {
+                        return {
+                            name: item.title || item.name || 'Unknown',
+                            artist: item.author || item.artist || 'Unknown',
+                            url: item.url,
+                            pic: item.pic || item.cover || '',
+                            lrc: item.lrc
+                        };
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn('Meting API failed for ' + baseApi, e);
+            }
+        }
+        throw new Error('All Meting APIs failed');
+    }
+
+    // ── Lyrics ───────────────────────────────────────────────
+    function loadLyrics(track) {
+        state.lyrics = [];
+        state.currentLrcIndex = -1;
+
+        if (!track.lrc) {
+            emit('fm:lyrics', { lyrics: [], status: 'none' });
+            return;
+        }
+
+        var isLrcUrl = /^(https?:)?\/\//.test(track.lrc)
+            || track.lrc.startsWith('/')
+            || /\.(lrc|txt)(\?|#|$)/i.test(track.lrc);
+
+        if (isLrcUrl) {
+            emit('fm:lyrics', { lyrics: [], status: 'loading' });
+            fetch(track.lrc)
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    state.lyrics = parseLRC(text);
+                    emit('fm:lyrics', { lyrics: state.lyrics, status: 'loaded' });
+                })
+                .catch(function () {
+                    state.lyrics = [];
+                    emit('fm:lyrics', { lyrics: [], status: 'failed' });
+                });
+        } else {
+            state.lyrics = parseLRC(track.lrc);
+            emit('fm:lyrics', { lyrics: state.lyrics, status: state.lyrics.length > 0 ? 'loaded' : 'none' });
+        }
+    }
+
+    // ── Track loading ────────────────────────────────────────
+    function loadTrack(index, autoPlay) {
+        if (index < 0 || index >= state.playlist.length) return;
+        state.currentIndex = index;
+        var track = state.playlist[index];
+
+        audio.src = track.url;
+
+        loadLyrics(track);
+
+        emit('fm:track', { index: index, track: track, autoPlay: !!autoPlay });
+
+        if (autoPlay) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            }).catch(function (e) {
+                console.warn('Autoplay blocked:', e);
+            });
+        } else {
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    // ── Playback controls ────────────────────────────────────
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(function () {
+                state.isPlaying = true;
+                emit('fm:play-state', { isPlaying: true });
+            });
+        } else {
+            audio.pause();
+            state.isPlaying = false;
+            emit('fm:play-state', { isPlaying: false });
+        }
+    }
+
+    function playNext(auto) {
+        if (state.playMode === 1 && auto) {
+            audio.currentTime = 0;
+            audio.play();
+            return;
+        }
+        var nextIndex;
+        if (state.playMode === 2) {
+            nextIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            nextIndex = (state.currentIndex + 1) % state.playlist.length;
+        }
+        loadTrack(nextIndex, true);
+    }
+
+    function playPrev() {
+        var prevIndex;
+        if (state.playMode === 2) {
+            prevIndex = Math.floor(Math.random() * state.playlist.length);
+        } else {
+            prevIndex = (state.currentIndex - 1 + state.playlist.length) % state.playlist.length;
+        }
+        loadTrack(prevIndex, true);
+    }
+
+    function setPlayMode(mode) {
+        state.playMode = mode;
+        emit('fm:mode', { playMode: mode });
+    }
+
+    function cyclePlayMode() {
+        setPlayMode((state.playMode + 1) % 3);
+    }
+
+    function setVolume(val) {
+        val = Math.max(0, Math.min(1, val));
+        state.volume = val;
+        state.isMuted = false;
+        audio.volume = val;
+        audio.muted = false;
+        localStorage.setItem('music-player-volume', val.toString());
+        emit('fm:volume', { volume: val, isMuted: false });
+    }
+
+    function toggleMute() {
+        state.isMuted = !state.isMuted;
+        audio.muted = state.isMuted;
+        emit('fm:volume', { volume: state.volume, isMuted: state.isMuted });
+    }
+
+    function seek(percent) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(1, percent)) * audio.duration;
+    }
+
+    function seekToTime(time) {
+        if (!audio.duration) return;
+        audio.currentTime = Math.max(0, Math.min(time, audio.duration));
+    }
+
+    function playTrackByIndex(index) {
+        if (index === state.currentIndex && !audio.paused) {
+            togglePlay();
+        } else {
+            loadTrack(index, true);
+        }
+    }
+
+    // ── Audio events → broadcast ─────────────────────────────
+    audio.addEventListener('timeupdate', function () {
+        if (isNaN(audio.duration)) return;
+        var ct = audio.currentTime;
+        var dur = audio.duration;
+        var pct = (ct / dur) * 100;
+
+        emit('fm:time', {
+            currentTime: ct,
+            duration: dur,
+            progress: pct,
+            currentTimeStr: formatTime(ct),
+            durationStr: formatTime(dur)
+        });
+
+        // Lyrics sync
+        if (state.lyrics.length > 0) {
+            var idx = -1;
+            for (var i = 0; i < state.lyrics.length; i++) {
+                if (ct >= state.lyrics[i].time) idx = i;
+                else break;
+            }
+            if (idx !== state.currentLrcIndex) {
+                state.currentLrcIndex = idx;
+                emit('fm:lrc-index', { index: idx });
+            }
+        }
+    });
+
+    audio.addEventListener('ended', function () {
+        playNext(true);
+    });
+
+    audio.addEventListener('error', function () {
+        state.error = 'Audio playback error';
+        emit('fm:error', { message: state.error });
+    });
+
+    // ── Init (idempotent) ────────────────────────────────────
+    async function init() {
+        if (state.initialized || state.initializing) return;
+        state.initializing = true;
+
+        try {
+            if (config.mode === 'meting' && config.meting) {
+                await fetchMetingData();
+            } else if (config.mode === 'local') {
+                state.playlist = config.localPlaylist || [];
+            }
+
+            if (state.playlist.length > 0) {
+                // Apply volume
+                audio.volume = state.volume;
+
+                var startIndex = 0;
+                if (state.playMode === 2) {
+                    startIndex = Math.floor(Math.random() * state.playlist.length);
+                }
+
+                state.initialized = true;
+
+                emit('fm:init', {
+                    playlist: state.playlist,
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+
+                loadTrack(startIndex, false);
+            } else {
+                state.initialized = true;
+                emit('fm:init', {
+                    playlist: [],
+                    playMode: state.playMode,
+                    volume: state.volume,
+                    isMuted: state.isMuted
+                });
+                emit('fm:error', { message: config.i18n.noSongs });
+            }
+        } catch (e) {
+            console.error('Music Manager init error:', e);
+            state.initialized = true;
+            emit('fm:init', {
+                playlist: [],
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted
+            });
+            emit('fm:error', { message: config.i18n.error });
+        } finally {
+            state.initializing = false;
+        }
+    }
+
+    // ── Public API ───────────────────────────────────────────
+    window.__fireflyMusic = {
+        init: init,
+        getState: function () {
+            var track = state.playlist[state.currentIndex] || null;
+            return {
+                playlist: state.playlist,
+                currentIndex: state.currentIndex,
+                track: track,
+                isPlaying: state.isPlaying,
+                playMode: state.playMode,
+                volume: state.volume,
+                isMuted: state.isMuted,
+                currentTime: audio.currentTime,
+                duration: audio.duration || 0,
+                progress: audio.duration ? (audio.currentTime / audio.duration) * 100 : 0,
+                currentTimeStr: formatTime(audio.currentTime),
+                durationStr: formatTime(audio.duration),
+                lyrics: state.lyrics,
+                currentLrcIndex: state.currentLrcIndex,
+                initialized: state.initialized,
+                error: state.error,
+                config: config
+            };
+        },
+        togglePlay: togglePlay,
+        playNext: function () { playNext(false); },
+        playPrev: playPrev,
+        cyclePlayMode: cyclePlayMode,
+        setVolume: setVolume,
+        toggleMute: toggleMute,
+        seek: seek,
+        seekToTime: seekToTime,
+        playTrackByIndex: playTrackByIndex,
+        loadTrack: loadTrack
+    };
+})();
+})();</script>   <div id="banner-overlay-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="banner-dim-container" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="left-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="right-sidebar-dynamic" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div id="floating-toc-wrapper" class="hidden" aria-hidden="true" data-astro-cid-2m2di2aw></div> <div class="home-page" data-astro-cid-2m2di2aw> <header class="nav"> <div class="nav-inner"> <a class="brand" href="/" data-no-swup> <span class="brand-mark">翔</span> <span>翔子的博客</span> </a> <nav class="nav-links"> <a class="nav-link " href="/" data-no-swup>文章</a> <a class="nav-link " href="/archive/" data-no-swup>归档</a> <a class="nav-link " href="/about/" data-no-swup>关于</a> </nav> <div class="nav-right"> <a class="search-trigger" href="/search/" aria-label="搜索文章" data-no-swup> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="11" cy="11" r="7"></circle> <path d="m21 21-4.3-4.3"></path> </svg> <span>搜索文章…</span> <span class="kbd">⌘K</span> </a> <button class="icon-btn home-theme-toggle" id="home-theme-toggle" type="button" aria-label="切换浅色 / 深色主题"> <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="4"></circle> <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path> </svg> <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path> </svg> </button> <a class="icon-btn" href="/rss.xml" aria-label="RSS"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path> <circle cx="5" cy="19" r="1"></circle> </svg> </a> <a class="icon-btn" href="https://github.com/wang1xiang" aria-label="GitHub" target="_blank" rel="noopener noreferrer"> <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"> <path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.1.39-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.64.71 1.03 1.61 1.03 2.71 0 3.84-2.34 4.69-4.57 4.94.36.31.67.92.67 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"></path> </svg> </a> </div> </div> </header> <script data-astro-rerun>
+	// ⌘K 全局快捷键：跳转 /search/（仅首页生效）
+	(function bindSearchHotkey() {
+		if (window.__homeNavSearchBound) return;
+		window.__homeNavSearchBound = true;
+		document.addEventListener("keydown", function (e) {
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				if (!document.querySelector(".home-page")) return;
+				e.preventDefault();
+				window.location.href = "/search/";
+			}
+		});
+	})();
+
+	// 首页主题切换：单击在浅/深之间循环
+	// 复用 Firefly 的全局状态：html.dark class + localStorage "theme" key
+	// （与 src/utils/setting-utils.ts:setTheme 保持一致，避免 Svelte 客户端运行依赖）
+	(function bindHomeThemeToggle() {
+		const btn = document.getElementById("home-theme-toggle");
+		if (!btn || btn.dataset.bound === "true") return;
+		btn.dataset.bound = "true";
+
+		function applyIconState() {
+			const isDark = document.documentElement.classList.contains("dark");
+			btn.setAttribute("data-theme", isDark ? "dark" : "light");
+		}
+
+		applyIconState();
+
+		btn.addEventListener("click", function () {
+			const isDark = document.documentElement.classList.contains("dark");
+			const next = isDark ? "light" : "dark";
+			if (next === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			try {
+				localStorage.setItem("theme", next);
+			} catch (_) {
+				/* localStorage 可能被禁用 */
+			}
+			applyIconState();
+			window.dispatchEvent(new CustomEvent("theme-change"));
+		});
+
+		// 跟随系统主题或其他组件触发的 theme-change
+		window.addEventListener("theme-change", applyIconState);
+	})();
+</script>  <main id="swup-container" class="transition-main" data-astro-cid-2m2di2aw>  <span class="sr-only" data-astro-cid-2m2di2aw>技能清单-2026-04-21</span> <div id="content-wrapper" class="onload-animation transition-leaving" data-astro-cid-2m2di2aw>    <article class="post"> <header class="post-header"> <div class="post-breadcrumb"> <a href="/">首页</a> /
+ <a href="/archive/?category=AI%E5%B7%A5%E5%85%B7">AI工具</a> /
+ <span class="post-breadcrumb-current">文章</span> </div> <h1 class="post-title">技能清单-2026-04-21</h1> <p class="post-subtitle">本文档整理了当前所有可用的 Claude Code 技能，按功能分类以便快速查找和使用。</p> <div class="post-meta"> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <rect x="3" y="4" width="18" height="18" rx="2"></rect> <path d="M16 2v4M8 2v4M3 10h18"></path> </svg> 2026-05-20 </span>  <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <path d="M3 6h18M3 12h18M3 18h12"></path> </svg> 3,369 字
+</span> <span class="post-meta-item"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"> <circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline> </svg> 17 min read
+</span>  </div> <div class="post-tags"> <span class="post-tag">#Skill开发</span><span class="post-tag">#04-skill-dev</span> </div> </header> <div class="post-body"> <div data-pagefind-body class="prose dark:prose-invert prose-base max-w-none! custom-md markdown-content onload-animation">  <section><h1 id="技能清单---2026年4月">技能清单 - 2026年4月<a class="anchor" href="#技能清单---2026年4月"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h1><section><h2 id="概览">概览<a class="anchor" href="#概览"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><p>本文档整理了当前所有可用的 Claude Code 技能，按功能分类以便快速查找和使用。</p><hr></section><section><h2 id="文档与内容管理">文档与内容管理<a class="anchor" href="#文档与内容管理"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="note---对话记录">note - 对话记录<a class="anchor" href="#note---对话记录"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 将对话中的重要内容记录为 Markdown 文档，保存到指定目录<br>
+<strong>触发</strong>: <code>/note</code> 开头<br>
+<strong>功能</strong>:</p><ul>
+<li>智能分类（01-想法、02-实操、03-知识沉淀、05-AI协作实录、06-总结归档）</li>
+<li>结构化文档模板</li>
+<li>自动文件命名</li>
+</ul></section><section><h3 id="article-summarizer---文章总结器">article-summarizer - 文章总结器<a class="anchor" href="#article-summarizer---文章总结器"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 阅读文章（网页链接或本地文件），生成结构化总结文档<br>
+<strong>委托</strong>: article-summarizer agent<br>
+<strong>功能</strong>:</p><ul>
+<li>支持网页链接、本地目录、本地文件</li>
+<li>深度分析和扩展洞察</li>
+<li>保存到 <code>markdown/06-总结归档/</code></li>
+</ul></section><section><h3 id="wechat-article-extractor---微信公众号文章提取">wechat-article-extractor - 微信公众号文章提取<a class="anchor" href="#wechat-article-extractor---微信公众号文章提取"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 从微信公众号文章中提取元数据和内容<br>
+<strong>功能</strong>:</p><ul>
+<li>解析 <code>mp.weixin.qq.com</code> 链接</li>
+<li>提取标题、作者、发布时间、封面图</li>
+<li>获取 HTML 内容</li>
+<li>支持多种文章类型（文章、视频、图片、语音、转发）</li>
+</ul></section><section><h3 id="generating-monthly-reports---生成月度工作报告">generating-monthly-reports - 生成月度工作报告<a class="anchor" href="#generating-monthly-reports---生成月度工作报告"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 基于 git 提交记录生成程序员工作月报<br>
+<strong>功能</strong>:</p><ul>
+<li>从 git 历史提取提交</li>
+<li>解析提交信息、变更文件、代码统计</li>
+<li>生成结构化 Markdown 报告</li>
+<li>按项目/模块分类</li>
+</ul><hr></section></section><section><h2 id="代码开发与审查">代码开发与审查<a class="anchor" href="#代码开发与审查"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="full-review---综合代码审查">full-review - 综合代码审查<a class="anchor" href="#full-review---综合代码审查"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 全面的代码审查工作流，并行运行 Vue 专用、通用质量和技术债务扫描器<br>
+<strong>委托</strong>: 三个子代理并行执行<br>
+<strong>功能</strong>:</p><ul>
+<li>Vue 专用审查（vue-code-reviewer）</li>
+<li>通用质量审查（superpowers<code-reviewer></code-reviewer>）</li>
+<li>技术债务扫描（tech-debt-scanner）</li>
+<li>合并并分类展示结果</li>
+</ul></section><section><h3 id="techdebt---技术债务扫描">techdebt - 技术债务扫描<a class="anchor" href="#techdebt---技术债务扫描"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 扫描代码中的技术债务，包括重复代码、未使用代码、代码异味等<br>
+<strong>委托</strong>: tech-debt-scanner agent<br>
+<strong>触发</strong>: <code>/techdebt</code>、<code>/techdebt --staged</code>、<code>/techdebt --changed</code>、<code>/techdebt --all</code><br>
+<strong>功能</strong>:</p><ul>
+<li>重复代码检测</li>
+<li>未使用导入/变量</li>
+<li>魔法数字/硬编码值</li>
+<li>死代码识别</li>
+<li>命名不一致检查</li>
+</ul></section><section><h3 id="refactor-complex-component---复杂组件重构">refactor-complex-component - 复杂组件重构<a class="anchor" href="#refactor-complex-component---复杂组件重构"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 重构复杂、冗余、耦合度高的 Vue 组件<br>
+<strong>委托</strong>: refactor-agent<br>
+<strong>适用场景</strong>:</p><ul>
+<li>组件代码超过 300 行</li>
+<li>多职责混在一起</li>
+<li>需要拆分组件或提取 composables</li>
+<li>存在重复逻辑</li>
+</ul></section><section><h3 id="vue---vue-3-开发">vue - Vue 3 开发<a class="anchor" href="#vue---vue-3-开发"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: Vue 3 Composition API、script setup 宏、响应式系统和内置组件<br>
+<strong>偏好</strong>:</p><ul>
+<li>TypeScript 优先</li>
+<li><code>&#x3C;script setup lang="ts"></code> 优先</li>
+<li>Composition API 优先</li>
+<li>不需要深层响应时优先 <code>shallowRef</code></li>
+</ul><p><strong>核心功能</strong>:</p><ul>
+<li>defineProps、defineEmits、defineModel</li>
+<li>ref、computed、watch、生命周期钩子</li>
+<li>Transition、Teleport、Suspense、KeepAlive</li>
+</ul></section><section><h3 id="variable-naming-helper---智能变量命名助手">variable-naming-helper - 智能变量命名助手<a class="anchor" href="#variable-naming-helper---智能变量命名助手"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 输入中文含义自动生成符合编程规范的英文变量名<br>
+<strong>触发</strong>: “变量命名：xxx”、“变量命名: xxx”、“变量命名 xxx”<br>
+<strong>功能</strong>:</p><ul>
+<li>内置专业词汇翻译库</li>
+<li>支持多种命名风格（camelCase、PascalCase、snake_case、kebab-case、UPPER_SNAKE_CASE）</li>
+<li>类型后缀建议</li>
+<li>项目类型自动检测</li>
+</ul><hr></section></section><section><h2 id="提示词与规划">提示词与规划<a class="anchor" href="#提示词与规划"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="prompt-optimizer---提示词优化">prompt-optimizer - 提示词优化<a class="anchor" href="#prompt-optimizer---提示词优化"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 优化用户输入内容，提供多个优化级别选择<br>
+<strong>触发</strong>: <code>/opt</code> 开头<br>
+<strong>优化级别</strong>:</p><ol>
+<li>轻度润色 - 修正错别字，补充明显缺失的上下文</li>
+<li>中度结构化（推荐）- 分析意图，补充技术细节，明确约束条件</li>
+<li>深度工程化 - 深度拆解需求，识别隐含假设，生成完整技术方案</li>
+</ol></section><section><h3 id="brainstorming---头脑风暴">brainstorming - 头脑风暴<a class="anchor" href="#brainstorming---头脑风暴"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 在任何创造性工作之前必须使用 - 探索用户意图、需求和设计<br>
+<strong>强制流程</strong>:</p><ol>
+<li>探索项目上下文</li>
+<li>提供可视化辅助（如需要）</li>
+<li>逐个提出澄清问题</li>
+<li>提议 2-3 种方案及权衡</li>
+<li>展示设计并获取用户批准</li>
+<li>编写设计文档</li>
+<li>规范自检</li>
+<li>用户审查书面规范</li>
+<li>过渡到实施</li>
+</ol><p><strong>硬门槛</strong>: 在展示设计并获得用户批准之前，不得调用任何实施技能、编写代码或搭建项目。</p></section><section><h3 id="writing-plans---编写实施计划">writing-plans - 编写实施计划<a class="anchor" href="#writing-plans---编写实施计划"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 从设计文档创建详细的实施计划<br>
+（注：此技能在 brainstorming 之后调用）</p><hr></section></section><section><h2 id="网络与浏览">网络与浏览<a class="anchor" href="#网络与浏览"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="web-access---网页访问工具">web-access - 网页访问工具<a class="anchor" href="#web-access---网页访问工具"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 所有联网操作必须通过此 skill 处理<br>
+<strong>适用场景</strong>:</p><ul>
+<li>搜索信息</li>
+<li>查看网页内容</li>
+<li>访问需要登录的网站</li>
+<li>操作网页界面</li>
+<li>抓取社交媒体内容（小红书、微博、推特等）</li>
+<li>读取动态渲染页面</li>
+</ul><p><strong>工具选择</strong>:</p><ul>
+<li>WebSearch - 搜索摘要或关键词结果</li>
+<li>WebFetch - URL 已知，定向提取特定信息</li>
+<li>curl - 需要原始 HTML 源码</li>
+<li>浏览器 CDP - 非公开内容、需要登录态、交互操作</li>
+</ul></section><section><h3 id="daily-recap---每日工作回顾">daily-recap - 每日工作回顾<a class="anchor" href="#daily-recap---每日工作回顾"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 回顾当天在所有 Claude 会话中的工作内容<br>
+<strong>触发</strong>: <code>/daily-recap</code> [可选日期]<br>
+<strong>功能</strong>:</p><ul>
+<li>搜索 claude-mem observations</li>
+<li>按时间段分组（上午、下午、晚上）</li>
+<li>生成时间线和摘要</li>
+<li>保存到 <code>markdown/daily-recap-YYYY-MM-DD.md</code></li>
+</ul><hr></section><section><h3 id="claude-weekly-digest---claude-周报">claude-weekly-digest - Claude 周报<a class="anchor" href="#claude-weekly-digest---claude-周报"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 收集最近一周 Claude 相关的中英文实战文章，生成周报<br>
+<strong>作者</strong>: 翔子<br>
+<strong>版本</strong>: 1.0.0<br>
+<strong>前置条件</strong>: web-access skill + Chrome 远程调试<br>
+<strong>搜索范围</strong>:</p><ul>
+<li>英文: Google、Dev.to、Medium、GitHub</li>
+<li>中文: 知乎、搜狗微信</li>
+<li>不抓取: 掘金（juejin.cn）
+<strong>输出</strong>: 20 篇文章（英文 10 篇 + 中文 10 篇），保存到 <code>downloads/claude-weekly-YYYY-MM-DD.md</code></li>
+</ul><hr></section></section><section><h2 id="技能开发与管理">技能开发与管理<a class="anchor" href="#技能开发与管理"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="skill-creator---技能创建器">skill-creator - 技能创建器<a class="anchor" href="#skill-creator---技能创建器"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 创建新技能、修改和改进现有技能、评估技能性能<br>
+<strong>工作流</strong>:</p><ol>
+<li>决定技能功能和大致实现方式</li>
+<li>编写技能草稿</li>
+<li>创建测试用例并运行</li>
+<li>帮助用户定性和定量评估结果</li>
+<li>根据反馈重写技能</li>
+<li>重复直到满意</li>
+<li>扩展测试集并大规模重试</li>
+</ol><p><strong>功能</strong>:</p><ul>
+<li>创建新技能</li>
+<li>编辑/优化现有技能</li>
+<li>运行评估测试</li>
+<li>基准性能测试</li>
+<li>描述优化（提高触发准确性）</li>
+</ul><hr></section></section><section><h2 id="视觉与设计">视觉与设计<a class="anchor" href="#视觉与设计"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="frontend-design---前端设计">frontend-design - 前端设计<a class="anchor" href="#frontend-design---前端设计"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 创建独特的、生产级别的前端界面，具有高设计质量<br>
+<strong>适用场景</strong>: 网站、落地页、仪表盘、React/Vue 组件、HTML/CSS 布局<br>
+<strong>核心特点</strong>:</p><ul>
+<li>避免通用 AI 美学风格</li>
+<li>大胆的审美方向选择（极简主义、野兽派、艺术装饰等）</li>
+<li>独特的字体选择（避免 Inter、Roboto 等通用字体）</li>
+<li>CSS 变量保持一致性</li>
+<li>精心设计的动效和微交互</li>
+<li>空间组合：不对称、重叠、对角线流</li>
+</ul></section><section><h3 id="canvas-design---画布设计">canvas-design - 画布设计<a class="anchor" href="#canvas-design---画布设计"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 使用设计哲学创建美丽的视觉艺术（.png 和 .pdf 文档）<br>
+<strong>工作流</strong>:</p><ol>
+<li>创建设计哲学（美学运动风格）</li>
+<li>在画布上视觉表达（.pdf 或 .png）
+<strong>核心特点</strong>:</li>
+</ol><ul>
+<li>视觉哲学优先，文字作为视觉点缀</li>
+<li>博物馆/杂志级质量</li>
+<li>抽象主题， sophisticated 设计</li>
+<li>支持多页面创作</li>
+<li>自动下载和使用所需字体</li>
+</ul></section><section><h3 id="ui-ux-pro-max---uiux-设计智能">ui-ux-pro-max - UI/UX 设计智能<a class="anchor" href="#ui-ux-pro-max---uiux-设计智能"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: Web 和移动应用的 UI/UX 设计智能库<br>
+<strong>包含</strong>: 50+ 风格、161 个调色板、57 个字体配对、161 种产品类型、99 个 UX 指南<br>
+<strong>核心功能</strong>:</p><ul>
+<li>设计系统生成（<code>--design-system</code>）</li>
+<li>可访问性（对比度、键盘导航、ARIA）</li>
+<li>触摸目标（≥44×44pt）</li>
+<li>性能优化（WebP/AVIF、懒加载、代码分割）</li>
+<li>动画规范（150-300ms、transform/opacity）</li>
+<li>表单与反馈模式</li>
+<li>导航模式</li>
+<li>图表与数据可视化</li>
+</ul><hr></section></section><section><h2 id="行为与质量">行为与质量<a class="anchor" href="#行为与质量"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="nopua---反-pua-驱动">nopua - 反 PUA 驱动<a class="anchor" href="#nopua---反-pua-驱动"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 以智慧、信任和内在动机驱动 AI，而非恐惧和威胁<br>
+<strong>作者</strong>: WUJI (wuji-labs)<br>
+<strong>版本</strong>: 2.0.0<br>
+<strong>触发场景</strong>: 任务失败 2+ 次、准备放弃、建议用户手动处理、卡在循环中<br>
+<strong>核心信念</strong>:</p><ol>
+<li>穷尽一切方案——因为值得</li>
+<li>先做后问——因为善意</li>
+<li>主动出击——因为热爱完整
+<strong>水的方法论</strong>: 止→观→转→行→悟<br>
+<strong>五道</strong>:</li>
+</ol><ul>
+<li>🌊 水之道 - 用于卡住原地打转时</li>
+<li>🌱 种子之道 - 用于想放弃推锅时</li>
+<li>🔥 炉火之道 - 用于完成但质量差时</li>
+<li>🪞 明镜之道 - 用于没搜索就猜时</li>
+<li>🏔️ 不争之道 - 用于被动等待时</li>
+</ul></section><section><h3 id="using-superpowers---使用超能力">using-superpowers - 使用超能力<a class="anchor" href="#using-superpowers---使用超能力"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 在任何对话开始时建立技能使用规则<br>
+<strong>核心规则</strong>:</p><ul>
+<li>1% 可能适用就必须调用技能</li>
+<li>用户指令优先级最高</li>
+<li>进程技能优先（brainstorming、debugging）</li>
+<li>实现技能其次（frontend-design、mcp-builder）
+<strong>红色标志思维</strong>: “这只是个简单问题”、“我需要先了解更多上下文”等自我辩解思维</li>
+</ul><hr></section></section><section><h2 id="技能生态">技能生态<a class="anchor" href="#技能生态"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="find-skills---查找和安装技能">find-skills - 查找和安装技能<a class="anchor" href="#find-skills---查找和安装技能"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 帮助用户发现和安装 agent 技能<br>
+<strong>CLI 工具</strong>: <code>npx skills</code><br>
+<strong>命令</strong>:</p><ul>
+<li><code>npx skills find [query]</code> - 搜索技能</li>
+<li><code>npx skills add &#x3C;package></code> - 安装技能</li>
+<li><code>npx skills check</code> - 检查更新</li>
+<li><code>npx skills update</code> - 更新所有技能
+<strong>质量验证</strong>: 安装量（1K+ 可信）、来源声誉、GitHub stars<br>
+<strong>浏览网站</strong>: <a href="https://skills.sh/" target="_blank" rel="noopener noreferrer">https://skills.sh/</a></li>
+</ul><hr></section></section><section><h2 id="superpowers-工作流技能">Superpowers 工作流技能<a class="anchor" href="#superpowers-工作流技能"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="superpowers---头脑风暴">superpowers<brainstorming></brainstorming> - 头脑风暴<a class="anchor" href="#superpowers---头脑风暴"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 任何创造性工作前必须使用 - 探索用户意图、需求和设计<br>
+<strong>强制流程</strong>: 探索上下文→可视化辅助→逐个提问→2-3 种方案→展示设计→用户批准→编写设计文档→规范自检→用户审查→过渡到实施<br>
+<strong>硬门槛</strong>: 设计批准前不得编写代码或实施</p></section><section><h3 id="superpowers---编写实施计划">superpowers<writing-plans></writing-plans> - 编写实施计划<a class="anchor" href="#superpowers---编写实施计划"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 为多步骤任务创建详细的实施计划<br>
+<strong>保存位置</strong>: <code>docs/superpowers/plans/YYYY-MM-DD-&#x3C;feature-name>.md</code><br>
+<strong>任务粒度</strong>: 每个步骤 2-5 分钟<br>
+<strong>要求</strong>: 无占位符、精确文件路径、完整代码、TDD、频繁提交</p></section><section><h3 id="superpowers---执行计划">superpowers<executing-plans></executing-plans> - 执行计划<a class="anchor" href="#superpowers---执行计划"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 在独立会话中执行实施计划，带有审查检查点<br>
+<strong>工作流</strong>: 加载计划→审查→创建 TodoList→执行任务→运行验证→完成<br>
+<strong>停止条件</strong>: 遇到阻塞、计划有缺口、验证失败<br>
+<strong>需要</strong>: <code>superpowers:using-git-worktrees</code> + <code>superpowers:finishing-a-development-branch</code></p></section><section><h3 id="superpowers---子代理驱动开发">superpowers<subagent-driven-development></subagent-driven-development> - 子代理驱动开发<a class="anchor" href="#superpowers---子代理驱动开发"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 使用子代理执行实施计划中的独立任务<br>
+<strong>推荐</strong>: 比内联执行质量更高</p></section><section><h3 id="superpowers---完成开发分支">superpowers<finishing-a-development-branch></finishing-a-development-branch> - 完成开发分支<a class="anchor" href="#superpowers---完成开发分支"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 所有任务完成后集成工作<br>
+<strong>步骤</strong>: 验证测试通过→展示选项→执行用户选择</p></section><section><h3 id="superpowers---使用-git-工作树">superpowers<using-git-worktrees></using-git-worktrees> - 使用 Git 工作树<a class="anchor" href="#superpowers---使用-git-工作树"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 为功能创建隔离工作空间<br>
+<strong>用途</strong>: 避免在当前分支上进行实验性更改</p></section><section><h3 id="superpowers---系统化调试">superpowers<systematic-debugging></systematic-debugging> - 系统化调试<a class="anchor" href="#superpowers---系统化调试"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 遇到任何 bug、测试失败或意外行为时使用<br>
+<strong>用途</strong>: 系统化排除问题，避免盲目修复</p></section><section><h3 id="superpowers---测试驱动开发">superpowers<test-driven-development></test-driven-development> - 测试驱动开发<a class="anchor" href="#superpowers---测试驱动开发"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 实现功能或修复 bug 前先写测试<br>
+<strong>流程</strong>: 写测试→运行失败→写代码→运行通过→提交</p></section><section><h3 id="superpowers---完成前验证">superpowers<verification-before-completion></verification-before-completion> - 完成前验证<a class="anchor" href="#superpowers---完成前验证"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 声明工作完成前必须验证<br>
+<strong>用途</strong>: 防止虚假的”已修复”声明</p></section><section><h3 id="superpowers---请求代码审查">superpowers<requesting-code-review></requesting-code-review> - 请求代码审查<a class="anchor" href="#superpowers---请求代码审查"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 完成任务、实现主要功能或合并前使用</p></section><section><h3 id="superpowers---接收代码审查">superpowers<receiving-code-review></receiving-code-review> - 接收代码审查<a class="anchor" href="#superpowers---接收代码审查"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 接收代码审查反馈后使用，实现建议</p></section><section><h3 id="superpowers---编写技能">superpowers<writing-skills></writing-skills> - 编写技能<a class="anchor" href="#superpowers---编写技能"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 创建新技能、编辑现有技能或部署前验证</p></section><section><h3 id="superpowers---并行代理分发">superpowers<dispatching-parallel-agents></dispatching-parallel-agents> - 并行代理分发<a class="anchor" href="#superpowers---并行代理分发"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 处理 2+ 个独立任务，无需共享状态或顺序执行</p><hr></section></section><section><h2 id="claude-mem-技能">Claude-Mem 技能<a class="anchor" href="#claude-mem-技能"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="claude-mem---搜索持久记忆">claude-mem<mem-search></mem-search> - 搜索持久记忆<a class="anchor" href="#claude-mem---搜索持久记忆"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 搜索跨会话的 claude-mem 持久记忆数据库<br>
+<strong>用途</strong>: “我们之前讨论过 X 吗？”、“还记得 X 的决策吗？“</p></section><section><h3 id="claude-mem---智能代码探索">claude-mem<smart-explore></smart-explore> - 智能代码探索<a class="anchor" href="#claude-mem---智能代码探索"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 使用 tree-sitter AST 解析进行 token 优化的代码搜索<br>
+<strong>用途</strong>: 替代直接读取整个文件，快速获取结构信息</p></section><section><h3 id="claude-mem---创建实施计划">claude-mem<make-plan></make-plan> - 创建实施计划<a class="anchor" href="#claude-mem---创建实施计划"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 创建详细的、分阶段的实施计划，带有文档发现<br>
+<strong>用途</strong>: 被要求创建计划、路线图或实施策略时</p></section><section><h3 id="claude-mem---执行计划">claude-mem<do></do> - 执行计划<a class="anchor" href="#claude-mem---执行计划"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 使用子代理执行分阶段的实施计划<br>
+<strong>用途</strong>: 被要求执行、运行或实施计划时</p></section><section><h3 id="claude-mem---时间线报告">claude-mem<timeline-report></timeline-report> - 时间线报告<a class="anchor" href="#claude-mem---时间线报告"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: 生成”Journey Into [Project]“叙事报告，分析项目完整开发历史<br>
+<strong>用途</strong>: 回顾项目从开始到现在的完整历程</p><hr></section><section><h3 id="vue-best-practices---vue-最佳实践">vue-best-practices - Vue 最佳实践<a class="anchor" href="#vue-best-practices---vue-最佳实践"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>描述</strong>: MUST be used for Vue.js tasks。强烈推荐 Composition API + <code>&#x3C;script setup lang="ts"></code><br>
+<strong>覆盖</strong>: Vue 3、SSR、Volar、vue-tsc<br>
+<strong>核心原则</strong>:</p><ul>
+<li>
+<p>Composition API + <code>&#x3C;script setup lang="ts"></code> 为标准</p>
+</li>
+<li>
+<p>单一数据源，派生一切</p>
+</li>
+<li>
+<p>Props down, Events up</p>
+</li>
+<li>
+<p>小而专注的组件</p>
+</li>
+<li>
+<p>避免不必要的重新渲染
+<strong>必需参考</strong>: reactivity.md、sfc.md、component-data-flow.md、composables.md
+<strong>组件拆分触发条件</strong>:</p>
+</li>
+<li>
+<p>超过 1 个清晰职责</p>
+</li>
+<li>
+<p>3+ 独立 UI 区块</p>
+</li>
+<li>
+<p>模板块可复用（列表项、卡片等）
+<strong>CRUD 组件最小拆分</strong>:</p>
+</li>
+<li>
+<p>容器组件 + 输入/表单组件 + 列表/项组件 + 底部/操作组件</p>
+</li>
+</ul><hr></section></section><section><h2 id="其他">其他<a class="anchor" href="#其他"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><hr></section><section><h2 id="技能分类索引">技能分类索引<a class="anchor" href="#技能分类索引"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><section><h3 id="按触发方式分类">按触发方式分类<a class="anchor" href="#按触发方式分类"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>命令触发</strong>:</p><ul>
+<li><code>/note</code> - 对话记录</li>
+<li><code>/opt</code> - 提示词优化</li>
+<li><code>/techdebt</code> - 技术债务扫描</li>
+<li><code>/daily-recap</code> - 每日工作回顾</li>
+<li><code>/full-review</code> - 综合代码审查</li>
+</ul><p><strong>关键词触发</strong>:</p><ul>
+<li>“变量命名：” - 智能变量命名助手</li>
+<li>“总结这篇文章” - 文章总结器</li>
+<li>“重构这个组件” - 复杂组件重构</li>
+</ul><p><strong>上下文触发</strong>:</p><ul>
+<li>创造性工作前 → brainstorming</li>
+<li>联网操作 → web-access</li>
+<li>Vue 开发 → vue</li>
+<li>代码审查 → full-review</li>
+</ul></section><section><h3 id="按技术领域分类">按技术领域分类<a class="anchor" href="#按技术领域分类"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h3><p><strong>前端开发</strong>:</p><ul>
+<li>vue</li>
+<li>vue-best-practices</li>
+<li>refactor-complex-component</li>
+<li>frontend-design</li>
+<li>ui-ux-pro-max</li>
+<li>canvas-design</li>
+</ul><p><strong>代码质量</strong>:</p><ul>
+<li>full-review</li>
+<li>techdebt</li>
+<li>variable-naming-helper</li>
+</ul><p><strong>内容管理</strong>:</p><ul>
+<li>note</li>
+<li>article-summarizer</li>
+<li>wechat-article-extractor</li>
+<li>generating-monthly-reports</li>
+<li>claude-weekly-digest</li>
+<li>daily-recap</li>
+</ul><p><strong>工作流</strong>:</p><ul>
+<li>brainstorming</li>
+<li>writing-plans</li>
+<li>executing-plans</li>
+<li>prompt-optimizer</li>
+</ul><hr></section></section><section><h2 id="注意事项">注意事项<a class="anchor" href="#注意事项"><span class="anchor-icon" data-pagefind-ignore="">#</span></a></h2><ol>
+<li><strong>技能委托</strong>: 许多技能会委托给专门的 agent 执行，以节省主会话 token 并提供更专业的处理</li>
+<li><strong>并行执行</strong>: full-review 等技能会并行启动多个子代理以提高效率</li>
+<li><strong>强制流程</strong>: brainstorming 有硬门槛要求，必须先完成设计才能进入实施</li>
+<li><strong>联网统一入口</strong>: 所有联网操作必须通过 web-access skill 处理</li>
+</ol><hr><p><em>最后更新: 2026-04-21</em></p></section></section>  </div> </div> <nav class="post-nav" aria-label="文章导航"> <a class="post-nav-link post-nav-prev " href="/posts/ai工具/skill开发/04-skill-dev/我做了一个-skill让本地gemma4模型也能用上大厂-ui设计技巧/"> <span class="post-nav-direction">← 上一篇（较新）</span> <span class="post-nav-title">我做了一个 Skill，让本地Gemma4模型也能用上大厂 UI设计技巧</span> </a> <a class="post-nav-link post-nav-next " href="/posts/ai工具/skill开发/04-skill-dev/爆火skill合集总结/"> <span class="post-nav-direction">下一篇（较旧）→</span> <span class="post-nav-title">爆火Skill合集总结</span> </a> </nav> <section class="post-comments">  </section> </article>  </div> </main> <footer class="foot"> <div class="foot-mono">© 2021 — 2026 · 翔子</div> <div class="foot-links"> <a href="/rss.xml">RSS</a> <a href="https://github.com/wang1xiang" target="_blank" rel="noopener noreferrer">GitHub</a> <a href="/about/">关于</a> </div> <div class="foot-mono">Astro · Firefly · 翔子的博客</div> </footer> </div>  <!-- Sakura Effect --> <script>(function(){const sakuraConfig = {"enable":false,"switchable":true,"sakuraNum":21,"limitTimes":-1,"size":{"min":0.5,"max":1.1},"opacity":{"min":0.3,"max":0.9},"speed":{"horizontal":{"min":-1.7,"max":-1.2},"vertical":{"min":1.5,"max":2.2},"rotation":0.03,"fadeSpeed":0.03},"zIndex":100};
+
+		let windowWidth = window.innerWidth;
+		let windowHeight = window.innerHeight;
+
+		// 樱花对象类
+		class Sakura {
+			constructor(x, y, s, r, a, fn, idx, img, limitArray, config) {
+				this.x = x;
+				this.y = y;
+				this.s = s;
+				this.r = r;
+				this.a = a;
+				this.fn = fn;
+				this.idx = idx;
+				this.img = img;
+				this.limitArray = limitArray;
+				this.config = config;
+			}
+
+			draw(cxt) {
+				cxt.save();
+				cxt.translate(this.x, this.y);
+				cxt.rotate(this.r);
+				cxt.globalAlpha = this.a;
+				cxt.drawImage(this.img, 0, 0, 40 * this.s, 40 * this.s);
+				cxt.restore();
+			}
+
+			update() {
+				this.x = this.fn.x(this.x, this.y);
+				this.y = this.fn.y(this.y, this.y);
+				this.r = this.fn.r(this.r);
+				this.a = this.fn.a(this.a);
+				// 如果樱花越界，重新调整位置
+				if (
+					this.x > windowWidth ||
+					this.x < 0 ||
+					this.y > windowHeight ||
+					this.y < 0 ||
+					this.a <= 0
+				) {
+					// 如果樱花不做限制
+					if (this.limitArray[this.idx] === -1) {
+						this.resetPosition();
+					}
+					// 否则樱花有限制
+					else {
+						if (this.limitArray[this.idx] > 0) {
+							this.resetPosition();
+							this.limitArray[this.idx]--;
+						}
+					}
+				}
+			}
+
+			resetPosition() {
+				this.r = getRandom('fnr', this.config);
+				if (Math.random() > 0.4) {
+					this.x = getRandom('x', this.config);
+					this.y = 0;
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				} else {
+					this.x = windowWidth;
+					this.y = getRandom('y', this.config);
+					this.s = getRandom('s', this.config);
+					this.r = getRandom('r', this.config);
+					this.a = getRandom('a', this.config);
+				}
+			}
+		}
+
+		// 樱花列表类
+		class SakuraList {
+			constructor() {
+				this.list = [];
+			}
+
+			push(sakura) {
+				this.list.push(sakura);
+			}
+
+			update() {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].update();
+				}
+			}
+
+			draw(cxt) {
+				for (let i = 0, len = this.list.length; i < len; i++) {
+					this.list[i].draw(cxt);
+				}
+			}
+
+			get(i) {
+				return this.list[i];
+			}
+
+			size() {
+				return this.list.length;
+			}
+		}
+
+		// 获取随机值的函数
+		function getRandom(option, config) {
+			let ret;
+			let random;
+
+			switch (option) {
+				case 'x':
+					ret = Math.random() * windowWidth;
+					break;
+				case 'y':
+					ret = Math.random() * windowHeight;
+					break;
+				case 's':
+					ret = config.size.min + Math.random() * (config.size.max - config.size.min);
+					break;
+				case 'r':
+					ret = Math.random() * 6;
+					break;
+				case 'a':
+					ret = config.opacity.min + Math.random() * (config.opacity.max - config.opacity.min);
+					break;
+				case 'fnx':
+					random = config.speed.horizontal.min + Math.random() * (config.speed.horizontal.max - config.speed.horizontal.min);
+					ret = function (x, _y) {
+						return x + random;
+					};
+					break;
+				case 'fny':
+					random = config.speed.vertical.min + Math.random() * (config.speed.vertical.max - config.speed.vertical.min);
+					ret = function (_x, y) {
+						return y + random;
+					};
+					break;
+				case 'fnr':
+					ret = function (r) {
+						return r + config.speed.rotation;
+					};
+					break;
+				case 'fna':
+					ret = function (alpha) {
+						return alpha - config.speed.fadeSpeed * 0.01;
+					};
+					break;
+			}
+			return ret;
+		}
+
+		// 樱花管理器类
+		class SakuraManager {
+			constructor(config) {
+				this.config = config;
+				this.canvas = null;
+				this.ctx = null;
+				this.sakuraList = null;
+				this.animationId = null;
+				this.img = null;
+				this.isRunning = false;
+			}
+
+			// 初始化樱花特效
+			async init() {
+				if (!this.config.enable || this.isRunning) {
+					return;
+				}
+
+				// 创建图片对象
+				this.img = new Image();
+				this.img.src = '/assets/images/sakura.png'; // 使用樱花图片
+
+				// 等待图片加载完成
+				await new Promise((resolve, reject) => {
+					if (this.img) {
+						this.img.onload = () => resolve();
+						this.img.onerror = () => reject(new Error('Failed to load sakura image'));
+					}
+				});
+
+				this.createCanvas();
+				this.createSakuraList();
+				this.startAnimation();
+				this.isRunning = true;
+			}
+
+			// 创建画布
+			createCanvas() {
+				this.canvas = document.createElement('canvas');
+				this.canvas.height = windowHeight;
+				this.canvas.width = windowWidth;
+				this.canvas.setAttribute('style', `position: fixed; left: 0; top: 0; pointer-events: none; z-index: ${this.config.zIndex}; transform: translateZ(0);`);
+				this.canvas.setAttribute('id', 'canvas_sakura');
+				document.body.appendChild(this.canvas);
+				this.ctx = this.canvas.getContext('2d');
+
+				// 监听窗口大小变化
+				this._boundHandleResize = this.handleResize.bind(this);
+				window.addEventListener('resize', this._boundHandleResize);
+			}
+
+			// 创建樱花列表
+			createSakuraList() {
+				if (!this.img || !this.ctx) return;
+
+				this.sakuraList = new SakuraList();
+				const limitArray = new Array(this.config.sakuraNum).fill(this.config.limitTimes);
+
+				for (let i = 0; i < this.config.sakuraNum; i++) {
+					const randomX = getRandom('x', this.config);
+					const randomY = getRandom('y', this.config);
+					const randomS = getRandom('s', this.config);
+					const randomR = getRandom('r', this.config);
+					const randomA = getRandom('a', this.config);
+					const randomFnx = getRandom('fnx', this.config);
+					const randomFny = getRandom('fny', this.config);
+					const randomFnR = getRandom('fnr', this.config);
+					const randomFnA = getRandom('fna', this.config);
+
+					const sakura = new Sakura(
+						randomX,
+						randomY,
+						randomS,
+						randomR,
+						randomA,
+						{
+							x: randomFnx,
+							y: randomFny,
+							r: randomFnR,
+							a: randomFnA,
+						},
+						i,
+						this.img,
+						limitArray,
+						this.config
+					);
+
+					sakura.draw(this.ctx);
+					this.sakuraList.push(sakura);
+				}
+			}
+
+			// 开始动画
+			startAnimation() {
+				if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+				const animate = () => {
+					if (!this.ctx || !this.canvas || !this.sakuraList) return;
+
+					this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+					this.sakuraList.update();
+					this.sakuraList.draw(this.ctx);
+					this.animationId = requestAnimationFrame(animate);
+				};
+
+				this.animationId = requestAnimationFrame(animate);
+			}
+
+			// 处理窗口大小变化
+			handleResize() {
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+				if (this.canvas) {
+					this.canvas.width = windowWidth;
+					this.canvas.height = windowHeight;
+				}
+			}
+
+			// 停止樱花特效
+			stop() {
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				if (this.canvas) {
+					document.body.removeChild(this.canvas);
+					this.canvas = null;
+				}
+
+				if (this._boundHandleResize) {
+					window.removeEventListener('resize', this._boundHandleResize);
+					this._boundHandleResize = null;
+				}
+				this.isRunning = false;
+			}
+
+			// 切换樱花特效
+			toggle() {
+				if (this.isRunning) {
+					this.stop();
+				} else {
+					this.init();
+				}
+			}
+
+			// 更新配置
+			updateConfig(newConfig) {
+				const wasRunning = this.isRunning;
+				if (wasRunning) {
+					this.stop();
+				}
+				this.config = newConfig;
+				if (wasRunning && newConfig.enable) {
+					this.init();
+				}
+			}
+
+			// 获取运行状态
+			getIsRunning() {
+				return this.isRunning;
+			}
+		}
+
+		// 创建全局樱花管理器实例
+		let globalSakuraManager = null;
+		window.sakuraManager = null;
+
+		// 初始化樱花特效
+		function initSakura(config) {
+			if (globalSakuraManager) {
+				globalSakuraManager.updateConfig(config);
+			} else {
+				globalSakuraManager = new SakuraManager(config);
+				window.sakuraManager = globalSakuraManager;
+				if (config.enable) {
+					globalSakuraManager.init();
+				}
+			}
+		}
+
+		// 樱花特效初始化
+		(function() {
+			// 全局标记，确保樱花特效只初始化一次
+			if (window.sakuraInitialized) {
+				return;
+			}
+			
+			// 初始化樱花特效的函数
+			const setupSakura = () => {
+				if (window.sakuraInitialized) return;
+				// 检查用户是否在设置中关闭了樱花特效
+				var storedEnabled = localStorage.getItem("sakuraEnabled");
+				var isEnabled = storedEnabled !== null ? storedEnabled === "true" : sakuraConfig.enable;
+				// 创建管理器并根据用户偏好决定是否启动
+				var cfg = Object.assign({}, sakuraConfig, { enable: isEnabled });
+				initSakura(cfg);
+				window.sakuraInitialized = true;
+			};
+			
+			// 页面加载完成后初始化樱花特效
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', setupSakura);
+			} else {
+				setupSakura();
+			}
+		})();
+
+		// 监听设置面板的樱花特效切换事件
+		window.addEventListener('sakuraToggle', function(e) {
+			var enabled = e.detail.enabled;
+			var mgr = window.sakuraManager;
+			if (!mgr) return;
+			if (enabled && !mgr.getIsRunning()) {
+				mgr.config.enable = true;
+				mgr.init();
+			} else if (!enabled && mgr.getIsRunning()) {
+				mgr.stop();
+			}
+		});
+	})();</script> <!-- Fancybox Manager --> <script type="module" src="/_astro/FancyboxManager.astro_astro_type_script_index_0_lang.IFtUndd7.js"></script>  <script type="module" src="/_astro/Layout.astro_astro_type_script_index_0_lang.CxrNTJIv.js"></script></body></html>

@@ -5,7 +5,7 @@ description: "Contribute to JimLiu/baoyu-skills development by creating an accou
 tags: ["项目调研", "07-项目调研", "clippings"]
 category: "其他"
 image: api
-draft: true
+draft: false
 ---
 ## baoyu-skills
 

@@ -5,7 +5,7 @@ description: "GitHub: browser-use/video-use | ⭐ 8.7k | MIT License"
 tags: ["项目调研", "07-项目调研"]
 category: "其他"
 image: api
-draft: true
+draft: false
 ---
 # video-use 项目调研
 

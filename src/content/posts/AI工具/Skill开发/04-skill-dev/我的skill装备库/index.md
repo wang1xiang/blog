@@ -5,7 +5,7 @@ description: "统计截至 2026-06-01，共安装 71 个 Skill，按功能域分
 tags: ["Skill开发", "04-skill-dev"]
 category: "AI工具"
 image: api
-draft: true
+draft: false
 ---
 # 我的 Skill 装备库
 

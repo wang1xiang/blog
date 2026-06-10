@@ -5,7 +5,7 @@ description: "👔面试官：你来说说 ReAct、Plan-and-Execute、Reflection
 tags: ["AI工作流", "03-ai-workflow"]
 category: "AI工具"
 image: api
-draft: true
+draft: false
 ---
 👔面试官：你来说说 ReAct、[Plan-and-Execute](https://zhida.zhihu.com/search?content_id=274251819&content_type=Article&match_order=1&q=Plan-and-Execute&zhida_source=entity)、Reflection 三种范式的区别？
 

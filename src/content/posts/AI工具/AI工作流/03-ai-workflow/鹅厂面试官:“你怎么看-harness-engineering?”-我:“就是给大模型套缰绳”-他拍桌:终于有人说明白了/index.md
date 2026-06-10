@@ -5,7 +5,7 @@ description: "不知道你最近是不是和我一样有这种感觉：AI 圈造
 tags: ["AI工作流", "03-ai-workflow"]
 category: "AI工具"
 image: api
-draft: true
+draft: false
 ---
 不知道你最近是不是和我一样有这种感觉：AI 圈造新词的速度是真的快。
 

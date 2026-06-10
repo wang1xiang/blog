@@ -5,7 +5,7 @@ description: "想让 Claude Code 每周一自动收集最新关于 Claude 的实
 tags: ["Skill开发", "04-skill-dev", "web-access", "CDP", "自动化工具"]
 category: "AI工具"
 image: api
-draft: true
+draft: false
 ---
 # Web-Access Skill 安装与 Claude 周报实践
 

@@ -5,7 +5,7 @@ description: "把本地部署的 Gemma 4、开源的 design.md 设计参考体
 tags: ["Skill开发", "04-skill-dev", "clippings"]
 category: "AI工具"
 image: api
-draft: true
+draft: false
 ---
 原创 超级猛 *2026年4月9日 13:12*
 

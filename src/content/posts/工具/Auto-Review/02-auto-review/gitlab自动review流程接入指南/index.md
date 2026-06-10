@@ -5,7 +5,7 @@ description: "一、整体架构 - 二、前置准备 - 三、步骤 1：注册 
 tags: ["Auto-Review", "02-auto-review"]
 category: "工具"
 image: api
-draft: true
+draft: false
 ---
 # GitLab 自动 Review 流程接入指南
 

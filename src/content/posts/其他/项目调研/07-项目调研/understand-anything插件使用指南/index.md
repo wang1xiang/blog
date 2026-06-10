@@ -5,7 +5,7 @@ description: "接手陌生代码库时，传统方式是逐文件阅读、手动
 tags: ["项目调研", "07-项目调研"]
 category: "其他"
 image: api
-draft: true
+draft: false
 ---
 # Understand-Anything 插件使用指南
 

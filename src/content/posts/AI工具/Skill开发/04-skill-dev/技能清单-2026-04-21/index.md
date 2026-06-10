@@ -5,7 +5,7 @@ description: "本文档整理了当前所有可用的 Claude Code 技能，按�
 tags: ["Skill开发", "04-skill-dev"]
 category: "AI工具"
 image: api
-draft: true
+draft: false
 ---
 # 技能清单 - 2026年4月
 

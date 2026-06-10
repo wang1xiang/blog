@@ -5,7 +5,7 @@ description: "在探索 Claude Code 周边工具时，发现了 repomix——一
 tags: ["项目调研", "07-项目调研"]
 category: "其他"
 image: api
-draft: true
+draft: false
 ---
 # repomix 工具使用探索
 

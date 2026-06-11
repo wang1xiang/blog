@@ -202,9 +202,62 @@ html[data-theme="dark"] .home-page {
 
 /* ============ Hero ============ */
 .home-page .hero {
+  position: relative;
+  isolation: isolate; /* 锁住 canvas 的合成模式，不污染外部层叠上下文 */
+  overflow: hidden;
+}
+.home-page .hero-inner {
+  position: relative;
+  z-index: 2;
   max-width: var(--maxw);
   margin: 0 auto;
   padding: 96px var(--gutter) 56px;
+}
+/* 背景图常驻：放大覆盖更宽区域，边缘用 mask 渐变到透明，避免硬切 */
+.home-page .hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url("/assets/images/hero-bg.png");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: auto 160%; /* 等比放大，让图覆盖到 hero 外 */
+  opacity: 0.85;
+  pointer-events: none;
+  /* 边缘羽化：限定椭圆尺寸贴近图片实际渲染宽度，确保图的左右边能落进渐变带 */
+  -webkit-mask-image: radial-gradient(
+    ellipse 38% 85% at center,
+    #000 55%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 38% 85% at center,
+    #000 55%,
+    transparent 100%
+  );
+}
+/* 暗色模式下底图视感会偏亮，压一下 */
+.dark .home-page .hero-bg,
+:root.dark .home-page .hero-bg {
+  opacity: 0.45;
+  filter: grayscale(0.25) brightness(0.8);
+}
+/* 蒙版：实色画布盖在底图上，鼠标滑过擦出墨点 */
+.home-page .hero-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
+}
+/* 触屏 / 无 hover 设备：直接隐藏蒙版，底图常驻显示 */
+@media (hover: none) {
+  .home-page .hero-mask {
+    display: none;
+  }
+  .home-page .hero-bg {
+    opacity: 0.55; /* 触屏没有"擦出"动作，再压一点防止抢戏 */
+  }
 }
 .home-page .hero-eyebrow {
   display: inline-flex;
@@ -733,7 +786,7 @@ html[data-theme="dark"] .home-page {
   .home-page .search-trigger span:not(.kbd) {
     display: none;
   }
-  .home-page .hero {
+  .home-page .hero-inner {
     padding: 56px var(--gutter) 40px;
   }
   .home-page .hero-meta {

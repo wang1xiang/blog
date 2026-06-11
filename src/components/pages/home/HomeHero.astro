@@ -44,31 +44,215 @@ const runningDays = Math.ceil(
 );
 ---
 
-<section class="hero">
-	<div class="hero-eyebrow">{eyebrow}</div>
-	<h1 class="hero-headline">
-		{headlinePrefix}<em>{headlineEm}</em>{headlineSuffix}<br />{headlineLine2}
-	</h1>
-	<p class="hero-sub">{subtitle}</p>
-	<div class="hero-meta">
-		<div class="hero-author">
-			<div class="hero-avatar">{avatarChar}</div>
-			<div class="hero-author-info">
-				<strong>{profileConfig.name}</strong>
-				<span>{authorLocation}</span>
+<section class="hero" id="hero">
+	{/*
+		背景图常驻在 .hero-bg。
+		.hero-mask 是一张和页面背景同色的 canvas，覆盖在背景图之上；
+		鼠标移过时通过 destination-out 合成模式擦出墨点，露出底图。
+		触屏设备没有 hover，CSS 直接隐藏 canvas，背景图常驻显示。
+	*/}
+	<div class="hero-bg" aria-hidden="true"></div>
+	<canvas class="hero-mask" id="hero-mask" aria-hidden="true"></canvas>
+
+	<div class="hero-inner">
+		<div class="hero-eyebrow">{eyebrow}</div>
+		<h1 class="hero-headline">
+			{headlinePrefix}<em>{headlineEm}</em>{headlineSuffix}<br />{headlineLine2}
+		</h1>
+		<p class="hero-sub">{subtitle}</p>
+		<div class="hero-meta">
+			<div class="hero-author">
+				<div class="hero-avatar">{avatarChar}</div>
+				<div class="hero-author-info">
+					<strong>{profileConfig.name}</strong>
+					<span>{authorLocation}</span>
+				</div>
 			</div>
-		</div>
-		<div class="hero-stat">
-			<strong>{posts.length}</strong>
-			<span>篇文章</span>
-		</div>
-		<div class="hero-stat">
-			<strong>{formatNumber(totalWords)}</strong>
-			<span>字</span>
-		</div>
-		<div class="hero-stat">
-			<strong>{categories.length}</strong>
-			<span>分类</span>
+			<div class="hero-stat">
+				<strong>{posts.length}</strong>
+				<span>篇文章</span>
+			</div>
+			<div class="hero-stat">
+				<strong>{formatNumber(totalWords)}</strong>
+				<span>字</span>
+			</div>
+			<div class="hero-stat">
+				<strong>{categories.length}</strong>
+				<span>分类</span>
+			</div>
 		</div>
 	</div>
 </section>
+
+{/*
+	is:inline 让 Astro 原样输出脚本，不打包不 hoist；
+	每次 Swup 替换 #swup-container 时 <script> 会被新建并重新执行。
+*/}
+<script is:inline>
+	(function initHeroMask() {
+		const hero = document.getElementById("hero");
+		const canvas = document.getElementById("hero-mask");
+		if (!hero || !canvas) return;
+		// 触屏设备（无 hover）直接退出 —— CSS 已隐藏 canvas，背景图常驻
+		if (!window.matchMedia("(hover: hover)").matches) return;
+
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return;
+
+		// 蒙版颜色 = 页面背景色，从 CSS 变量取，自动适配明暗模式
+		function getMaskColor() {
+			const bg = getComputedStyle(document.documentElement)
+				.getPropertyValue("--bg")
+				.trim();
+			return bg || "#fafafa";
+		}
+
+		const R_START = 8;         // 墨点初始半径
+		const R_END = 128;         // 墨点最大半径
+		const R_VARY = 0.45;       // 半径随机抖动
+		const LIFETIME = 520;      // 墨点存活时间 (ms)
+		const STAMP_STEP = 12;     // 沿鼠标路径的补点间距 (px)
+		const MAX_STAMPS = 160;    // 同时存在的墨点上限
+		const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+		let w = 0;
+		let h = 0;
+		let maskColor = getMaskColor();
+
+		function resize() {
+			const rect = hero.getBoundingClientRect();
+			w = rect.width;
+			h = rect.height;
+			canvas.width = Math.round(w * DPR);
+			canvas.height = Math.round(h * DPR);
+			canvas.style.width = w + "px";
+			canvas.style.height = h + "px";
+			ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+			ctx.globalCompositeOperation = "source-over";
+			ctx.fillStyle = maskColor;
+			ctx.fillRect(0, 0, w, h);
+		}
+		resize();
+		window.addEventListener("resize", resize);
+
+		// 监听主题切换（项目通过给 <html> 加/去 class 切换）
+		const themeObserver = new MutationObserver(() => {
+			maskColor = getMaskColor();
+		});
+		themeObserver.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["class", "data-theme", "style"],
+		});
+
+		const stamps = [];
+		let lastX = null;
+		let lastY = null;
+
+		function addStamp(x, y) {
+			if (stamps.length >= MAX_STAMPS) stamps.shift();
+			stamps.push({
+				x: x,
+				y: y,
+				born: performance.now(),
+				seed: Math.random() * Math.PI * 2,
+				rmax: R_END * (1 - R_VARY + Math.random() * R_VARY),
+			});
+		}
+
+		function stampAlong(x, y) {
+			if (lastX === null) {
+				addStamp(x, y);
+			} else {
+				const dx = x - lastX;
+				const dy = y - lastY;
+				const dist = Math.hypot(dx, dy);
+				const steps = Math.max(1, Math.ceil(dist / STAMP_STEP));
+				for (let i = 1; i <= steps; i++) {
+					addStamp(lastX + (dx * i) / steps, lastY + (dy * i) / steps);
+				}
+			}
+			lastX = x;
+			lastY = y;
+		}
+
+		// 用 radialGradient + 32 段正弦扰动绘制不规则边缘的墨点
+		function carveInk(x, y, r, alpha, seed) {
+			const g = ctx.createRadialGradient(x, y, r * 0.25, x, y, r);
+			g.addColorStop(0, "rgba(0, 0, 0, " + 0.95 * alpha + ")");
+			g.addColorStop(0.55, "rgba(0, 0, 0, " + 0.88 * alpha + ")");
+			g.addColorStop(1, "rgba(0, 0, 0, 0)");
+			ctx.fillStyle = g;
+			ctx.beginPath();
+			const segs = 32;
+			for (let i = 0; i <= segs; i++) {
+				const a = (i / segs) * Math.PI * 2;
+				const wob =
+					0.78 +
+					0.14 * Math.sin(a * 3 + seed) +
+					0.08 * Math.sin(a * 7 + seed * 2.1) +
+					0.05 * Math.sin(a * 13 + seed * 0.7);
+				const rr = r * wob;
+				const px = x + Math.cos(a) * rr;
+				const py = y + Math.sin(a) * rr;
+				if (i === 0) ctx.moveTo(px, py);
+				else ctx.lineTo(px, py);
+			}
+			ctx.closePath();
+			ctx.fill();
+		}
+
+		let running = false;
+		function loop() {
+			const now = performance.now();
+			// 每帧重铺一整张实色蒙版，再挖出活着的墨点
+			ctx.globalCompositeOperation = "source-over";
+			ctx.fillStyle = maskColor;
+			ctx.fillRect(0, 0, w, h);
+
+			ctx.globalCompositeOperation = "destination-out";
+			for (let i = stamps.length - 1; i >= 0; i--) {
+				const t = (now - stamps[i].born) / LIFETIME;
+				if (t >= 1) {
+					stamps.splice(i, 1);
+					continue;
+				}
+				const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+				const r = R_START + (stamps[i].rmax - R_START) * ease;
+				const alpha = 1 - t * t; // 渐渐合拢
+				carveInk(stamps[i].x, stamps[i].y, r, alpha, stamps[i].seed);
+			}
+
+			if (stamps.length) {
+				requestAnimationFrame(loop);
+			} else {
+				running = false; // 没有活墨点就停止 RAF，省电
+			}
+		}
+
+		function start() {
+			if (!running) {
+				running = true;
+				requestAnimationFrame(loop);
+			}
+		}
+
+		hero.addEventListener("mouseenter", function (e) {
+			const rect = hero.getBoundingClientRect();
+			lastX = e.clientX - rect.left;
+			lastY = e.clientY - rect.top;
+			stampAlong(lastX, lastY);
+			start();
+		});
+
+		hero.addEventListener("mousemove", function (e) {
+			const rect = hero.getBoundingClientRect();
+			stampAlong(e.clientX - rect.left, e.clientY - rect.top);
+			start();
+		});
+
+		hero.addEventListener("mouseleave", function () {
+			lastX = null;
+			lastY = null;
+		});
+	})();
+</script>

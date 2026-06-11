@@ -211,9 +211,19 @@ export function collectFiles(sourceRoot, config) {
   return results;
 }
 
+function safeParseFrontmatter(raw) {
+  try {
+    return matter(raw);
+  } catch (err) {
+    // YAML 解析失败时降级：剥掉 frontmatter，正文当全文
+    const stripped = raw.replace(/^---\n[\s\S]*?\n---\n/, "");
+    return { data: {}, content: stripped };
+  }
+}
+
 export function migrateOne(sourcePath, config, { write = false } = {}) {
   const raw = readFileSync(sourcePath, "utf-8");
-  const parsed = matter(raw);
+  const parsed = safeParseFrontmatter(raw);
   const cleaned = cleanContent(parsed.content);
   const withSource = appendSourceLink(cleaned, parsed.data);
   const sensitiveResult = scanAndRedactSensitiveContent(withSource, config);

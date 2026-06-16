@@ -14,6 +14,9 @@ const getNavBarConfig = (): NavBarConfig => {
 
     // 归档
     LinkPreset.Archive,
+
+    // 隐藏入口：妙妙成长记录
+    { name: "·", url: "/miaomiao/" },
   ];
 
   return { links } as NavBarConfig;

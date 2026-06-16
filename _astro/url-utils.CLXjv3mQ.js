@@ -1,0 +1,1 @@
+import"./zh_TW.B2ckiio7.js";function i(e,n){const r=e.replace(/^\/|\/$/g,"").toLowerCase(),o=n.replace(/^\/|\/$/g,"").toLowerCase();return r===o}function t(...e){return e.join("/").replace(/\/+/g,"/")}function u(e){return a(`/search/?q=${encodeURIComponent(e.trim())}`)}function a(e){return t("","/",e)}export{u as g,i as p,a as u};

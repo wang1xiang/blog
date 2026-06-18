@@ -478,4 +478,49 @@
     diceNext?.addEventListener('click', (e) => { e.stopPropagation(); showDicePhoto(diceCurrentIndex + 1); });
     diceModal?.addEventListener('click', (e) => { if (e.target === diceModal) diceModal.classList.remove('visible'); });
   }
+
+  // ========== 点击照片查看原图 ==========
+  async function getLightbox() {
+    if (window.__PhotoLightboxInstance) return window.__PhotoLightboxInstance;
+    return new Promise((resolve) => {
+      let tries = 0;
+      const t = setInterval(() => {
+        if (window.__PhotoLightboxInstance) {
+          clearInterval(t);
+          resolve(window.__PhotoLightboxInstance);
+        } else if (++tries > 60) {
+          clearInterval(t);
+          resolve(null);
+        }
+      }, 50);
+    });
+  }
+
+  function gatherTimelinePhotos(scope) {
+    const nodes = scope.querySelectorAll('.tcard-photo[data-photo]');
+    const arr = [];
+    nodes.forEach((n) => {
+      const img = n.querySelector('img');
+      const thumb = img?.src || '';
+      const full = n.getAttribute('data-full') || thumb;
+      arr.push({
+        id: n.getAttribute('data-photo'),
+        bg: `url(${thumb}) center/cover no-repeat`,
+        full,
+        node: n,
+      });
+    });
+    return arr;
+  }
+
+  document.querySelectorAll('.tcard-photo[data-photo]').forEach((el) => {
+    el.addEventListener('click', async function(e) {
+      e.stopPropagation();
+      const view = this.closest('.view');
+      const photos = gatherTimelinePhotos(view);
+      const idx = photos.findIndex((p) => p.node === this);
+      const lb = await getLightbox();
+      if (lb && idx >= 0) lb.open(photos, idx);
+    });
+  });
 })();</script> 
